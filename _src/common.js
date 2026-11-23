@@ -161,7 +161,10 @@ function applyTheme(glMap, T) {
       else if (/motorway|trunk|primary|secondary|link/.test(id)) set(id, 'line-color', T.roadMajor);
       else set(id, 'line-color', T.road);
     }
-    else if (id === 'building') { set(id, 'fill-color', T.building); set(id, 'fill-outline-color', T.buildingLine); }
+    else if (id === 'building') {               // дома видны на любом крупном масштабе (в стиле они были только до z14)
+      try { glMap.setLayerZoomRange(id, 13, 24); } catch (_) {}
+      set(id, 'fill-color', T.building); set(id, 'fill-outline-color', T.buildingLine); set(id, 'fill-opacity', 1);
+    }
     else if (id === 'building-3d') {
       if (T.extrude) { set(id, 'fill-extrusion-color', T.building); set(id, 'fill-extrusion-opacity', .9); }
       else lay(id, 'visibility', 'none');
@@ -238,7 +241,7 @@ const CLASS_DEF = {
 const CLASS_IDS = C.classes || ['economy', 'standard', 'comfort'];
 const COLORS = [
   { n: 'Белый', hex: '#f2f3f5' }, { n: 'Серый', hex: '#8b9096' }, { n: 'Темно-серый', hex: '#55595f' },
-  { n: 'Чёрный', hex: '#26272b' }, { n: 'Серебристый', hex: '#c3c7cd' }, { n: 'Синий', hex: '#2d5aa8' }
+  { n: 'Чёрный', hex: '#26272b' }, { n: 'Серебряный', hex: '#c3c7cd' }, { n: 'Синий', hex: '#2d5aa8' }
 ];
 const NAMES = ['Олександр', 'Сергій', 'Дмитро', 'Андрій', 'Віталій', 'Ігор', 'Максим', 'Руслан', 'Євген', 'Володимир', 'Олег', 'Микола', 'Артем', 'Денис', 'Роман', 'Костянтин'];
 const PLATE_L = 'ABCEHIKMOPTX'.split('');
@@ -257,10 +260,12 @@ function fmtAddr(r) {
   const road = a.road || a.pedestrian || a.footway || a.square || a.neighbourhood || a.quarter || a.suburb || '';
   const house = a.house_number || '';
   const city = a.city || a.town || a.village || a.municipality || a.state || '';
-  const street = [road, house].filter(Boolean).join(', ');
+  const rd = C.roadFirst ? road.replace(/^(проспект|вулиця|провулок|площа|бульвар|узвіз|набережна|шосе|проїзд|майдан|улица|переулок|площадь)\s+(.+)$/i, '$2 $1') : road;
+  const street = [rd, house].filter(Boolean).join(', ');
+  const streetCity = C.cityInAddr && city && rd ? [`${rd} (${city})`, house].filter(Boolean).join(', ') : '';
   const poi = r.name && r.name !== road && r.name !== city ? r.name : '';
   const first = (r.display_name || '').split(',').slice(0, 2).join(',').trim();
-  if (house) return { main: street, sub: [poi, city].filter(Boolean).join(', '), city };
+  if (house) return { main: street, mainFrom: streetCity || street, sub: [poi, city].filter(Boolean).join(', '), city };
   return { main: poi || street || first, sub: [poi ? street : '', city].filter(Boolean).join(', '), city };
 }
 let typeT, typeCtl;
@@ -278,14 +283,12 @@ async function geocode(q) {
 const fieldsBox = $('#fields');
 const SUBL = { from: 'Откуда', stop: 'Через', to: 'Куда' };
 function subHTML(p) {
-  if (p.k !== 'from' && !p.ll) return '';
-  const n = S.pts.length - 2;
-  const stops = p.k === 'to' && n > 0 ? ` • ${n} ${n === 1 ? 'остановка' : 'остановки'}` : '';
-  return `<span>${SUBL[p.k]}</span>${p.city ? ' • ' + esc(p.city) : ''}${stops}`;
+  if (p.k === 'stop' || (p.k !== 'from' && !p.ll)) return '';
+  return `<span>${SUBL[p.k]}</span>${p.city ? ' • ' + esc(p.city) : ''}`;
 }
 function rowHTML(p, i, n) {
   const stop = p.k === 'stop';
-  const ph = stop ? `${C.ph.stop} ${i}` : C.ph[p.k];
+  const ph = stop ? C.ph.to : C.ph[p.k];
   const dot = stop ? i : (C.dot?.[p.k] || '');
   const sub = C.showSub ? `<div class="fsub">${subHTML(p)}</div>` : '';
   const ctl = stop ? `<div class="sctl"><button class="sb" data-a="up" ${i <= 1 ? 'disabled' : ''} aria-label="Выше">↑</button><button class="sb" data-a="down" ${i >= n - 2 ? 'disabled' : ''} aria-label="Ниже">↓</button><button class="sb del" data-a="del" aria-label="Удалить остановку">×</button></div>` : '';
@@ -334,7 +337,7 @@ function onType(i, v) {
 function applyPick(i, item) {
   const p = S.pts[i]; if (!p) return;
   clearTimeout(typeT); typeCtl?.abort();
-  p.text = item.main; p.city = item.city; p.ll = item.ll;
+  p.text = (i === 0 && item.mainFrom) || item.main; p.city = item.city; p.ll = item.ll;
   showSugg(i, []); syncField(i);
   document.activeElement?.blur();
   formSheet.snap(1);
@@ -361,6 +364,8 @@ fieldsBox.addEventListener('keydown', e => {
   const inp = e.target.closest('.finput');
   if (inp && e.key === 'Enter') { e.preventDefault(); resolveField(+inp.dataset.i); inp.blur(); }
 });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('.js-price')) e.target.blur(); });
+document.addEventListener('focusout', e => { if (e.target.closest('#priceEdit')) setTimeout(() => { if (!$('#priceEdit')?.contains(document.activeElement)) $('#priceEdit')?.classList.add('hidden'); }, 150); });
 fieldsBox.addEventListener('focusin', e => {
   const inp = e.target.closest('.finput'); if (!inp) return;
   inp.closest('.frow').classList.add('editing');
@@ -434,8 +439,7 @@ function drawLine(layer, coords, st, ok) {
 }
 function showTripInfo(state) {
   let txt = '';
-  if (state === 'loading') txt = 'Строим маршрут…';
-  else if (S.trip) txt = `${fmtKm(S.trip.dist)} · ${fmtDur(S.trip.dur)} в пути${S.trip.ok ? '' : ' (примерно, по прямой)'}`;
+  if (state !== 'loading' && S.trip && C.tripText) txt = C.tripText(fmtKm(S.trip.dist), fmtDur(S.trip.dur));
   $$('.js-trip').forEach(el => { el.textContent = txt; el.classList.toggle('hidden', !txt); });
 }
 let rseq = 0;
@@ -472,7 +476,8 @@ function fitTo(lls) {
   if (!lls.length) return;
   const sh = activeSheet();
   const bottom = Math.min(sh.snaps[1], sh.vis || 0, innerHeight * 0.62) + (C.fitExtraBottom || 24);
-  map.fitBounds(L.latLngBounds(lls), { paddingTopLeft: [40, safeTop + (C.fitTop || 100)], paddingBottomRight: [40, bottom], maxZoom: 16.5 });
+  const px = (S.state === 'order' && C.fitXOrder) || 40;
+  map.fitBounds(L.latLngBounds(lls), { paddingTopLeft: [px, safeTop + (S.state === 'order' && C.fitTopOrder || C.fitTop || 100)], paddingBottomRight: [px, bottom], maxZoom: 16.5 });
 }
 function centerOn(ll, z) {
   const sh = activeSheet();
@@ -667,7 +672,6 @@ function fillRide(car) {
   const t = new Date(Date.now() + car.eta * 60000);
   setText('.js-eta-clock', t.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
   setHTML('.js-route-list', routeListHTML());
-  setText('.js-trip2', S.trip ? `${fmtKm(S.trip.dist)} · ${fmtDur(S.trip.dur)} в пути` : '');
   setPrice(S.price);
 }
 let stageT = [];
@@ -714,7 +718,6 @@ async function findCar() {
   const real = C.mapCar === 'real';
   const html = real ? carTop(car.color.hex === '#f2f3f5' ? '#e9ebee' : car.color.hex, { glass: '#15181b', roof: '#15181b' }) : carTop(C.taxiColor || '#FFC928');
   L.marker(car.pos, { icon: icon(`<div class="car-ic" style="transform:rotate(${car.head.toFixed(0)}deg)">${html}</div>`, [24, 48], [12, 24]), interactive: false, zIndexOffset: 500 }).addTo(layers.car);
-  if (!car.route.ok) toast('Маршрут машины построен примерно — сервис маршрутов не ответил');
   fillRide(car);
   if (C.rideHideTrip) map.removeLayer(layers.route);
   go('ride', 1);
@@ -748,12 +751,6 @@ function startCountdown(sec) {
     setText('.js-countdown', mmss(left));
     setText('.js-eta-min', Math.max(1, Math.ceil(left / 60)) + ' мин');
     document.documentElement.style.setProperty('--prog', (1 - left / sec).toFixed(3));
-  }, () => {
-    document.body.classList.add('arrived');
-    $$('.js-arrive-title').forEach(el => { el.textContent = el.dataset.arrived || C.arrivedTitle || 'Водитель на месте'; });
-    setText('.js-eta-min', 'на месте');
-    toast('Водитель ожидает вас');
-    timer(180, left => setText('.js-wait', mmss(left)));
   });
 }
 function fitAll() {
@@ -784,7 +781,7 @@ async function setFrom(ll) {
   let txt, city = '';
   try {
     const j = await getJSON(`${NOM}/reverse?format=jsonv2&addressdetails=1&zoom=18&accept-language=uk,ru&lat=${ll[0]}&lon=${ll[1]}`);
-    const a = fmtAddr(j); txt = a.main; city = a.city;
+    const a = fmtAddr(j); txt = a.mainFrom || a.main; city = a.city;
   } catch (_) { txt = `${ll[0].toFixed(5)}, ${ll[1].toFixed(5)}`; }
   if (S.pts[0] === p && p.ll === ll) { p.text = txt || 'Моё местоположение'; p.city = city; syncField(0); drawMarkers(); }
 }
@@ -816,8 +813,6 @@ document.addEventListener('click', e => {
   else if (t.matches('.js-add-stop')) addStop();
   else if (t.matches('.js-back')) { go('form', 1); setTimeout(fitAll, 380); }
   else if (t.matches('.js-locate')) { if (S.me) centerOn(S.me, 16); else geolocate(false); }
-  else if (t.matches('.js-call')) toast(`Звонок водителю (${S.car?.driver || ''}) — недоступен в демо`);
-  else if (t.matches('.js-msg')) toast('Чат с водителем недоступен в демо');
   else if (t.matches('.js-fit')) fitAll();
   else if (t.matches('.js-collapse')) activeSheet().snap(1);
   else if (t.matches('.js-expand')) activeSheet().snap(1);
@@ -827,15 +822,12 @@ document.addEventListener('click', e => {
     const v = Math.max(10, Math.round((+S.price || priceFor(S.cls)) + +t.dataset.d));
     setPrice(String(v)); $('#searchSheet')?.classList.add('price-changed');
   }
-  else if (t.matches('.js-search-at')) { $('#searchSheet')?.classList.remove('price-changed'); toast(`Ищем по ${fmtP(S.price)} ₴`); }
+  else if (t.matches('.js-search-at')) { $('#searchSheet')?.classList.remove('price-changed'); }
   else if (t.matches('.js-hint-close')) { $('#installHint')?.classList.add('hidden'); localStorage.setItem('taxi.hint', '1'); }
-  else if (t.matches('.js-menu')) toast(`${C.name} — демо-эмулятор заказа такси`);
-  else if (t.matches('.js-share')) toast('Поделиться поездкой — недоступно в демо');
   else if (t.dataset.addr) {
     const i = S.pts.length - 1, p = S.pts[i];
     p.text = t.dataset.addr; p.ll = null; p.city = ''; syncField(i); resolveField(i);
   }
-  else if (t.matches('.js-deco')) toast('Недоступно в демо');
 });
 map.on('click', () => { if (document.activeElement?.matches('input')) document.activeElement.blur(); });
 
