@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<title>Рух — такси (демо)</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,222 +12,237 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
+<title>Рух — такси (демо)</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.css">
 <style>
 /*__CSS__*/
-body{--accent:#1DB954;--accent2:#1DB954;--to-bg:#1d1d1f;--stop-bg:#7a7a80}
-.menu{position:fixed;left:20px;top:calc(env(safe-area-inset-top) + 14px);z-index:15;width:64px;height:64px;border-radius:50%;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.16);display:grid;place-items:center}
-.bonus{position:fixed;right:14px;top:calc(env(safe-area-inset-top) + 22px);z-index:15;height:50px;padding:0 18px 0 12px;border-radius:25px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.16);display:flex;align-items:center;gap:8px;font-weight:600;font-size:21px}
-.locate{width:62px;height:62px;border-radius:50%;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.18);display:grid;place-items:center}
-.sheet{background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.12)}
-.sbody{padding:0 20px 8px}
+/* ===== Зелёный стиль: по скринам пользователя (главная, подача авто, «Ваша поездка») ===== */
+body{--g:#12924A;--g2:#1A9A50;--ink:#1f2a30;--mute:#7d8a92;--line:#e7eaec;--accent:#12924A;--accent2:#12924A;color:var(--ink);font-size:17px}
+.base-tiles.vector{filter:saturate(.38) brightness(1.05)}
+#formSheet .trip{display:none}
+.leaflet-container{background:#e9ebee}
+
+/* кнопки на карте */
+.mbtn{position:fixed;z-index:15;width:40px;height:40px;border-radius:50%;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.18);display:grid;place-items:center}
+.menu{left:12px;top:calc(env(safe-area-inset-top) + 50px)}
+.more{right:12px;top:calc(env(safe-area-inset-top) + 50px);display:none}
+.bonus{position:fixed;z-index:15;right:9px;top:calc(env(safe-area-inset-top) + 55px);height:31px;padding:0 11px 0 6px;border-radius:16px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.16);display:flex;align-items:center;gap:5px;font-weight:600;font-size:16px}
+.mapbtn{width:40px;height:40px;border-radius:50%;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.18);display:grid;place-items:center;right:16px}
+.locate{bottom:calc(var(--sheet,280px) + 18px)}
+.fit{bottom:calc(var(--sheet,280px) + 74px)}
+.taxi-btn{bottom:calc(var(--sheet,280px) + 74px);display:none}
+body.st-ride .more,body.st-ride .taxi-btn{display:grid}
+body.st-ride .bonus,body.st-ride .locate{display:none}
+body.st-ride .fit{bottom:calc(var(--sheet,280px) + 18px)}
+.leaflet-top.leaflet-right{top:calc(env(safe-area-inset-top) + 92px)}
+
+/* панели */
+.sheet{background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -2px 16px rgba(0,0,0,.1)}
+.handle{width:24px;height:4px;background:#c9cfd3;margin:7px auto 4px}
+.sbody{padding:0 16px 10px}
 
 /* адреса */
-.frow{gap:0 14px;padding:11px 0}
-.fdot{width:24px;height:24px;flex:none;margin-top:3px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;position:relative;z-index:1}
-.frow.from .fdot{background:radial-gradient(circle,#1DB954 0 4px,#fff 4.6px 7.4px,#1DB954 8px)}
-.frow.to .fdot{background:radial-gradient(circle,#1d1d1f 0 4px,#fff 4.6px 7.4px,#1d1d1f 8px)}
-.frow.stop .fdot{background:#8e8e93}
-.frow:not(:last-child)::after{content:"";position:absolute;left:11px;top:44px;bottom:-11px;border-left:2.5px dotted #1DB954}
-.finput{font-size:21px;line-height:30px;height:30px}
-.frow.from .finput{font-weight:500}
-.fsub{font-size:15px;color:#8e8e93;margin-top:3px}
-.fsub span{color:#1DB954}
-.star{width:46px;height:46px;flex:none;border-radius:50%;border:1px solid #e3e3e6;display:grid;place-items:center;margin:-8px 0 -8px 8px;align-self:center}
-.base-tiles{filter:saturate(.45) brightness(1.06) contrast(.92)}
-.sugg{flex:0 0 calc(100% - 38px);margin:6px 0 0 38px;background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.1);padding:0 10px}
-.addstop{display:flex;align-items:center;gap:14px;color:#1DB954;font-size:17px;font-weight:500;padding:6px 0 14px}
-.addstop i{width:24px;height:24px;border-radius:50%;border:2px solid #1DB954;display:grid;place-items:center;font-style:normal;font-size:18px;line-height:1}
-.trip{margin:0 0 14px 38px;display:inline-block;background:#EAF8EF;color:#13813b;border-radius:10px;padding:7px 12px;font-size:15px;font-weight:600}
-.block{border-top:1px solid #efeff1;padding:14px 0}
-.lbl{font-size:14px;color:#8e8e93;margin-bottom:8px}
-.pricefield{display:flex;align-items:center;gap:6px;background:#F4F4F5;border-radius:14px;padding:0 16px;height:56px}
-.pricefield input{flex:1;min-width:0;border:0;outline:0;background:none;font-size:21px;font-weight:600}
-.pricefield span{font-size:21px;color:#8e8e93}
-.clsrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.cls{background:#F4F4F5;border-radius:16px;padding:10px 10px 9px;text-align:left;border:2px solid transparent;display:flex;flex-direction:column;align-items:flex-start;gap:1px}
-.cls.on{border-color:#1DA05B;background:#DFF5E5}
-.cls.on b{color:#1DA05B}
-.cls b{font-size:16px;font-weight:600}
-.cls small{font-size:12px;color:#8e8e93}
-.cls .cpic{height:28px;width:40px;display:flex;align-items:center;justify-content:center;margin-bottom:4px}
-.cls .cpic svg{transform:rotate(90deg)}
+#fields{padding-top:4px}
+.frow{gap:0 12px;padding:9px 0;align-items:flex-start}
+.fdot{width:20px;height:20px;flex:none;margin-top:3px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;position:relative;z-index:1}
+.frow.from .fdot{background:radial-gradient(circle,#fff 0 3.6px,var(--g2) 4.2px)}
+.frow.to .fdot{background:radial-gradient(circle,#fff 0 3.6px,var(--ink) 4.2px)}
+.frow.stop .fdot{background:#8a979e}
+.frow:not(:last-child)::after{content:"";position:absolute;left:9px;top:36px;bottom:-12px;border-left:2px dotted var(--g2)}
+.ftext,.finput{font-size:17px;line-height:22px;color:var(--ink)}
+.finput{height:24px}
+.fsub{font-size:14px;color:var(--mute);margin-top:2px}
+.fsub span{color:var(--g2)}
+.plusbtn{width:31px;height:31px;flex:none;border-radius:50%;border:1px solid #dde1e4;display:grid;place-items:center;align-self:center;margin-left:8px}
+.sugg{flex:0 0 calc(100% - 32px);margin:6px 0 0 32px;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1);padding:0 10px}
+.trip{margin:4px 0 10px 32px;display:inline-block;background:#E4F5EA;color:#117a3f;border-radius:8px;padding:5px 10px;font-size:14px;font-weight:600}
+.lbl{font-size:13px;color:var(--mute);letter-spacing:1px;text-transform:uppercase;margin:12px 0 4px}
+.clsr{display:flex;align-items:center;gap:12px;width:100%;padding:10px 8px;border-radius:10px;text-align:left}
+.clsr.on{background:#DFF5E5}
+.clsr.on b{color:var(--g)}
+.clsr .cimg{width:22px;display:grid;place-items:center}
+.clsr .cn{flex:1;min-width:0}
+.clsr b{display:block;font-weight:500;font-size:17px}
+.clsr small{display:block;color:var(--mute);font-size:14px}
+.clsr .cp{font-weight:700;font-size:17px}
+.pricefield{display:flex;align-items:center;gap:6px;background:#f2f4f5;border-radius:10px;padding:0 14px;height:48px}
+.pricefield input{flex:1;min-width:0;border:0;outline:0;background:none;font-size:17px;font-weight:600}
+.pricefield span{color:var(--mute)}
 
 /* низ формы */
-.sfoot{display:flex;align-items:center;gap:8px;border-top:1px solid #efeff1;padding:14px 0 calc(14px + env(safe-area-inset-bottom)) 20px}
+#formSheet .sfoot{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding:11px 0 calc(10px + env(safe-area-inset-bottom)) 16px}
 .clsbtn{display:flex;align-items:center;gap:14px;text-align:left;flex:1 1 auto;min-width:0}
-.clsbtn .cv{flex:none}
-.clsbtn .ct{min-width:0}
-.clsbtn b{display:flex;align-items:center;gap:6px;font-size:21px;font-weight:500;white-space:nowrap}
-.clsbtn small{display:block;color:#8e8e93;font-size:15px;white-space:nowrap}
-.fprice{display:flex;align-items:baseline;gap:2px;flex:none;font-weight:700;font-size:23px}
-.fprice input{width:76px;text-align:right;border:0;outline:0;background:transparent;font-weight:700;font-size:23px;padding:2px 0;border-bottom:2px dashed #dadade}
-.go{width:92px;height:72px;flex:none;border-radius:36px 0 0 36px;background:#FFCC29;display:grid;place-items:center}
+.clsbtn b{display:flex;align-items:center;gap:6px;font-size:17px;font-weight:400;white-space:nowrap}
+.clsbtn small{display:block;color:var(--mute);font-size:14px;white-space:nowrap;margin-top:1px}
+.fprice{display:flex;align-items:baseline;flex:none;font-weight:600;font-size:19px}
+.fprice input{width:58px;text-align:right;border:0;outline:0;background:transparent;font-weight:600;font-size:19px;padding:0}
+.go{width:64px;height:54px;flex:none;border-radius:27px 0 0 27px;background:#FFCC29;display:grid;place-items:center}
 
-/* карточка поездки */
-.eta{padding:0 20px 12px}
-.eta-t{font-size:22px;font-weight:700;line-height:1.25}
-.eta-t span{color:#1DB954}
-.eta-s{color:#8e8e93;font-size:16px;margin-top:4px}
-.carrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-top:1px solid #efeff1}
-.car-n{font-size:20px;font-weight:600;margin-top:10px}
-.car-c{color:#8e8e93;font-size:15px;margin-top:2px}
-.car-pic{width:90px;height:56px;display:grid;place-items:center;flex:none}
-.drv{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid #efeff1}
-.ava{width:50px;height:50px;border-radius:50%;background:#EAF8EF;color:#13813b;display:grid;place-items:center;font-weight:700;font-size:21px;flex:none}
-.drv b{display:block;font-size:18px;font-weight:600}
-.drv .rate{color:#8e8e93;font-size:15px}
-.drv .rate i{color:#f5b800;font-style:normal}
-.acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:4px 0 14px}
-.act{height:52px;border-radius:16px;background:#F4F4F5;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:600}
-.sec{border-top:1px solid #efeff1;padding:14px 0}
-.sec-h{font-size:14px;color:#8e8e93;margin-bottom:8px}
-.rr{display:flex;gap:14px;align-items:flex-start;padding:6px 0;position:relative;font-size:17px}
-.rr:not(:last-child)::after{content:"";position:absolute;left:8px;top:28px;bottom:-8px;border-left:2px dotted #1DB954}
-.rdot{width:18px;height:18px;flex:none;margin-top:2px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;background:#8e8e93}
-.rr.from .rdot{background:radial-gradient(circle,#1DB954 0 3px,#fff 3.6px 5.4px,#1DB954 6px)}
-.rr.to .rdot{background:radial-gradient(circle,#1d1d1f 0 3px,#fff 3.6px 5.4px,#1d1d1f 6px)}
-.rt{min-width:0;overflow-wrap:anywhere}
-.trip2{margin-top:8px;font-weight:600;font-size:16px}
-.prow{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.prow .pricefield{width:150px;height:52px}
-#rideSheet .sfoot{padding:12px 20px calc(12px + env(safe-area-inset-bottom))}
-.cancel{width:100%;height:56px;border-radius:16px;background:#F4F4F5;color:#e5383b;font-weight:600;font-size:18px}
+/* пин «Откуда»: большой на главной, кольцо — когда построен маршрут */
+.pin1{position:relative;width:40px;height:62px}
+.pin1 .h{position:absolute;left:0;top:0;width:40px;height:40px;border-radius:50%;background:var(--g2);box-shadow:0 2px 6px rgba(0,0,0,.25);display:grid;place-items:center}
+.pin1 .h i{width:14px;height:14px;border-radius:50%;background:#fff}
+.pin1 .l{position:absolute;left:18.5px;top:38px;width:3px;height:24px;background:var(--g2);border-radius:2px}
+.pin1 .ring{display:none;position:absolute;left:4px;bottom:-16px;width:32px;height:32px;border-radius:50%;background:rgba(66,133,244,.18)}
+.pin1 .ring::after{content:"";position:absolute;inset:4px;border-radius:50%;background:radial-gradient(circle,#fff 0 4.5px,var(--g2) 5.2px);box-shadow:0 0 0 2px #fff}
+body.has-route .pin1 .h,body.has-route .pin1 .l{display:none}
+body.has-route .pin1 .ring{display:block}
+.mk-num{width:22px;height:22px;font-size:11px;background:#1f2a30;border:2px solid #fff}
+.dbub{transform:translate(-50%,-160%);background:#fff;border-radius:8px;padding:4px 8px;font-size:13px;font-weight:600;box-shadow:0 1px 6px rgba(0,0,0,.2);white-space:nowrap}
+.dbub small{font-weight:400;color:var(--mute);font-size:13px}
 
-/* пин «Откуда» */
-.pin1{position:relative;width:46px;height:70px}
-.pin1 .h{position:absolute;left:0;top:0;width:46px;height:46px;border-radius:50%;background:#1DB954;box-shadow:0 3px 8px rgba(0,0,0,.25);display:grid;place-items:center}
-.pin1 .h i{width:16px;height:16px;border-radius:50%;background:#fff}
-.pin1 .l{position:absolute;left:21.5px;top:44px;width:3px;height:26px;background:#1DB954;border-radius:2px}
-
-/* v3: по официальным скринам (сайт, Google Play, Instagram) */
-body{color:#263238}
-.base-tiles.vector{filter:saturate(.45) brightness(1.05)!important}
-.trip{background:#DFF5E5;color:#147a43}
-.act{border-radius:999px;background:#fff;border:1.5px solid #d5d9dc;color:#263238}
-.act.call{background:#1DA05B;border-color:#1DA05B;color:#fff}
-.plate{border:1.5px solid #9aa3a8;border-radius:6px}
-.plate .ua{display:none}
-.wait{display:none;color:#78858c;font-size:16px;margin-top:6px}
-.wait b{color:#263238;font-variant-numeric:tabular-nums}
-body.arrived .eta{text-align:center}
-body.arrived .eta-t{font-size:24px}
-body.arrived #rcEta,body.arrived .eta-t .js-countdown,body.arrived .eta-s{display:none}
-body.arrived .wait{display:block}
-/* v2: детали как в реальном приложении */
-body{--to-bg:#fff;--to-fg:#1d1d1f;--stop-bg:#fff}
-.mk-num{color:#1d1d1f;border:4px solid #1d1d1f;width:26px;height:26px;font-size:12px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
-.mk-num.to{font-size:0}
-.base-tiles.vector{filter:saturate(.8) brightness(1.02)}
-.mapbtn.fit{width:62px;height:62px;border-radius:50%;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.18);display:grid;place-items:center;bottom:calc(var(--sheet,280px) + 90px)}
-.dbub{transform:translate(-50%,-150%);background:#fff;border-radius:10px;padding:6px 10px;font-size:14px;font-weight:600;color:#1d1d1f;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.dbub small{font-weight:400;color:#8e8e93;font-size:14px}
-.ebub{transform:translate(-50%,-112px);background:#1d1d1f;color:#fff;border-radius:10px;padding:5px 10px;font-size:14px;font-weight:700}
-.eta-t .js-countdown{display:inline-block;margin-left:6px;background:#EAF8EF;color:#13813b;border-radius:8px;padding:2px 8px;font-size:17px;font-variant-numeric:tabular-nums;vertical-align:2px}
-.ava{position:relative}
-.ava .rb{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.2);font-size:11px;font-weight:700;color:#1d1d1f;padding:1px 5px;white-space:nowrap}
-.fsub{display:block}
-.frow.stop .fsub span,.frow.to .fsub span{color:#8e8e93}
-
+/* ===== подача авто / ваша поездка ===== */
+#rideSheet .sbody{padding:0}
+.rtitle{padding:6px 16px 10px;font-size:21px;font-weight:700;line-height:1.25}
+body.arrived .eta-v{display:none}
+.rwait{display:none;padding:0 16px 8px;color:var(--mute);font-size:15px}
+.rwait b{color:var(--ink);font-variant-numeric:tabular-nums}
+body.arrived .rwait{display:block}
+.carblk{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px 14px}
+.plate{border:1.5px solid var(--ink);border-radius:4px;padding:3px 7px;font-size:15px;font-weight:600;letter-spacing:.3px;display:inline-block}
+.carname{margin-top:12px;font-size:16px;font-weight:600}
+.carpic{width:72px;height:72px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#f4f6f7,#dfe3e6);display:grid;place-items:center;overflow:hidden;flex:none}
+.carpic svg{transform:translateX(8px) scale(1.15)}
+.drv{display:flex;align-items:center;gap:14px;padding:12px 16px;border-top:1px solid var(--line)}
+.ava{position:relative;width:56px;height:56px;flex:none}
+.ava .js-ava{display:block;width:56px;height:56px;border-radius:50%;overflow:hidden}
+.ava .js-ava svg{width:100%;height:100%;display:block}
+.ava .on{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);background:var(--g2);color:#fff;font-size:10px;font-weight:700;border-radius:5px;padding:1px 4px;border:1.5px solid #fff}
+.dname{font-size:17px}
+.dname i{font-style:normal;color:var(--g2);font-size:14px;margin-left:8px}
+.dname i b{color:var(--ink);font-size:13px}
+.dstat{font-size:13px;color:var(--mute);line-height:1.35}
+.dstat b{font-weight:400;color:var(--ink)}
+.chatrow{display:flex;gap:16px;align-items:center;padding:6px 16px 18px}
+.chat{flex:1;height:56px;border-radius:28px;border:1.5px solid #e1e5e8;display:flex;align-items:center;justify-content:center;gap:14px;font-size:19px;font-weight:500}
+.callg{width:56px;height:56px;border-radius:50%;background:var(--g2);display:grid;place-items:center;flex:none}
+.band{background:#EEF2F5;color:var(--mute);font-size:13px;letter-spacing:1.6px;padding:8px 16px}
+.js-route-list{padding:10px 16px 4px}
+.rl{display:flex;gap:14px;position:relative;padding:8px 0 10px}
+.rl .rd{width:20px;height:20px;flex:none;border-radius:50%;margin-top:1px;font-style:normal;font-size:10px;font-weight:700;color:#fff;display:grid;place-items:center;background:#8a979e}
+.rl.from .rd{background:radial-gradient(circle,#fff 0 3.6px,var(--g2) 4.2px)}
+.rl.to .rd{background:radial-gradient(circle,#fff 0 3.6px,var(--ink) 4.2px)}
+.rl:not(:last-child)::after{content:"";position:absolute;left:9px;top:28px;bottom:-6px;border-left:2px dotted var(--g2)}
+.rl small{display:none}
+.rl span{display:block;font-size:17px}
+.rl.from span,.rl.stop span{color:#8a979e}
+.elink{color:var(--g2);font-size:14px;display:block;margin-top:1px}
+.opts{border-top:1px solid var(--line);padding:4px 16px calc(12px + env(safe-area-inset-bottom))}
+.opt{display:flex;align-items:center;gap:16px;padding:11px 0;width:100%;text-align:left;font-size:17px}
+.opt .oi{width:24px;flex:none;display:grid;place-items:center}
+.opt .ot{flex:1;min-width:0}
+.opt .ot small{display:block;color:var(--g2);font-size:14px}
+.opt.dim .ot{color:#8a979e}
+.chip{border:1px solid #dfe3e6;border-radius:8px;padding:6px 10px;font-size:14px}
+.opt .pricefield{width:110px;height:38px;background:transparent;padding:0}
+.opt .pricefield input{text-align:right;font-weight:400;font-size:17px}
+.opt.cancel{color:#D32F2F}
+#rideHead{position:fixed;left:0;right:0;top:0;z-index:19;height:calc(env(safe-area-inset-top) + 64px);padding-top:env(safe-area-inset-top);background:#00A35A;color:#fff;display:none;align-items:center;justify-content:space-between;padding-left:12px;padding-right:12px}
+#rideHead b{font-size:19px}
+#rideHead button{width:40px;height:40px;display:grid;place-items:center}
+body.st-ride.sheet-full #rideHead{display:flex}
+#searching{top:calc(env(safe-area-inset-top) + 104px)}
 </style>
 </head>
 <body>
 <div id="map"></div>
 
-<button class="menu js-menu" aria-label="Меню"><svg width="30" height="22" viewBox="0 0 30 22"><path d="M2 2h26M2 11h26M2 20h18" stroke="#1d1d1f" stroke-width="2.6" stroke-linecap="round"/></svg></button>
-<div class="bonus"><svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="13" fill="#F5B800"/><circle cx="14" cy="14" r="10" fill="#FFCE2E"/><path d="M14 7.5l1.9 4.1 4.4.4-3.3 2.9 1 4.4L14 17l-4 2.3 1-4.4-3.3-2.9 4.4-.4z" fill="#fff"/></svg>64</div>
-<button class="locate mapbtn js-locate" aria-label="Моё местоположение"><svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="#1d1d1f" stroke-width="2.4"><circle cx="17" cy="17" r="9"/><circle cx="17" cy="17" r="3.6" fill="#1d1d1f"/><path d="M17 2v6M17 26v6M2 17h6M26 17h6" stroke-linecap="round"/></svg></button>
-<button class="mapbtn fit js-fit" aria-label="Показать весь маршрут"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#1d1d1f" stroke-width="2.2" stroke-linecap="round"><circle cx="6" cy="20" r="3"/><circle cx="20" cy="6" r="3"/><path d="M8.5 18 17.5 8"/></svg></button>
+<button class="mbtn menu js-menu" aria-label="Меню"><svg width="20" height="14" viewBox="0 0 20 14"><path d="M1 1h18M1 7h18M1 13h12" stroke="#1f2a30" stroke-width="2" stroke-linecap="round"/></svg></button>
+<button class="mbtn more js-deco" aria-label="Ещё"><svg width="18" height="4" viewBox="0 0 18 4"><circle cx="2" cy="2" r="2" fill="#1f2a30"/><circle cx="9" cy="2" r="2" fill="#1f2a30"/><circle cx="16" cy="2" r="2" fill="#1f2a30"/></svg></button>
+<div class="bonus"><svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="10.5" fill="#F5A800"/><circle cx="11" cy="11" r="8" fill="#FFC41F"/><path d="M11 5.6l1.5 3.3 3.6.4-2.7 2.4.8 3.6L11 13.4l-3.2 1.9.8-3.6-2.7-2.4 3.6-.4z" fill="#fff"/></svg>64</div>
+<button class="mapbtn taxi-btn js-fit" aria-label="Машина"><svg width="22" height="20" viewBox="0 0 22 20" fill="#1f2a30"><path d="M8 1h6l.6 2.4H7.4z"/><path d="M4.6 5h12.8l2.2 5.4c.9.4 1.4 1.2 1.4 2.2V17a1 1 0 0 1-1 1h-1.6a1 1 0 0 1-1-1v-1H4.6v1a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-4.4c0-1 .5-1.8 1.4-2.2zm1.2 1.8-1.4 3.6h13.2l-1.4-3.6zM4.6 12.2a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6zm12.8 0a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6z"/></svg></button>
+<button class="mapbtn fit js-fit" aria-label="Весь маршрут"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#1f2a30" stroke-width="2"><circle cx="5" cy="5" r="3"/><circle cx="17" cy="17" r="3"/><path d="M7.2 7.2l7.6 7.6" stroke-linecap="round"/></svg></button>
+<button class="mapbtn locate js-locate" aria-label="Моё местоположение"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#1f2a30" stroke-width="2"><circle cx="11" cy="11" r="6"/><circle cx="11" cy="11" r="2.4" fill="#1f2a30"/><path d="M11 1v3.5M11 17.5V21M1 11h3.5M17.5 11H21" stroke-linecap="round"/></svg></button>
 <div id="searching"><span class="spin"></span>Ищем машину…</div>
 <div id="toast" role="status"></div>
+<div id="rideHead"><button class="js-collapse" aria-label="Свернуть"><svg width="18" height="11" viewBox="0 0 18 11"><path d="M1.5 1.5 9 9l7.5-7.5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><b>Ваша поездка</b><button class="js-deco" aria-label="Ещё"><svg width="18" height="4" viewBox="0 0 18 4"><circle cx="2" cy="2" r="2" fill="#fff"/><circle cx="9" cy="2" r="2" fill="#fff"/><circle cx="16" cy="2" r="2" fill="#fff"/></svg></button></div>
 
-<!-- Панель заказа -->
+<!-- Главная: адреса -->
 <section class="sheet" id="formSheet">
   <div class="grab"><div class="handle"></div></div>
   <div class="sbody">
     <div id="fields"></div>
-    <button class="addstop js-add-stop"><i>+</i>Добавить остановку</button>
     <div><div class="trip js-trip hidden"></div></div>
-    <div class="block">
-      <div class="lbl">Стоимость, ₴</div>
-      <label class="pricefield"><input class="js-price" type="text" inputmode="decimal" placeholder="Введите сумму" autocomplete="off"><span>₴</span></label>
-    </div>
-    <div class="block" id="classes">
+    <div id="classes">
       <div class="lbl">Класс авто</div>
-      <div class="clsrow">
-        <button class="cls js-cls" data-c="economy"><span class="cpic"><svg width="20" height="36" viewBox="0 0 24 44"><use href="#carY"/></svg></span><b>Эконом</b><small>1-4 пассажира</small></button>
-        <button class="cls js-cls" data-c="standard"><span class="cpic"><svg width="20" height="36" viewBox="0 0 24 44"><use href="#carY"/></svg></span><b>Стандарт</b><small>1-4 пассажира</small></button>
-        <button class="cls js-cls" data-c="comfort"><span class="cpic"><svg width="20" height="36" viewBox="0 0 24 44"><use href="#carK"/></svg></span><b>Комфорт</b><small>1-4 пассажира</small></button>
-      </div>
+      <div id="clsList"></div>
+      <div class="lbl">Своя стоимость, ₴</div>
+      <label class="pricefield"><input class="js-price" type="text" inputmode="decimal" autocomplete="off"><span>₴</span></label>
     </div>
   </div>
   <div class="sfoot">
     <button class="clsbtn js-cls-open">
-      <svg class="cv" width="24" height="44" viewBox="0 0 24 44"><use href="#carY"/></svg>
-      <span class="ct"><b><span class="js-cls-name">Стандарт</span><svg width="14" height="9" viewBox="0 0 14 9"><path d="M1.5 1.5 7 7l5.5-5.5" fill="none" stroke="#1d1d1f" stroke-width="2.2" stroke-linecap="round"/></svg></b><small>1-4 пассажира</small></span>
+      <span data-car-top="#FFC928" data-w="22"></span>
+      <span><b><span class="js-cls-name">Стандарт</span><svg width="13" height="8" viewBox="0 0 13 8"><path d="M1.2 1.2 6.5 6.5l5.3-5.3" fill="none" stroke="#1f2a30" stroke-width="1.8" stroke-linecap="round"/></svg></b><small>1-4 пассажира</small></span>
     </button>
-    <label class="fprice"><input class="js-price" type="text" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Стоимость, ₴">₴</label>
-    <button class="go js-find" aria-label="Найти машину" title="Найти машину"><svg width="30" height="26" viewBox="0 0 30 26"><path d="M2 13h24M15 2l11 11-11 11" fill="none" stroke="#1d1d1f" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <label class="fprice"><input class="js-price" type="text" inputmode="decimal" autocomplete="off" aria-label="Стоимость, ₴">₴</label>
+    <button class="go js-find" aria-label="Найти машину"><svg width="20" height="18" viewBox="0 0 20 18"><path d="M1.5 9h16M10.5 2l7 7-7 7" fill="none" stroke="#1f2a30" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
 </section>
 
-<!-- Карточка поездки -->
+<!-- Подача авто / Ваша поездка -->
 <section class="sheet off" id="rideSheet">
   <div class="grab">
     <div class="handle"></div>
-    <div class="eta">
-      <div class="eta-t"><span class="js-arrive-title" data-t="Машина будет через" style="color:inherit">Машина будет через</span> <span id="rcEta"></span><span class="js-countdown">00:00</span></div>
-      <div class="eta-s"><span id="rcDist"></span> до вас · подача в <span class="js-eta-clock"></span></div>
-      <div class="wait">Бесплатное ожидание: <b class="js-wait">03:00</b></div>
-    </div>
+    <div class="rtitle"><span class="js-arrive-title" data-t="Подача авто через ~" data-arrived="Машина подана! Выходите">Подача авто через ~</span><span class="eta-v js-eta-min"></span></div>
+    <div class="rwait">Бесплатное ожидание: <b class="js-wait">03:00</b></div>
   </div>
   <div class="sbody">
-    <div class="carrow">
-      <div><div class="plate" id="rcPlate"></div><div class="car-n" id="rcModel"></div><div class="car-c"><span id="rcColor"></span> · <span class="js-cls-name"></span></div></div>
-      <div class="car-pic" id="rcCarPic"></div>
+    <div class="carblk">
+      <div><span class="plate js-plate"></span><div class="carname js-car-full"></div></div>
+      <div class="carpic js-car-side" data-w="92"></div>
     </div>
-    <div class="drv"><div class="ava"><span id="rcAva"></span><span class="rb">★ <span id="rcRating"></span></span></div><div><b id="rcDriver"></b><span class="rate"><span class="js-trips"></span></span></div></div>
-    <div class="acts">
-      <button class="act js-msg"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 3h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 1-2z" fill="#1DA05B"/></svg>Сообщение</button>
-      <button class="act call js-call"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M6.6 10.8a15.2 15.2 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z" fill="#fff"/></svg>Позвонить</button>
+    <div class="drv">
+      <div class="ava"><span class="js-ava"></span><span class="on">Онлайн</span></div>
+      <div>
+        <div class="dname"><span class="js-driver"></span><i>★ <b class="js-rating"></b></i></div>
+        <div class="dstat">Поездок: <b class="js-trips-n"></b></div>
+        <div class="dstat">В сервисе: <b class="js-years"></b></div>
+      </div>
     </div>
-    <div class="sec"><div class="sec-h">Маршрут поездки</div><div id="rcRoute"></div><div class="trip2" id="rcTrip"></div></div>
-    <div class="sec prow"><div><div class="sec-h" style="margin:0">Стоимость</div><small style="color:#8e8e93">можно изменить</small></div><label class="pricefield"><input class="js-price" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span>₴</span></label></div>
+    <div class="chatrow">
+      <button class="chat js-msg"><svg width="24" height="22" viewBox="0 0 24 22" fill="none" stroke="#1f2a30" stroke-width="2"><path d="M3 2h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H8l-5 4V3a1 1 0 0 1 1-1z" stroke-linejoin="round"/></svg>Чат с водителем</button>
+      <button class="callg js-call" aria-label="Позвонить"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M6.6 10.8a15.2 15.2 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z" fill="none" stroke="#fff" stroke-width="2"/></svg></button>
+    </div>
+    <div class="band">ПАРАМЕТРЫ ЗАКАЗА</div>
+    <div class="js-route-list"></div>
+    <div class="opts">
+      <div class="opt"><span class="oi"><svg width="22" height="20" viewBox="0 0 22 20" fill="none" stroke="#9aa6ad" stroke-width="1.8"><path d="M2 2h18v12H8l-6 4z" stroke-linejoin="round"/><circle cx="7" cy="8" r=".6" fill="#9aa6ad"/><circle cx="11" cy="8" r=".6" fill="#9aa6ad"/><circle cx="15" cy="8" r=".6" fill="#9aa6ad"/></svg></span><span class="ot">Комментарий<small>Изменить</small></span><button class="chip js-deco">Подъезд</button></div>
+      <div class="opt"><span class="oi"><svg width="20" height="18" viewBox="0 0 20 18" stroke="#9aa6ad" stroke-width="1.8" stroke-linecap="round"><path d="M1 3h18M1 9h18M1 15h18"/><path d="M6 1v4M14 7v4M8 13v4"/></svg></span><span class="ot">Дополнительные опции<small>Изменить</small></span></div>
+      <div class="opt dim"><span class="oi"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#9aa6ad" stroke-width="1.8"><circle cx="11" cy="11" r="9.5"/><path d="M11 5v6l4 2.5" stroke-linecap="round"/></svg></span><span class="ot">На ближайшее время</span></div>
+      <div class="opt dim"><span class="oi"><svg width="22" height="18" viewBox="0 0 22 18" fill="#9aa6ad"><path d="M4.6 2h12.8l2.2 5.4c.9.4 1.4 1.2 1.4 2.2V15a1 1 0 0 1-1 1h-1.6a1 1 0 0 1-1-1v-1H4.6v1a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V9.6c0-1 .5-1.8 1.4-2.2zm1.2 1.8L4.4 7.4h13.2l-1.4-3.6z"/></svg></span><span class="ot js-cls-name">Стандарт</span></div>
+      <div class="opt"><span class="oi"><svg width="24" height="18" viewBox="0 0 24 18"><rect x="1" y="1" width="22" height="16" rx="1.5" fill="#1A9A50"/><rect x="3.5" y="3.5" width="17" height="11" fill="none" stroke="#c8f0d6" stroke-width="1"/><text x="12" y="12.2" text-anchor="middle" font-size="6.5" font-weight="700" fill="#fff" font-family="system-ui,sans-serif">100</text></svg></span><span class="ot">Наличные</span><label class="pricefield"><input class="js-price" type="text" inputmode="decimal" autocomplete="off"><span>₴</span></label></div>
+      <button class="opt js-share"><span class="oi"><svg width="20" height="22" viewBox="0 0 20 22" fill="none" stroke="#9aa6ad" stroke-width="1.8"><circle cx="16" cy="4" r="3"/><circle cx="4" cy="11" r="3"/><circle cx="16" cy="18" r="3"/><path d="m6.6 9.6 6.8-4.2M6.6 12.4l6.8 4.2"/></svg></span><span class="ot">Поделиться заказом</span></button>
+      <button class="opt cancel js-cancel"><span class="oi"><svg width="18" height="18" viewBox="0 0 18 18" stroke="#D32F2F" stroke-width="2.4" stroke-linecap="round"><path d="M2 2l14 14M16 2 2 16"/></svg></span><span class="ot">Отменить заказ</span></button>
+    </div>
   </div>
-  <div class="sfoot"><button class="cancel js-cancel">Отменить</button></div>
 </section>
-
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <g id="carY"><rect x="1.5" y="1.5" width="21" height="41" rx="7" fill="#FFC928" stroke="#c99500"/><path d="M4.3 13.6Q12 9.6 19.7 13.6L18.6 18.4H5.4Z" fill="#26313d"/><path d="M5.4 33H18.6L19.2 37.3Q12 39.8 4.8 37.3Z" fill="#26313d"/><rect x="5.6" y="19.2" width="12.8" height="12.8" rx="2.5" fill="#FFD84F"/></g>
-    <g id="carK"><rect x="1.5" y="1.5" width="21" height="41" rx="7" fill="#2b2d33" stroke="#000"/><path d="M4.3 13.6Q12 9.6 19.7 13.6L18.6 18.4H5.4Z" fill="#9fb3c8"/><path d="M5.4 33H18.6L19.2 37.3Q12 39.8 4.8 37.3Z" fill="#9fb3c8"/><rect x="5.6" y="19.2" width="12.8" height="12.8" rx="2.5" fill="#3a3d45"/></g>
-  </defs>
-</svg>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
 <script>
 window.APP = {
-  vectorStyle: 'https://tiles.openfreemap.org/styles/liberty',
-  taxiColor: '#FFC928',
-  destBubble: (km, min) => `<div class="bubble"><div class="dbub">${km} <small>• ${min} мин</small></div></div>`,
-  etaBubble: min => `<div class="bubble"><div class="ebub">${min} мин</div></div>`,
   name: 'Рух',
-  tiles: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-  fallbackTiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-  attr: '© OpenStreetMap',
+  vectorStyle: 'https://tiles.openfreemap.org/styles/liberty',
+  classes: ['economy', 'standard', 'comfort', 'business'],
+  seats: '1-4 пассажира',
+  clsImg: id => carTop(id === 'business' ? '#2b2d31' : '#FFC928', { w: 16 }),
   ph: { from: 'Откуда', to: 'Куда...', stop: 'Остановка' },
   showSub: true,
-  toExtra: '<button class="star js-deco" aria-label="Избранное"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17l-5.7 3.1 1.2-6.3L2.9 9.4l6.3-.8z" fill="none" stroke="#1d1d1f" stroke-width="1.8" stroke-linejoin="round"/></svg></button>',
-  pin: { html: '<div class="pin1"><div class="h"><i></i></div><div class="l"></div></div>', size: [46, 70], anchor: [23, 70] },
-  route: { color: '#1DA05B', casing: '#ffffff' },
+  wrapFields: true,
+  editLink: true,
+  toExtra: '<button class="plusbtn js-add-stop" aria-label="Добавить остановку"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#1f2a30" stroke-width="1.8" stroke-linecap="round"/></svg></button>',
+  pin: { html: '<div class="pin1"><div class="h"><i></i></div><div class="l"></div><div class="ring"></div></div>', size: [40, 62], anchor: [20, 62] },
+  route: { color: '#12924A', weight: 5 },
+  carRoute: { color: '#1f2a30', weight: 5, dash: '1 9' },
+  mapCar: 'taxi', taxiColor: '#FFC928',
+  nearby: 5,
+  destBubble: (km, min) => `<div class="bubble"><div class="dbub">${km} <small>· ${min} мин</small></div></div>`,
   arrivedTitle: 'Машина подана! Выходите',
-  pointPin: n => `<svg width="30" height="40" viewBox="0 0 30 40"><path d="M15 1C7.3 1 1 7.1 1 14.8 1 25 15 39 15 39s14-14 14-24.2C29 7.1 22.7 1 15 1z" fill="#263238" stroke="#fff" stroke-width="1.5"/>${n ? `<text x="15" y="19.5" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" font-family="system-ui,sans-serif">${n}</text>` : '<circle cx="15" cy="14.5" r="4.5" fill="#fff"/>'}</svg>`,
-  carRoute: '#1d1d1f',
-  formSnaps: (H, top) => { const lo = Math.min(300, H * 0.45); return [lo, Math.max(lo + 80, H * 0.58), H - top - 64]; },
-  rideSnaps: (H, top) => { const lo = Math.min(200, H * 0.3); return [lo, Math.max(lo + 80, H * 0.56), H - top - 64]; }
+  formSnaps: (H) => [Math.min(190, H * 0.24), Math.max(270, H * 0.33), H - 90],
+  rideSnaps: (H, top) => [Math.min(150, H * 0.2), Math.max(330, H * 0.41), H - top - 64]
 };
 /*__JS__*/
 </script>

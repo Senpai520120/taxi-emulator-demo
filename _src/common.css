@@ -78,3 +78,23 @@ input{-webkit-user-select:text;user-select:text}
 .mapbtn{position:fixed;right:16px;z-index:15;transition:bottom .3s cubic-bezier(.2,.8,.2,1),opacity .2s}
 body.dragging .mapbtn{transition:none}
 body.sheet-full .mapbtn{opacity:0;pointer-events:none}
+
+/* --- v4: общие элементы экранов --- */
+.ftext{display:none}
+.fbox .ftext{display:block;cursor:text;overflow-wrap:anywhere}
+.frow:not(.editing) .ftext~.finput{position:absolute;opacity:0;pointer-events:none;height:0!important;width:0}
+.frow.editing .ftext{display:none}
+.ftext.ph{color:#9aa3a8}
+.mk-to{width:24px;height:24px;border-radius:50%;background:radial-gradient(circle,#fff 0 4px,#1f2a30 4.6px);box-shadow:0 0 0 2px #fff,0 1px 5px rgba(0,0,0,.35)}
+.near-car,.car-ic{filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.car-ic{width:24px;height:48px}
+.apill{position:absolute;white-space:nowrap;display:flex;align-items:center;gap:8px;pointer-events:auto}
+.apill span{background:#fff;border-radius:8px;padding:7px 11px;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.14)}
+.pill-plus{width:32px;height:32px;border-radius:8px;background:#2b2d31;color:#fff;font-size:22px;line-height:1;display:grid;place-items:center}
+.js-steps{display:flex;align-items:center;justify-content:center;gap:6px}
+.js-steps i{width:28px;height:28px;border-radius:50%;border:3px solid #e6e6e6;display:grid;place-items:center;flex:none;font-style:normal;background:#fff}
+.js-steps i.act{border-color:#2aa883}
+.js-steps i.done{background:#2aa883;border-color:#2aa883}
+.js-steps i.done::after{content:"";width:9px;height:5px;border-left:2.5px solid #fff;border-bottom:2.5px solid #fff;transform:translateY(-1px) rotate(-45deg)}
+.js-steps b{width:40px;height:3px;border-radius:2px;background:#ececec}
+.js-steps b.done{background:#2aa883}

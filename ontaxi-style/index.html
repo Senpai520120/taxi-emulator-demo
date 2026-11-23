@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<title>Рух — такси (демо)</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,6 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
+<title>Рух — такси (демо)</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.css">
 <style>
@@ -97,218 +97,252 @@ input{-webkit-user-select:text;user-select:text}
 body.dragging .mapbtn{transition:none}
 body.sheet-full .mapbtn{opacity:0;pointer-events:none}
 
-body{--accent:#1DB954;--accent2:#1DB954;--to-bg:#1d1d1f;--stop-bg:#7a7a80}
-.menu{position:fixed;left:20px;top:calc(env(safe-area-inset-top) + 14px);z-index:15;width:64px;height:64px;border-radius:50%;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.16);display:grid;place-items:center}
-.bonus{position:fixed;right:14px;top:calc(env(safe-area-inset-top) + 22px);z-index:15;height:50px;padding:0 18px 0 12px;border-radius:25px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.16);display:flex;align-items:center;gap:8px;font-weight:600;font-size:21px}
-.locate{width:62px;height:62px;border-radius:50%;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.18);display:grid;place-items:center}
-.sheet{background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.12)}
-.sbody{padding:0 20px 8px}
+/* --- v4: общие элементы экранов --- */
+.ftext{display:none}
+.fbox .ftext{display:block;cursor:text;overflow-wrap:anywhere}
+.frow:not(.editing) .ftext~.finput{position:absolute;opacity:0;pointer-events:none;height:0!important;width:0}
+.frow.editing .ftext{display:none}
+.ftext.ph{color:#9aa3a8}
+.mk-to{width:24px;height:24px;border-radius:50%;background:radial-gradient(circle,#fff 0 4px,#1f2a30 4.6px);box-shadow:0 0 0 2px #fff,0 1px 5px rgba(0,0,0,.35)}
+.near-car,.car-ic{filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.car-ic{width:24px;height:48px}
+.apill{position:absolute;white-space:nowrap;display:flex;align-items:center;gap:8px;pointer-events:auto}
+.apill span{background:#fff;border-radius:8px;padding:7px 11px;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.14)}
+.pill-plus{width:32px;height:32px;border-radius:8px;background:#2b2d31;color:#fff;font-size:22px;line-height:1;display:grid;place-items:center}
+.js-steps{display:flex;align-items:center;justify-content:center;gap:6px}
+.js-steps i{width:28px;height:28px;border-radius:50%;border:3px solid #e6e6e6;display:grid;place-items:center;flex:none;font-style:normal;background:#fff}
+.js-steps i.act{border-color:#2aa883}
+.js-steps i.done{background:#2aa883;border-color:#2aa883}
+.js-steps i.done::after{content:"";width:9px;height:5px;border-left:2.5px solid #fff;border-bottom:2.5px solid #fff;transform:translateY(-1px) rotate(-45deg)}
+.js-steps b{width:40px;height:3px;border-radius:2px;background:#ececec}
+.js-steps b.done{background:#2aa883}
+
+/* ===== Зелёный стиль: по скринам пользователя (главная, подача авто, «Ваша поездка») ===== */
+body{--g:#12924A;--g2:#1A9A50;--ink:#1f2a30;--mute:#7d8a92;--line:#e7eaec;--accent:#12924A;--accent2:#12924A;color:var(--ink);font-size:17px}
+.base-tiles.vector{filter:saturate(.38) brightness(1.05)}
+#formSheet .trip{display:none}
+.leaflet-container{background:#e9ebee}
+
+/* кнопки на карте */
+.mbtn{position:fixed;z-index:15;width:40px;height:40px;border-radius:50%;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.18);display:grid;place-items:center}
+.menu{left:12px;top:calc(env(safe-area-inset-top) + 50px)}
+.more{right:12px;top:calc(env(safe-area-inset-top) + 50px);display:none}
+.bonus{position:fixed;z-index:15;right:9px;top:calc(env(safe-area-inset-top) + 55px);height:31px;padding:0 11px 0 6px;border-radius:16px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.16);display:flex;align-items:center;gap:5px;font-weight:600;font-size:16px}
+.mapbtn{width:40px;height:40px;border-radius:50%;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.18);display:grid;place-items:center;right:16px}
+.locate{bottom:calc(var(--sheet,280px) + 18px)}
+.fit{bottom:calc(var(--sheet,280px) + 74px)}
+.taxi-btn{bottom:calc(var(--sheet,280px) + 74px);display:none}
+body.st-ride .more,body.st-ride .taxi-btn{display:grid}
+body.st-ride .bonus,body.st-ride .locate{display:none}
+body.st-ride .fit{bottom:calc(var(--sheet,280px) + 18px)}
+.leaflet-top.leaflet-right{top:calc(env(safe-area-inset-top) + 92px)}
+
+/* панели */
+.sheet{background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -2px 16px rgba(0,0,0,.1)}
+.handle{width:24px;height:4px;background:#c9cfd3;margin:7px auto 4px}
+.sbody{padding:0 16px 10px}
 
 /* адреса */
-.frow{gap:0 14px;padding:11px 0}
-.fdot{width:24px;height:24px;flex:none;margin-top:3px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;position:relative;z-index:1}
-.frow.from .fdot{background:radial-gradient(circle,#1DB954 0 4px,#fff 4.6px 7.4px,#1DB954 8px)}
-.frow.to .fdot{background:radial-gradient(circle,#1d1d1f 0 4px,#fff 4.6px 7.4px,#1d1d1f 8px)}
-.frow.stop .fdot{background:#8e8e93}
-.frow:not(:last-child)::after{content:"";position:absolute;left:11px;top:44px;bottom:-11px;border-left:2.5px dotted #1DB954}
-.finput{font-size:21px;line-height:30px;height:30px}
-.frow.from .finput{font-weight:500}
-.fsub{font-size:15px;color:#8e8e93;margin-top:3px}
-.fsub span{color:#1DB954}
-.star{width:46px;height:46px;flex:none;border-radius:50%;border:1px solid #e3e3e6;display:grid;place-items:center;margin:-8px 0 -8px 8px;align-self:center}
-.base-tiles{filter:saturate(.45) brightness(1.06) contrast(.92)}
-.sugg{flex:0 0 calc(100% - 38px);margin:6px 0 0 38px;background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.1);padding:0 10px}
-.addstop{display:flex;align-items:center;gap:14px;color:#1DB954;font-size:17px;font-weight:500;padding:6px 0 14px}
-.addstop i{width:24px;height:24px;border-radius:50%;border:2px solid #1DB954;display:grid;place-items:center;font-style:normal;font-size:18px;line-height:1}
-.trip{margin:0 0 14px 38px;display:inline-block;background:#EAF8EF;color:#13813b;border-radius:10px;padding:7px 12px;font-size:15px;font-weight:600}
-.block{border-top:1px solid #efeff1;padding:14px 0}
-.lbl{font-size:14px;color:#8e8e93;margin-bottom:8px}
-.pricefield{display:flex;align-items:center;gap:6px;background:#F4F4F5;border-radius:14px;padding:0 16px;height:56px}
-.pricefield input{flex:1;min-width:0;border:0;outline:0;background:none;font-size:21px;font-weight:600}
-.pricefield span{font-size:21px;color:#8e8e93}
-.clsrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.cls{background:#F4F4F5;border-radius:16px;padding:10px 10px 9px;text-align:left;border:2px solid transparent;display:flex;flex-direction:column;align-items:flex-start;gap:1px}
-.cls.on{border-color:#1DA05B;background:#DFF5E5}
-.cls.on b{color:#1DA05B}
-.cls b{font-size:16px;font-weight:600}
-.cls small{font-size:12px;color:#8e8e93}
-.cls .cpic{height:28px;width:40px;display:flex;align-items:center;justify-content:center;margin-bottom:4px}
-.cls .cpic svg{transform:rotate(90deg)}
+#fields{padding-top:4px}
+.frow{gap:0 12px;padding:9px 0;align-items:flex-start}
+.fdot{width:20px;height:20px;flex:none;margin-top:3px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;position:relative;z-index:1}
+.frow.from .fdot{background:radial-gradient(circle,#fff 0 3.6px,var(--g2) 4.2px)}
+.frow.to .fdot{background:radial-gradient(circle,#fff 0 3.6px,var(--ink) 4.2px)}
+.frow.stop .fdot{background:#8a979e}
+.frow:not(:last-child)::after{content:"";position:absolute;left:9px;top:36px;bottom:-12px;border-left:2px dotted var(--g2)}
+.ftext,.finput{font-size:17px;line-height:22px;color:var(--ink)}
+.finput{height:24px}
+.fsub{font-size:14px;color:var(--mute);margin-top:2px}
+.fsub span{color:var(--g2)}
+.plusbtn{width:31px;height:31px;flex:none;border-radius:50%;border:1px solid #dde1e4;display:grid;place-items:center;align-self:center;margin-left:8px}
+.sugg{flex:0 0 calc(100% - 32px);margin:6px 0 0 32px;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1);padding:0 10px}
+.trip{margin:4px 0 10px 32px;display:inline-block;background:#E4F5EA;color:#117a3f;border-radius:8px;padding:5px 10px;font-size:14px;font-weight:600}
+.lbl{font-size:13px;color:var(--mute);letter-spacing:1px;text-transform:uppercase;margin:12px 0 4px}
+.clsr{display:flex;align-items:center;gap:12px;width:100%;padding:10px 8px;border-radius:10px;text-align:left}
+.clsr.on{background:#DFF5E5}
+.clsr.on b{color:var(--g)}
+.clsr .cimg{width:22px;display:grid;place-items:center}
+.clsr .cn{flex:1;min-width:0}
+.clsr b{display:block;font-weight:500;font-size:17px}
+.clsr small{display:block;color:var(--mute);font-size:14px}
+.clsr .cp{font-weight:700;font-size:17px}
+.pricefield{display:flex;align-items:center;gap:6px;background:#f2f4f5;border-radius:10px;padding:0 14px;height:48px}
+.pricefield input{flex:1;min-width:0;border:0;outline:0;background:none;font-size:17px;font-weight:600}
+.pricefield span{color:var(--mute)}
 
 /* низ формы */
-.sfoot{display:flex;align-items:center;gap:8px;border-top:1px solid #efeff1;padding:14px 0 calc(14px + env(safe-area-inset-bottom)) 20px}
+#formSheet .sfoot{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding:11px 0 calc(10px + env(safe-area-inset-bottom)) 16px}
 .clsbtn{display:flex;align-items:center;gap:14px;text-align:left;flex:1 1 auto;min-width:0}
-.clsbtn .cv{flex:none}
-.clsbtn .ct{min-width:0}
-.clsbtn b{display:flex;align-items:center;gap:6px;font-size:21px;font-weight:500;white-space:nowrap}
-.clsbtn small{display:block;color:#8e8e93;font-size:15px;white-space:nowrap}
-.fprice{display:flex;align-items:baseline;gap:2px;flex:none;font-weight:700;font-size:23px}
-.fprice input{width:76px;text-align:right;border:0;outline:0;background:transparent;font-weight:700;font-size:23px;padding:2px 0;border-bottom:2px dashed #dadade}
-.go{width:92px;height:72px;flex:none;border-radius:36px 0 0 36px;background:#FFCC29;display:grid;place-items:center}
+.clsbtn b{display:flex;align-items:center;gap:6px;font-size:17px;font-weight:400;white-space:nowrap}
+.clsbtn small{display:block;color:var(--mute);font-size:14px;white-space:nowrap;margin-top:1px}
+.fprice{display:flex;align-items:baseline;flex:none;font-weight:600;font-size:19px}
+.fprice input{width:58px;text-align:right;border:0;outline:0;background:transparent;font-weight:600;font-size:19px;padding:0}
+.go{width:64px;height:54px;flex:none;border-radius:27px 0 0 27px;background:#FFCC29;display:grid;place-items:center}
 
-/* карточка поездки */
-.eta{padding:0 20px 12px}
-.eta-t{font-size:22px;font-weight:700;line-height:1.25}
-.eta-t span{color:#1DB954}
-.eta-s{color:#8e8e93;font-size:16px;margin-top:4px}
-.carrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-top:1px solid #efeff1}
-.car-n{font-size:20px;font-weight:600;margin-top:10px}
-.car-c{color:#8e8e93;font-size:15px;margin-top:2px}
-.car-pic{width:90px;height:56px;display:grid;place-items:center;flex:none}
-.drv{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid #efeff1}
-.ava{width:50px;height:50px;border-radius:50%;background:#EAF8EF;color:#13813b;display:grid;place-items:center;font-weight:700;font-size:21px;flex:none}
-.drv b{display:block;font-size:18px;font-weight:600}
-.drv .rate{color:#8e8e93;font-size:15px}
-.drv .rate i{color:#f5b800;font-style:normal}
-.acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:4px 0 14px}
-.act{height:52px;border-radius:16px;background:#F4F4F5;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:600}
-.sec{border-top:1px solid #efeff1;padding:14px 0}
-.sec-h{font-size:14px;color:#8e8e93;margin-bottom:8px}
-.rr{display:flex;gap:14px;align-items:flex-start;padding:6px 0;position:relative;font-size:17px}
-.rr:not(:last-child)::after{content:"";position:absolute;left:8px;top:28px;bottom:-8px;border-left:2px dotted #1DB954}
-.rdot{width:18px;height:18px;flex:none;margin-top:2px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;background:#8e8e93}
-.rr.from .rdot{background:radial-gradient(circle,#1DB954 0 3px,#fff 3.6px 5.4px,#1DB954 6px)}
-.rr.to .rdot{background:radial-gradient(circle,#1d1d1f 0 3px,#fff 3.6px 5.4px,#1d1d1f 6px)}
-.rt{min-width:0;overflow-wrap:anywhere}
-.trip2{margin-top:8px;font-weight:600;font-size:16px}
-.prow{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.prow .pricefield{width:150px;height:52px}
-#rideSheet .sfoot{padding:12px 20px calc(12px + env(safe-area-inset-bottom))}
-.cancel{width:100%;height:56px;border-radius:16px;background:#F4F4F5;color:#e5383b;font-weight:600;font-size:18px}
+/* пин «Откуда»: большой на главной, кольцо — когда построен маршрут */
+.pin1{position:relative;width:40px;height:62px}
+.pin1 .h{position:absolute;left:0;top:0;width:40px;height:40px;border-radius:50%;background:var(--g2);box-shadow:0 2px 6px rgba(0,0,0,.25);display:grid;place-items:center}
+.pin1 .h i{width:14px;height:14px;border-radius:50%;background:#fff}
+.pin1 .l{position:absolute;left:18.5px;top:38px;width:3px;height:24px;background:var(--g2);border-radius:2px}
+.pin1 .ring{display:none;position:absolute;left:4px;bottom:-16px;width:32px;height:32px;border-radius:50%;background:rgba(66,133,244,.18)}
+.pin1 .ring::after{content:"";position:absolute;inset:4px;border-radius:50%;background:radial-gradient(circle,#fff 0 4.5px,var(--g2) 5.2px);box-shadow:0 0 0 2px #fff}
+body.has-route .pin1 .h,body.has-route .pin1 .l{display:none}
+body.has-route .pin1 .ring{display:block}
+.mk-num{width:22px;height:22px;font-size:11px;background:#1f2a30;border:2px solid #fff}
+.dbub{transform:translate(-50%,-160%);background:#fff;border-radius:8px;padding:4px 8px;font-size:13px;font-weight:600;box-shadow:0 1px 6px rgba(0,0,0,.2);white-space:nowrap}
+.dbub small{font-weight:400;color:var(--mute);font-size:13px}
 
-/* пин «Откуда» */
-.pin1{position:relative;width:46px;height:70px}
-.pin1 .h{position:absolute;left:0;top:0;width:46px;height:46px;border-radius:50%;background:#1DB954;box-shadow:0 3px 8px rgba(0,0,0,.25);display:grid;place-items:center}
-.pin1 .h i{width:16px;height:16px;border-radius:50%;background:#fff}
-.pin1 .l{position:absolute;left:21.5px;top:44px;width:3px;height:26px;background:#1DB954;border-radius:2px}
-
-/* v3: по официальным скринам (сайт, Google Play, Instagram) */
-body{color:#263238}
-.base-tiles.vector{filter:saturate(.45) brightness(1.05)!important}
-.trip{background:#DFF5E5;color:#147a43}
-.act{border-radius:999px;background:#fff;border:1.5px solid #d5d9dc;color:#263238}
-.act.call{background:#1DA05B;border-color:#1DA05B;color:#fff}
-.plate{border:1.5px solid #9aa3a8;border-radius:6px}
-.plate .ua{display:none}
-.wait{display:none;color:#78858c;font-size:16px;margin-top:6px}
-.wait b{color:#263238;font-variant-numeric:tabular-nums}
-body.arrived .eta{text-align:center}
-body.arrived .eta-t{font-size:24px}
-body.arrived #rcEta,body.arrived .eta-t .js-countdown,body.arrived .eta-s{display:none}
-body.arrived .wait{display:block}
-/* v2: детали как в реальном приложении */
-body{--to-bg:#fff;--to-fg:#1d1d1f;--stop-bg:#fff}
-.mk-num{color:#1d1d1f;border:4px solid #1d1d1f;width:26px;height:26px;font-size:12px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
-.mk-num.to{font-size:0}
-.base-tiles.vector{filter:saturate(.8) brightness(1.02)}
-.mapbtn.fit{width:62px;height:62px;border-radius:50%;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.18);display:grid;place-items:center;bottom:calc(var(--sheet,280px) + 90px)}
-.dbub{transform:translate(-50%,-150%);background:#fff;border-radius:10px;padding:6px 10px;font-size:14px;font-weight:600;color:#1d1d1f;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.dbub small{font-weight:400;color:#8e8e93;font-size:14px}
-.ebub{transform:translate(-50%,-112px);background:#1d1d1f;color:#fff;border-radius:10px;padding:5px 10px;font-size:14px;font-weight:700}
-.eta-t .js-countdown{display:inline-block;margin-left:6px;background:#EAF8EF;color:#13813b;border-radius:8px;padding:2px 8px;font-size:17px;font-variant-numeric:tabular-nums;vertical-align:2px}
-.ava{position:relative}
-.ava .rb{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.2);font-size:11px;font-weight:700;color:#1d1d1f;padding:1px 5px;white-space:nowrap}
-.fsub{display:block}
-.frow.stop .fsub span,.frow.to .fsub span{color:#8e8e93}
-
+/* ===== подача авто / ваша поездка ===== */
+#rideSheet .sbody{padding:0}
+.rtitle{padding:6px 16px 10px;font-size:21px;font-weight:700;line-height:1.25}
+body.arrived .eta-v{display:none}
+.rwait{display:none;padding:0 16px 8px;color:var(--mute);font-size:15px}
+.rwait b{color:var(--ink);font-variant-numeric:tabular-nums}
+body.arrived .rwait{display:block}
+.carblk{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px 14px}
+.plate{border:1.5px solid var(--ink);border-radius:4px;padding:3px 7px;font-size:15px;font-weight:600;letter-spacing:.3px;display:inline-block}
+.carname{margin-top:12px;font-size:16px;font-weight:600}
+.carpic{width:72px;height:72px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#f4f6f7,#dfe3e6);display:grid;place-items:center;overflow:hidden;flex:none}
+.carpic svg{transform:translateX(8px) scale(1.15)}
+.drv{display:flex;align-items:center;gap:14px;padding:12px 16px;border-top:1px solid var(--line)}
+.ava{position:relative;width:56px;height:56px;flex:none}
+.ava .js-ava{display:block;width:56px;height:56px;border-radius:50%;overflow:hidden}
+.ava .js-ava svg{width:100%;height:100%;display:block}
+.ava .on{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);background:var(--g2);color:#fff;font-size:10px;font-weight:700;border-radius:5px;padding:1px 4px;border:1.5px solid #fff}
+.dname{font-size:17px}
+.dname i{font-style:normal;color:var(--g2);font-size:14px;margin-left:8px}
+.dname i b{color:var(--ink);font-size:13px}
+.dstat{font-size:13px;color:var(--mute);line-height:1.35}
+.dstat b{font-weight:400;color:var(--ink)}
+.chatrow{display:flex;gap:16px;align-items:center;padding:6px 16px 18px}
+.chat{flex:1;height:56px;border-radius:28px;border:1.5px solid #e1e5e8;display:flex;align-items:center;justify-content:center;gap:14px;font-size:19px;font-weight:500}
+.callg{width:56px;height:56px;border-radius:50%;background:var(--g2);display:grid;place-items:center;flex:none}
+.band{background:#EEF2F5;color:var(--mute);font-size:13px;letter-spacing:1.6px;padding:8px 16px}
+.js-route-list{padding:10px 16px 4px}
+.rl{display:flex;gap:14px;position:relative;padding:8px 0 10px}
+.rl .rd{width:20px;height:20px;flex:none;border-radius:50%;margin-top:1px;font-style:normal;font-size:10px;font-weight:700;color:#fff;display:grid;place-items:center;background:#8a979e}
+.rl.from .rd{background:radial-gradient(circle,#fff 0 3.6px,var(--g2) 4.2px)}
+.rl.to .rd{background:radial-gradient(circle,#fff 0 3.6px,var(--ink) 4.2px)}
+.rl:not(:last-child)::after{content:"";position:absolute;left:9px;top:28px;bottom:-6px;border-left:2px dotted var(--g2)}
+.rl small{display:none}
+.rl span{display:block;font-size:17px}
+.rl.from span,.rl.stop span{color:#8a979e}
+.elink{color:var(--g2);font-size:14px;display:block;margin-top:1px}
+.opts{border-top:1px solid var(--line);padding:4px 16px calc(12px + env(safe-area-inset-bottom))}
+.opt{display:flex;align-items:center;gap:16px;padding:11px 0;width:100%;text-align:left;font-size:17px}
+.opt .oi{width:24px;flex:none;display:grid;place-items:center}
+.opt .ot{flex:1;min-width:0}
+.opt .ot small{display:block;color:var(--g2);font-size:14px}
+.opt.dim .ot{color:#8a979e}
+.chip{border:1px solid #dfe3e6;border-radius:8px;padding:6px 10px;font-size:14px}
+.opt .pricefield{width:110px;height:38px;background:transparent;padding:0}
+.opt .pricefield input{text-align:right;font-weight:400;font-size:17px}
+.opt.cancel{color:#D32F2F}
+#rideHead{position:fixed;left:0;right:0;top:0;z-index:19;height:calc(env(safe-area-inset-top) + 64px);padding-top:env(safe-area-inset-top);background:#00A35A;color:#fff;display:none;align-items:center;justify-content:space-between;padding-left:12px;padding-right:12px}
+#rideHead b{font-size:19px}
+#rideHead button{width:40px;height:40px;display:grid;place-items:center}
+body.st-ride.sheet-full #rideHead{display:flex}
+#searching{top:calc(env(safe-area-inset-top) + 104px)}
 </style>
 </head>
 <body>
 <div id="map"></div>
 
-<button class="menu js-menu" aria-label="Меню"><svg width="30" height="22" viewBox="0 0 30 22"><path d="M2 2h26M2 11h26M2 20h18" stroke="#1d1d1f" stroke-width="2.6" stroke-linecap="round"/></svg></button>
-<div class="bonus"><svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="13" fill="#F5B800"/><circle cx="14" cy="14" r="10" fill="#FFCE2E"/><path d="M14 7.5l1.9 4.1 4.4.4-3.3 2.9 1 4.4L14 17l-4 2.3 1-4.4-3.3-2.9 4.4-.4z" fill="#fff"/></svg>64</div>
-<button class="locate mapbtn js-locate" aria-label="Моё местоположение"><svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="#1d1d1f" stroke-width="2.4"><circle cx="17" cy="17" r="9"/><circle cx="17" cy="17" r="3.6" fill="#1d1d1f"/><path d="M17 2v6M17 26v6M2 17h6M26 17h6" stroke-linecap="round"/></svg></button>
-<button class="mapbtn fit js-fit" aria-label="Показать весь маршрут"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#1d1d1f" stroke-width="2.2" stroke-linecap="round"><circle cx="6" cy="20" r="3"/><circle cx="20" cy="6" r="3"/><path d="M8.5 18 17.5 8"/></svg></button>
+<button class="mbtn menu js-menu" aria-label="Меню"><svg width="20" height="14" viewBox="0 0 20 14"><path d="M1 1h18M1 7h18M1 13h12" stroke="#1f2a30" stroke-width="2" stroke-linecap="round"/></svg></button>
+<button class="mbtn more js-deco" aria-label="Ещё"><svg width="18" height="4" viewBox="0 0 18 4"><circle cx="2" cy="2" r="2" fill="#1f2a30"/><circle cx="9" cy="2" r="2" fill="#1f2a30"/><circle cx="16" cy="2" r="2" fill="#1f2a30"/></svg></button>
+<div class="bonus"><svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="10.5" fill="#F5A800"/><circle cx="11" cy="11" r="8" fill="#FFC41F"/><path d="M11 5.6l1.5 3.3 3.6.4-2.7 2.4.8 3.6L11 13.4l-3.2 1.9.8-3.6-2.7-2.4 3.6-.4z" fill="#fff"/></svg>64</div>
+<button class="mapbtn taxi-btn js-fit" aria-label="Машина"><svg width="22" height="20" viewBox="0 0 22 20" fill="#1f2a30"><path d="M8 1h6l.6 2.4H7.4z"/><path d="M4.6 5h12.8l2.2 5.4c.9.4 1.4 1.2 1.4 2.2V17a1 1 0 0 1-1 1h-1.6a1 1 0 0 1-1-1v-1H4.6v1a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-4.4c0-1 .5-1.8 1.4-2.2zm1.2 1.8-1.4 3.6h13.2l-1.4-3.6zM4.6 12.2a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6zm12.8 0a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6z"/></svg></button>
+<button class="mapbtn fit js-fit" aria-label="Весь маршрут"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#1f2a30" stroke-width="2"><circle cx="5" cy="5" r="3"/><circle cx="17" cy="17" r="3"/><path d="M7.2 7.2l7.6 7.6" stroke-linecap="round"/></svg></button>
+<button class="mapbtn locate js-locate" aria-label="Моё местоположение"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#1f2a30" stroke-width="2"><circle cx="11" cy="11" r="6"/><circle cx="11" cy="11" r="2.4" fill="#1f2a30"/><path d="M11 1v3.5M11 17.5V21M1 11h3.5M17.5 11H21" stroke-linecap="round"/></svg></button>
 <div id="searching"><span class="spin"></span>Ищем машину…</div>
 <div id="toast" role="status"></div>
+<div id="rideHead"><button class="js-collapse" aria-label="Свернуть"><svg width="18" height="11" viewBox="0 0 18 11"><path d="M1.5 1.5 9 9l7.5-7.5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><b>Ваша поездка</b><button class="js-deco" aria-label="Ещё"><svg width="18" height="4" viewBox="0 0 18 4"><circle cx="2" cy="2" r="2" fill="#fff"/><circle cx="9" cy="2" r="2" fill="#fff"/><circle cx="16" cy="2" r="2" fill="#fff"/></svg></button></div>
 
-<!-- Панель заказа -->
+<!-- Главная: адреса -->
 <section class="sheet" id="formSheet">
   <div class="grab"><div class="handle"></div></div>
   <div class="sbody">
     <div id="fields"></div>
-    <button class="addstop js-add-stop"><i>+</i>Добавить остановку</button>
     <div><div class="trip js-trip hidden"></div></div>
-    <div class="block">
-      <div class="lbl">Стоимость, ₴</div>
-      <label class="pricefield"><input class="js-price" type="text" inputmode="decimal" placeholder="Введите сумму" autocomplete="off"><span>₴</span></label>
-    </div>
-    <div class="block" id="classes">
+    <div id="classes">
       <div class="lbl">Класс авто</div>
-      <div class="clsrow">
-        <button class="cls js-cls" data-c="economy"><span class="cpic"><svg width="20" height="36" viewBox="0 0 24 44"><use href="#carY"/></svg></span><b>Эконом</b><small>1-4 пассажира</small></button>
-        <button class="cls js-cls" data-c="standard"><span class="cpic"><svg width="20" height="36" viewBox="0 0 24 44"><use href="#carY"/></svg></span><b>Стандарт</b><small>1-4 пассажира</small></button>
-        <button class="cls js-cls" data-c="comfort"><span class="cpic"><svg width="20" height="36" viewBox="0 0 24 44"><use href="#carK"/></svg></span><b>Комфорт</b><small>1-4 пассажира</small></button>
-      </div>
+      <div id="clsList"></div>
+      <div class="lbl">Своя стоимость, ₴</div>
+      <label class="pricefield"><input class="js-price" type="text" inputmode="decimal" autocomplete="off"><span>₴</span></label>
     </div>
   </div>
   <div class="sfoot">
     <button class="clsbtn js-cls-open">
-      <svg class="cv" width="24" height="44" viewBox="0 0 24 44"><use href="#carY"/></svg>
-      <span class="ct"><b><span class="js-cls-name">Стандарт</span><svg width="14" height="9" viewBox="0 0 14 9"><path d="M1.5 1.5 7 7l5.5-5.5" fill="none" stroke="#1d1d1f" stroke-width="2.2" stroke-linecap="round"/></svg></b><small>1-4 пассажира</small></span>
+      <span data-car-top="#FFC928" data-w="22"></span>
+      <span><b><span class="js-cls-name">Стандарт</span><svg width="13" height="8" viewBox="0 0 13 8"><path d="M1.2 1.2 6.5 6.5l5.3-5.3" fill="none" stroke="#1f2a30" stroke-width="1.8" stroke-linecap="round"/></svg></b><small>1-4 пассажира</small></span>
     </button>
-    <label class="fprice"><input class="js-price" type="text" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Стоимость, ₴">₴</label>
-    <button class="go js-find" aria-label="Найти машину" title="Найти машину"><svg width="30" height="26" viewBox="0 0 30 26"><path d="M2 13h24M15 2l11 11-11 11" fill="none" stroke="#1d1d1f" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <label class="fprice"><input class="js-price" type="text" inputmode="decimal" autocomplete="off" aria-label="Стоимость, ₴">₴</label>
+    <button class="go js-find" aria-label="Найти машину"><svg width="20" height="18" viewBox="0 0 20 18"><path d="M1.5 9h16M10.5 2l7 7-7 7" fill="none" stroke="#1f2a30" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
 </section>
 
-<!-- Карточка поездки -->
+<!-- Подача авто / Ваша поездка -->
 <section class="sheet off" id="rideSheet">
   <div class="grab">
     <div class="handle"></div>
-    <div class="eta">
-      <div class="eta-t"><span class="js-arrive-title" data-t="Машина будет через" style="color:inherit">Машина будет через</span> <span id="rcEta"></span><span class="js-countdown">00:00</span></div>
-      <div class="eta-s"><span id="rcDist"></span> до вас · подача в <span class="js-eta-clock"></span></div>
-      <div class="wait">Бесплатное ожидание: <b class="js-wait">03:00</b></div>
-    </div>
+    <div class="rtitle"><span class="js-arrive-title" data-t="Подача авто через ~" data-arrived="Машина подана! Выходите">Подача авто через ~</span><span class="eta-v js-eta-min"></span></div>
+    <div class="rwait">Бесплатное ожидание: <b class="js-wait">03:00</b></div>
   </div>
   <div class="sbody">
-    <div class="carrow">
-      <div><div class="plate" id="rcPlate"></div><div class="car-n" id="rcModel"></div><div class="car-c"><span id="rcColor"></span> · <span class="js-cls-name"></span></div></div>
-      <div class="car-pic" id="rcCarPic"></div>
+    <div class="carblk">
+      <div><span class="plate js-plate"></span><div class="carname js-car-full"></div></div>
+      <div class="carpic js-car-side" data-w="92"></div>
     </div>
-    <div class="drv"><div class="ava"><span id="rcAva"></span><span class="rb">★ <span id="rcRating"></span></span></div><div><b id="rcDriver"></b><span class="rate"><span class="js-trips"></span></span></div></div>
-    <div class="acts">
-      <button class="act js-msg"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 3h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 1-2z" fill="#1DA05B"/></svg>Сообщение</button>
-      <button class="act call js-call"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M6.6 10.8a15.2 15.2 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z" fill="#fff"/></svg>Позвонить</button>
+    <div class="drv">
+      <div class="ava"><span class="js-ava"></span><span class="on">Онлайн</span></div>
+      <div>
+        <div class="dname"><span class="js-driver"></span><i>★ <b class="js-rating"></b></i></div>
+        <div class="dstat">Поездок: <b class="js-trips-n"></b></div>
+        <div class="dstat">В сервисе: <b class="js-years"></b></div>
+      </div>
     </div>
-    <div class="sec"><div class="sec-h">Маршрут поездки</div><div id="rcRoute"></div><div class="trip2" id="rcTrip"></div></div>
-    <div class="sec prow"><div><div class="sec-h" style="margin:0">Стоимость</div><small style="color:#8e8e93">можно изменить</small></div><label class="pricefield"><input class="js-price" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span>₴</span></label></div>
+    <div class="chatrow">
+      <button class="chat js-msg"><svg width="24" height="22" viewBox="0 0 24 22" fill="none" stroke="#1f2a30" stroke-width="2"><path d="M3 2h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H8l-5 4V3a1 1 0 0 1 1-1z" stroke-linejoin="round"/></svg>Чат с водителем</button>
+      <button class="callg js-call" aria-label="Позвонить"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M6.6 10.8a15.2 15.2 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z" fill="none" stroke="#fff" stroke-width="2"/></svg></button>
+    </div>
+    <div class="band">ПАРАМЕТРЫ ЗАКАЗА</div>
+    <div class="js-route-list"></div>
+    <div class="opts">
+      <div class="opt"><span class="oi"><svg width="22" height="20" viewBox="0 0 22 20" fill="none" stroke="#9aa6ad" stroke-width="1.8"><path d="M2 2h18v12H8l-6 4z" stroke-linejoin="round"/><circle cx="7" cy="8" r=".6" fill="#9aa6ad"/><circle cx="11" cy="8" r=".6" fill="#9aa6ad"/><circle cx="15" cy="8" r=".6" fill="#9aa6ad"/></svg></span><span class="ot">Комментарий<small>Изменить</small></span><button class="chip js-deco">Подъезд</button></div>
+      <div class="opt"><span class="oi"><svg width="20" height="18" viewBox="0 0 20 18" stroke="#9aa6ad" stroke-width="1.8" stroke-linecap="round"><path d="M1 3h18M1 9h18M1 15h18"/><path d="M6 1v4M14 7v4M8 13v4"/></svg></span><span class="ot">Дополнительные опции<small>Изменить</small></span></div>
+      <div class="opt dim"><span class="oi"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#9aa6ad" stroke-width="1.8"><circle cx="11" cy="11" r="9.5"/><path d="M11 5v6l4 2.5" stroke-linecap="round"/></svg></span><span class="ot">На ближайшее время</span></div>
+      <div class="opt dim"><span class="oi"><svg width="22" height="18" viewBox="0 0 22 18" fill="#9aa6ad"><path d="M4.6 2h12.8l2.2 5.4c.9.4 1.4 1.2 1.4 2.2V15a1 1 0 0 1-1 1h-1.6a1 1 0 0 1-1-1v-1H4.6v1a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V9.6c0-1 .5-1.8 1.4-2.2zm1.2 1.8L4.4 7.4h13.2l-1.4-3.6z"/></svg></span><span class="ot js-cls-name">Стандарт</span></div>
+      <div class="opt"><span class="oi"><svg width="24" height="18" viewBox="0 0 24 18"><rect x="1" y="1" width="22" height="16" rx="1.5" fill="#1A9A50"/><rect x="3.5" y="3.5" width="17" height="11" fill="none" stroke="#c8f0d6" stroke-width="1"/><text x="12" y="12.2" text-anchor="middle" font-size="6.5" font-weight="700" fill="#fff" font-family="system-ui,sans-serif">100</text></svg></span><span class="ot">Наличные</span><label class="pricefield"><input class="js-price" type="text" inputmode="decimal" autocomplete="off"><span>₴</span></label></div>
+      <button class="opt js-share"><span class="oi"><svg width="20" height="22" viewBox="0 0 20 22" fill="none" stroke="#9aa6ad" stroke-width="1.8"><circle cx="16" cy="4" r="3"/><circle cx="4" cy="11" r="3"/><circle cx="16" cy="18" r="3"/><path d="m6.6 9.6 6.8-4.2M6.6 12.4l6.8 4.2"/></svg></span><span class="ot">Поделиться заказом</span></button>
+      <button class="opt cancel js-cancel"><span class="oi"><svg width="18" height="18" viewBox="0 0 18 18" stroke="#D32F2F" stroke-width="2.4" stroke-linecap="round"><path d="M2 2l14 14M16 2 2 16"/></svg></span><span class="ot">Отменить заказ</span></button>
+    </div>
   </div>
-  <div class="sfoot"><button class="cancel js-cancel">Отменить</button></div>
 </section>
-
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <g id="carY"><rect x="1.5" y="1.5" width="21" height="41" rx="7" fill="#FFC928" stroke="#c99500"/><path d="M4.3 13.6Q12 9.6 19.7 13.6L18.6 18.4H5.4Z" fill="#26313d"/><path d="M5.4 33H18.6L19.2 37.3Q12 39.8 4.8 37.3Z" fill="#26313d"/><rect x="5.6" y="19.2" width="12.8" height="12.8" rx="2.5" fill="#FFD84F"/></g>
-    <g id="carK"><rect x="1.5" y="1.5" width="21" height="41" rx="7" fill="#2b2d33" stroke="#000"/><path d="M4.3 13.6Q12 9.6 19.7 13.6L18.6 18.4H5.4Z" fill="#9fb3c8"/><path d="M5.4 33H18.6L19.2 37.3Q12 39.8 4.8 37.3Z" fill="#9fb3c8"/><rect x="5.6" y="19.2" width="12.8" height="12.8" rx="2.5" fill="#3a3d45"/></g>
-  </defs>
-</svg>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
 <script>
 window.APP = {
-  vectorStyle: 'https://tiles.openfreemap.org/styles/liberty',
-  taxiColor: '#FFC928',
-  destBubble: (km, min) => `<div class="bubble"><div class="dbub">${km} <small>• ${min} мин</small></div></div>`,
-  etaBubble: min => `<div class="bubble"><div class="ebub">${min} мин</div></div>`,
   name: 'Рух',
-  tiles: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-  fallbackTiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-  attr: '© OpenStreetMap',
+  vectorStyle: 'https://tiles.openfreemap.org/styles/liberty',
+  classes: ['economy', 'standard', 'comfort', 'business'],
+  seats: '1-4 пассажира',
+  clsImg: id => carTop(id === 'business' ? '#2b2d31' : '#FFC928', { w: 16 }),
   ph: { from: 'Откуда', to: 'Куда...', stop: 'Остановка' },
   showSub: true,
-  toExtra: '<button class="star js-deco" aria-label="Избранное"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17l-5.7 3.1 1.2-6.3L2.9 9.4l6.3-.8z" fill="none" stroke="#1d1d1f" stroke-width="1.8" stroke-linejoin="round"/></svg></button>',
-  pin: { html: '<div class="pin1"><div class="h"><i></i></div><div class="l"></div></div>', size: [46, 70], anchor: [23, 70] },
-  route: { color: '#1DA05B', casing: '#ffffff' },
+  wrapFields: true,
+  editLink: true,
+  toExtra: '<button class="plusbtn js-add-stop" aria-label="Добавить остановку"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#1f2a30" stroke-width="1.8" stroke-linecap="round"/></svg></button>',
+  pin: { html: '<div class="pin1"><div class="h"><i></i></div><div class="l"></div><div class="ring"></div></div>', size: [40, 62], anchor: [20, 62] },
+  route: { color: '#12924A', weight: 5 },
+  carRoute: { color: '#1f2a30', weight: 5, dash: '1 9' },
+  mapCar: 'taxi', taxiColor: '#FFC928',
+  nearby: 5,
+  destBubble: (km, min) => `<div class="bubble"><div class="dbub">${km} <small>· ${min} мин</small></div></div>`,
   arrivedTitle: 'Машина подана! Выходите',
-  pointPin: n => `<svg width="30" height="40" viewBox="0 0 30 40"><path d="M15 1C7.3 1 1 7.1 1 14.8 1 25 15 39 15 39s14-14 14-24.2C29 7.1 22.7 1 15 1z" fill="#263238" stroke="#fff" stroke-width="1.5"/>${n ? `<text x="15" y="19.5" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" font-family="system-ui,sans-serif">${n}</text>` : '<circle cx="15" cy="14.5" r="4.5" fill="#fff"/>'}</svg>`,
-  carRoute: '#1d1d1f',
-  formSnaps: (H, top) => { const lo = Math.min(300, H * 0.45); return [lo, Math.max(lo + 80, H * 0.58), H - top - 64]; },
-  rideSnaps: (H, top) => { const lo = Math.min(200, H * 0.3); return [lo, Math.max(lo + 80, H * 0.56), H - top - 64]; }
+  formSnaps: (H) => [Math.min(190, H * 0.24), Math.max(270, H * 0.33), H - 90],
+  rideSnaps: (H, top) => [Math.min(150, H * 0.2), Math.max(330, H * 0.41), H - top - 64]
 };
 (() => {
 'use strict';
@@ -325,6 +359,8 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = a => a[Math.floor(Math.random() * a.length)];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const setText = (sel, v) => $$(sel).forEach(el => { el.textContent = v; });
+const setHTML = (sel, v) => $$(sel).forEach(el => { el.innerHTML = v; });
 
 /* ---------------- геометрия ---------------- */
 const ER = 6371000, rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
@@ -362,12 +398,50 @@ async function getJSON(url, ms = 10000, outer) {
     throw e;
   } finally { clearTimeout(t); }
 }
-
 let toastT;
 function toast(msg, ms = 3400) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms);
 }
+
+/* ---------------- рисунки машин (свои SVG) ---------------- */
+// вид сверху: для карты. glass — стёкла, roof — крыша (у «Теслы» стеклянная)
+function carTop(body, { glass = '#1f2429', roof = body, w = 24, shade = 'rgba(0,0,0,.35)' } = {}) {
+  const h = Math.round(w * 2);
+  return `<svg viewBox="0 0 24 48" width="${w}" height="${h}" aria-hidden="true">
+<path d="M6 3.2Q12 .6 18 3.2L20.6 9.5Q21.3 12 21.3 15V39.5Q21.3 45.6 12 45.8Q2.7 45.6 2.7 39.5V15Q2.7 12 3.4 9.5Z" fill="${body}" stroke="${shade}" stroke-width=".8"/>
+<rect x=".4" y="15.2" width="3.4" height="2.6" rx="1.2" fill="${body}" stroke="${shade}" stroke-width=".5"/>
+<rect x="20.2" y="15.2" width="3.4" height="2.6" rx="1.2" fill="${body}" stroke="${shade}" stroke-width=".5"/>
+<path d="M4.6 15.6Q12 11.6 19.4 15.6L18.2 21.6Q12 20 5.8 21.6Z" fill="${glass}"/>
+<rect x="5.9" y="21.8" width="12.2" height="12.6" rx="2.4" fill="${roof}"/>
+<path d="M5.4 21.9 4.3 34.2" stroke="${glass}" stroke-width="1.1"/><path d="M18.6 21.9 19.7 34.2" stroke="${glass}" stroke-width="1.1"/>
+<path d="M5.8 35Q12 36.6 18.2 35L19.2 39.6Q12 42 4.8 39.6Z" fill="${glass}"/>
+<path d="M6.2 4.2Q7.6 3.4 9 3.2L8.6 5.2Z" fill="#fffbe0"/><path d="M17.8 4.2Q16.4 3.4 15 3.2L15.4 5.2Z" fill="#fffbe0"/>
+<rect x="4.2" y="43.2" width="3.2" height="1.3" rx=".6" fill="#e0453a"/><rect x="16.6" y="43.2" width="3.2" height="1.3" rx=".6" fill="#e0453a"/>
+</svg>`;
+}
+// вид сбоку: для карточек и списка классов
+function carSide(body, { w = 120, glass = '#2b3036', dark = false } = {}) {
+  const h = Math.round(w * 50 / 120);
+  const hl = dark ? '#d9e6ff' : '#fff8d6';
+  return `<svg viewBox="0 0 120 50" width="${w}" height="${h}" aria-hidden="true">
+<ellipse cx="60" cy="45.5" rx="55" ry="3" fill="rgba(0,0,0,.16)"/>
+<path d="M4.5 33.5Q4 27 11 25.4L33 21.6Q43.5 11.2 57 10.2H76Q88 10.8 99 20.6L110.5 23Q116.5 24.6 116 32.5V36.5Q116 40.6 112 40.6H8.4Q4.6 40.6 4.5 37Z" fill="${body}" stroke="rgba(0,0,0,.25)" stroke-width=".7"/>
+<path d="M37.5 21.4Q46.5 13 57.5 12.6H66V21.4Z" fill="${glass}"/>
+<path d="M69 12.6H76Q86.5 13.2 94.5 21.4H69Z" fill="${glass}"/>
+<path d="M8 30.2H113" stroke="rgba(0,0,0,.14)" stroke-width="1"/>
+<path d="M67.5 12.6V39" stroke="rgba(0,0,0,.18)" stroke-width=".8"/>
+<rect x="58" y="24.5" width="5.5" height="1.6" rx=".8" fill="rgba(0,0,0,.3)"/><rect x="86" y="24.5" width="5.5" height="1.6" rx=".8" fill="rgba(0,0,0,.3)"/>
+<path d="M108 24.6 115 27.2 114.4 29.6 107.6 28.4Z" fill="${hl}"/>
+<rect x="4.6" y="26.6" width="4.4" height="3.4" rx="1" fill="#d8392f"/>
+<circle cx="30" cy="40" r="8.6" fill="#1b1d20"/><circle cx="30" cy="40" r="4.6" fill="#c9ccd1"/><circle cx="30" cy="40" r="1.6" fill="#6b7077"/>
+<circle cx="92" cy="40" r="8.6" fill="#1b1d20"/><circle cx="92" cy="40" r="4.6" fill="#c9ccd1"/><circle cx="92" cy="40" r="1.6" fill="#6b7077"/>
+</svg>`;
+}
+const avatarSvg = `<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" fill="#d9dde2"/><circle cx="32" cy="25" r="11" fill="#9aa3ad"/><path d="M11 60Q13 41 32 41Q51 41 53 60Z" fill="#9aa3ad"/></svg>`;
+window.carTop = carTop; window.carSide = carSide;
+$$('[data-car-side]').forEach(el => { el.innerHTML = carSide(el.dataset.carSide, { w: +el.dataset.w || 120 }); });
+$$('[data-car-top]').forEach(el => { el.innerHTML = carTop(el.dataset.carTop, { w: +el.dataset.w || 24, glass: el.dataset.glass || '#1f2429' }); });
 
 /* ---------------- карта ---------------- */
 const map = L.map('map', { zoomControl: false, attributionControl: false, zoomSnap: 0.25 }).setView(KH, 15);
@@ -376,7 +450,6 @@ function rasterBase() {
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap', className: 'base-tiles raster' }).addTo(map);
 }
 if (C.vectorStyle && window.L.maplibreGL && hasWebGL) {
-  // векторная карта (OpenFreeMap, без ключа): чистая, как в приложениях такси
   try {
     const gl = L.maplibreGL({
       style: C.vectorStyle, className: 'base-tiles vector',
@@ -398,44 +471,37 @@ if (C.vectorStyle && window.L.maplibreGL && hasWebGL) {
 } else rasterBase();
 L.control.attribution({ position: 'topright', prefix: false }).addTo(map);
 const layers = {
-  me: L.layerGroup().addTo(map), route: L.layerGroup().addTo(map),
+  me: L.layerGroup().addTo(map), nearby: L.layerGroup().addTo(map), route: L.layerGroup().addTo(map),
   car: L.layerGroup().addTo(map), mk: L.layerGroup().addTo(map)
 };
 const icon = (html, size, anchor) => L.divIcon({ html, className: '', iconSize: size, iconAnchor: anchor });
 
-function carSvg(color, w = 24) {
-  const h = Math.round(w * 44 / 24);
-  return `<svg viewBox="0 0 24 44" width="${w}" height="${h}" aria-hidden="true">
-<rect x="1.5" y="1.5" width="21" height="41" rx="7" fill="${color}" stroke="rgba(0,0,0,.45)" stroke-width="1"/>
-<path d="M4.3 13.6Q12 9.6 19.7 13.6L18.6 18.4H5.4Z" fill="#26313d"/>
-<path d="M5.4 33H18.6L19.2 37.3Q12 39.8 4.8 37.3Z" fill="#26313d"/>
-<rect x="5.6" y="19.2" width="12.8" height="12.8" rx="2.5" fill="${color}" stroke="rgba(0,0,0,.18)"/>
-<rect x="3.2" y="3.4" width="4" height="2" rx="1" fill="#fff6bf"/><rect x="16.8" y="3.4" width="4" height="2" rx="1" fill="#fff6bf"/>
-</svg>`;
-}
-window.carSvg = carSvg;
-
-/* ---------------- состояние ---------------- */
-const CLS = { economy: 'Эконом', standard: 'Стандарт', comfort: 'Комфорт' };
-const MODELS = {
-  economy: ['Skoda Fabia', 'Hyundai Accent', 'Kia Rio', 'Renault Logan', 'Chevrolet Aveo'],
-  standard: ['Skoda Octavia', 'Toyota Corolla', 'Hyundai Elantra', 'Kia Ceed', 'Volkswagen Jetta', 'Mitsubishi Lancer', 'Nissan Leaf'],
-  comfort: ['Toyota Camry', 'Volkswagen Passat']
+/* ---------------- классы и машины ---------------- */
+const M_ECO = ['Skoda Fabia', 'Hyundai Accent', 'Kia Rio', 'Renault Logan', 'Chevrolet Aveo'];
+const M_STD = ['Skoda Octavia', 'Toyota Corolla', 'Hyundai Elantra', 'Kia Ceed', 'Volkswagen Jetta', 'Mitsubishi Lancer', 'Nissan Leaf'];
+const M_COMF = ['Toyota Camry', 'Volkswagen Passat'];
+const CLASS_DEF = {
+  economy: { n: 'Эконом', ratio: 0.86, models: M_ECO },
+  fast: { n: 'Быстрый поиск', ratio: 1.38, upto: true, models: [...M_ECO, ...M_STD] },
+  standard: { n: 'Стандарт', ratio: 1, models: M_STD },
+  comfort: { n: 'Комфорт', ratio: 1.13, models: M_COMF },
+  business: { n: 'Бизнес', ratio: 1.38, models: M_COMF }
 };
+const CLASS_IDS = C.classes || ['economy', 'standard', 'comfort'];
 const COLORS = [
-  { n: 'белый', hex: '#f4f4f4' }, { n: 'серый', hex: '#7d838b' }, { n: 'чёрный', hex: '#26272b' },
-  { n: 'серебристый', hex: '#c4c8ce' }, { n: 'синий', hex: '#2d5aa8' }
+  { n: 'Белый', hex: '#f2f3f5' }, { n: 'Серый', hex: '#8b9096' }, { n: 'Темно-серый', hex: '#55595f' },
+  { n: 'Чёрный', hex: '#26272b' }, { n: 'Серебристый', hex: '#c3c7cd' }, { n: 'Синий', hex: '#2d5aa8' }
 ];
-const NAMES = ['Александр', 'Сергей', 'Дмитрий', 'Андрей', 'Виталий', 'Игорь', 'Максим', 'Руслан', 'Евгений', 'Владимир', 'Олег', 'Николай', 'Артём', 'Денис', 'Роман'];
+const NAMES = ['Олександр', 'Сергій', 'Дмитро', 'Андрій', 'Віталій', 'Ігор', 'Максим', 'Руслан', 'Євген', 'Володимир', 'Олег', 'Микола', 'Артем', 'Денис', 'Роман', 'Костянтин'];
 const PLATE_L = 'ABCEHIKMOPTX'.split('');
 
 const S = {
   pts: [{ k: 'from', text: '', city: '', ll: null }, { k: 'to', text: '', city: '', ll: null }],
-  sug: [], sugI: -1, trip: null, car: null, me: null, busy: false,
+  sug: [], sugI: -1, trip: null, car: null, me: null, busy: false, state: 'form',
   cls: localStorage.getItem('taxi.cls') || 'standard',
   price: localStorage.getItem('taxi.price') || ''
 };
-if (!CLS[S.cls]) S.cls = 'standard';
+if (!CLASS_IDS.includes(S.cls)) S.cls = CLASS_IDS.includes('standard') ? 'standard' : CLASS_IDS[0];
 
 /* ---------------- адреса (Nominatim) ---------------- */
 function fmtAddr(r) {
@@ -446,7 +512,7 @@ function fmtAddr(r) {
   const street = [road, house].filter(Boolean).join(', ');
   const poi = r.name && r.name !== road && r.name !== city ? r.name : '';
   const first = (r.display_name || '').split(',').slice(0, 2).join(',').trim();
-  if (house) return { main: street, sub: [poi, city].filter(Boolean).join(', '), city };   // есть номер дома — показываем адрес
+  if (house) return { main: street, sub: [poi, city].filter(Boolean).join(', '), city };
   return { main: poi || street || first, sub: [poi ? street : '', city].filter(Boolean).join(', '), city };
 }
 let typeT, typeCtl;
@@ -455,8 +521,8 @@ async function geocode(q) {
   typeCtl = new AbortController();
   const sig = typeCtl.signal;
   const base = `${NOM}/search?format=jsonv2&addressdetails=1&limit=5&countrycodes=ua&accept-language=uk,ru&viewbox=${VB}&q=${encodeURIComponent(q)}`;
-  let r = await getJSON(base + '&bounded=1', 10000, sig);       // сначала только Харьков
-  if (!r.length) r = await getJSON(base, 10000, sig);           // потом вся Украина, Харьков в приоритете
+  let r = await getJSON(base + '&bounded=1', 10000, sig);
+  if (!r.length) r = await getJSON(base, 10000, sig);
   return r.map(x => ({ ...fmtAddr(x), ll: [+x.lat, +x.lon] }));
 }
 
@@ -476,7 +542,8 @@ function rowHTML(p, i, n) {
   const sub = C.showSub ? `<div class="fsub">${subHTML(p)}</div>` : '';
   const ctl = stop ? `<div class="sctl"><button class="sb" data-a="up" ${i <= 1 ? 'disabled' : ''} aria-label="Выше">↑</button><button class="sb" data-a="down" ${i >= n - 2 ? 'disabled' : ''} aria-label="Ниже">↓</button><button class="sb del" data-a="del" aria-label="Удалить остановку">×</button></div>` : '';
   const extra = p.k === 'to' && C.toExtra ? C.toExtra : '';
-  return `<div class="frow ${p.k}" data-i="${i}"><span class="fdot">${dot}</span><div class="fbox"><input class="finput" data-i="${i}" type="text" placeholder="${esc(ph)}" value="${esc(p.text)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">${sub}</div>${ctl}${extra}<div class="sugg" data-i="${i}"></div></div>`;
+  const ftext = C.wrapFields ? `<div class="ftext${p.text ? '' : ' ph'}">${esc(p.text || ph)}</div>` : '';
+  return `<div class="frow ${p.k}" data-i="${i}"><span class="fdot">${dot}</span><div class="fbox">${ftext}<input class="finput" data-i="${i}" type="text" placeholder="${esc(ph)}" value="${esc(p.text)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">${sub}</div>${ctl}${extra}<div class="sugg" data-i="${i}"></div></div>`;
 }
 function renderFields() {
   const n = S.pts.length;
@@ -488,6 +555,8 @@ function syncField(i) {
   const row = $(`#fields .frow[data-i="${i}"]`); if (!row) return;
   const p = S.pts[i];
   $('.finput', row).value = p.text;
+  const ft = $('.ftext', row);
+  if (ft) { ft.textContent = p.text || $('.finput', row).placeholder; ft.classList.toggle('ph', !p.text); }
   const sub = $('.fsub', row);
   if (sub) sub.innerHTML = subHTML(p);
 }
@@ -503,7 +572,7 @@ function onType(i, v) {
   if (p.ll) { p.ll = null; p.city = ''; updateRoute(false); }
   clearTimeout(typeT); typeCtl?.abort();
   if (v.trim().length < 3) { showSugg(i, []); return; }
-  typeT = setTimeout(async () => {                                // debounce 400 мс
+  typeT = setTimeout(async () => {
     try {
       const r = await geocode(v);
       if (S.pts[i] !== p || p.text !== v) return;
@@ -520,7 +589,8 @@ function applyPick(i, item) {
   showSugg(i, []); syncField(i);
   document.activeElement?.blur();
   formSheet.snap(1);
-  updateRoute(true);
+  if (i === 0) spawnNearby(p.ll);
+  updateRoute(true, true);
 }
 async function resolveField(i) {
   const p = S.pts[i]; if (!p || !p.text.trim() || p.ll || p.busy) return;
@@ -535,7 +605,6 @@ async function resolveField(i) {
     if (e.name !== 'AbortError') toast('Сервис поиска адресов не отвечает. Проверьте интернет');
   } finally { p.busy = false; }
 }
-
 fieldsBox.addEventListener('input', e => {
   const inp = e.target.closest('.finput'); if (inp) onType(+inp.dataset.i, inp.value);
 });
@@ -543,17 +612,24 @@ fieldsBox.addEventListener('keydown', e => {
   const inp = e.target.closest('.finput');
   if (inp && e.key === 'Enter') { e.preventDefault(); resolveField(+inp.dataset.i); inp.blur(); }
 });
-fieldsBox.addEventListener('focusin', e => { if (e.target.closest('.finput')) formSheet.snap(2); });
+fieldsBox.addEventListener('focusin', e => {
+  const inp = e.target.closest('.finput'); if (!inp) return;
+  inp.closest('.frow').classList.add('editing');
+  formSheet.snap(2);
+});
 fieldsBox.addEventListener('focusout', e => {
   const inp = e.target.closest('.finput'); if (!inp) return;
   const i = +inp.dataset.i, p = S.pts[i];
-  setTimeout(() => {                         // даём сработать клику по подсказке
+  setTimeout(() => {
     if (S.pts[i] !== p || document.activeElement === inp) return;
+    inp.closest('.frow')?.classList.remove('editing');
     $(`#fields .sugg[data-i="${i}"]`)?.replaceChildren();
     if (p.text.trim() && !p.ll) resolveField(i);
   }, 300);
 });
 fieldsBox.addEventListener('click', e => {
+  const ft = e.target.closest('.ftext');
+  if (ft) { const row = ft.closest('.frow'); row.classList.add('editing'); const inp = $('.finput', row); inp.focus(); inp.select(); return; }
   const it = e.target.closest('.sitem');
   if (it) { const i = +it.parentElement.dataset.i; const item = S.sug[+it.dataset.k]; if (item && S.sugI === i) applyPick(i, item); return; }
   const b = e.target.closest('.sb'); if (!b) return;
@@ -561,13 +637,14 @@ fieldsBox.addEventListener('click', e => {
   if (a === 'del') S.pts.splice(i, 1);
   else { const j = a === 'up' ? i - 1 : i + 1; if (j < 1 || j > S.pts.length - 2) return; [S.pts[i], S.pts[j]] = [S.pts[j], S.pts[i]]; }
   renderFields(); updateRoute(true);
-  S.pts.forEach((_, k) => syncField(k));
 });
 function addStop() {
   const n = S.pts.length; if (n - 2 >= MAX_STOPS) return;
+  if (S.state !== 'form') go('form', 2);
   S.pts.splice(n - 1, 0, { k: 'stop', text: '', city: '', ll: null });
   renderFields();
-  $(`#fields .finput[data-i="${n - 1}"]`)?.focus();
+  const inp = $(`#fields .finput[data-i="${n - 1}"]`);
+  inp?.closest('.frow').classList.add('editing'); inp?.focus();
 }
 
 /* ---------------- маршрут (OSRM) ---------------- */
@@ -578,28 +655,33 @@ async function osrmRoute(lls) {
     if (j.code !== 'Ok' || !j.routes?.length) throw new Error(j.code);
     const rt = j.routes[0];
     return { coords: rt.geometry.coordinates.map(c => [c[1], c[0]]), dist: rt.distance, dur: rt.duration, ok: true };
-  } catch (e) {                              // заглушка: прямая линия, ~30 км/ч
+  } catch (e) {
     let d = 0; for (let k = 1; k < lls.length; k++) d += dist(lls[k - 1], lls[k]);
     d *= 1.3;
     return { coords: lls, dist: d, dur: d / (30 / 3.6), ok: false };
   }
 }
+const short = s => s.length > 24 ? s.slice(0, 11) + '...' + s.slice(-10) : s;
 function drawMarkers() {
   layers.mk.clearLayers();
-  const n = S.pts.length;
+  const last = S.pts.length - 1;
   S.pts.forEach((p, i) => {
     if (!p.ll) return;
     let ic;
     if (p.k === 'from') ic = icon(C.pin.html, C.pin.size, C.pin.anchor);
     else if (C.pointPin) ic = icon(C.pointPin(p.k === 'to' ? '' : i), [30, 40], [15, 40]);
-    else if (p.k === 'to') ic = icon('<div class="mk-num to">B</div>', [28, 28], [14, 14]);
+    else if (p.k === 'to') ic = icon('<div class="mk-to"></div>', [30, 30], [15, 15]);
     else ic = icon(`<div class="mk-num">${i}</div>`, [28, 28], [14, 14]);
     L.marker(p.ll, { icon: ic, interactive: false, zIndexOffset: p.k === 'from' ? 400 : 300 }).addTo(layers.mk);
+    if (C.addrPills && (p.k === 'from' || i === last)) {   // подписи адресов на карте (экран выбора класса)
+      const plus = i === last ? '<button class="pill-plus js-add-stop" aria-label="Добавить остановку">+</button>' : '';
+      L.marker(p.ll, { icon: icon(`<div class="bubble"><div class="apill ${p.k}"><span>${esc(short(p.text))}</span>${plus}</div></div>`, [0, 0], [0, 0]), zIndexOffset: 700 }).addTo(layers.mk);
+    }
   });
 }
-function drawLine(layer, coords, color, ok, casing) {
-  if (casing) L.polyline(coords, { color: casing, weight: 10, opacity: 1, lineJoin: 'round', interactive: false }).addTo(layer);
-  L.polyline(coords, { color, weight: 6, opacity: .95, lineJoin: 'round', lineCap: 'round', dashArray: ok ? null : '10 10', interactive: false }).addTo(layer);
+function drawLine(layer, coords, st, ok) {
+  if (st.casing) L.polyline(coords, { color: st.casing, weight: (st.weight || 6) + 4, opacity: 1, lineJoin: 'round', interactive: false }).addTo(layer);
+  L.polyline(coords, { color: st.color, weight: st.weight || 6, opacity: 1, lineJoin: 'round', lineCap: 'round', dashArray: ok === false ? '10 10' : (st.dash || null), interactive: false }).addTo(layer);
 }
 function showTripInfo(state) {
   let txt = '';
@@ -608,21 +690,25 @@ function showTripInfo(state) {
   $$('.js-trip').forEach(el => { el.textContent = txt; el.classList.toggle('hidden', !txt); });
 }
 let rseq = 0;
-async function updateRoute(fit) {
+async function updateRoute(fit, fromPick) {
   drawMarkers();
   const ps = S.pts.filter(p => p.ll);
   const from = S.pts[0], to = S.pts[S.pts.length - 1];
-  layers.route.clearLayers(); S.trip = null; showTripInfo();
+  layers.route.clearLayers(); S.trip = null; showTripInfo(); renderClasses();
+  document.body.classList.remove('has-route');
   const seq = ++rseq;
   if (!from.ll || !to.ll) { if (fit && ps.length) fitTo(ps.map(p => p.ll)); return; }
   showTripInfo('loading');
   const r = await osrmRoute(ps.map(p => p.ll));
   if (seq !== rseq) return;
   S.trip = r;
-  drawLine(layers.route, r.coords, C.route.color, r.ok, C.route.casing);
+  document.body.classList.add('has-route');
+  drawLine(layers.route, r.coords, C.route, r.ok);
   if (C.destBubble) L.marker(to.ll, { icon: icon(C.destBubble(fmtKm(r.dist), Math.max(1, Math.round(r.dur / 60))), [0, 0], [0, 0]), interactive: false, zIndexOffset: 350 }).addTo(layers.route);
-  showTripInfo();
+  showTripInfo(); renderClasses();
   if (!r.ok) toast('Сервис маршрутов не ответил — показана прямая линия');
+  // жёлтый стиль: после выбора адресов открывается экран выбора класса
+  if (fromPick && sheets.order && S.state === 'form' && S.pts.every(p => p.ll)) { go('order', 1); }
   if (fit) fitTo(r.coords);
 }
 
@@ -632,15 +718,15 @@ const safeTop = (() => {
   d.style.cssText = 'position:fixed;top:0;height:env(safe-area-inset-top);visibility:hidden';
   document.body.appendChild(d); const h = d.offsetHeight; d.remove(); return h;
 })();
+const activeSheet = () => sheets[S.state] || formSheet;
 function fitTo(lls) {
   if (!lls.length) return;
-  const sh = rideSheet.on ? rideSheet : formSheet;
-  const bottom = Math.min(sh.snaps[1], sh.vis || 0, innerHeight * 0.62) + 24;
-  map.fitBounds(L.latLngBounds(lls), { paddingTopLeft: [36, safeTop + 96], paddingBottomRight: [36, bottom], maxZoom: 16.5 });
+  const sh = activeSheet();
+  const bottom = Math.min(sh.snaps[1], sh.vis || 0, innerHeight * 0.62) + (C.fitExtraBottom || 24);
+  map.fitBounds(L.latLngBounds(lls), { paddingTopLeft: [40, safeTop + (C.fitTop || 100)], paddingBottomRight: [40, bottom], maxZoom: 16.5 });
 }
-
-function centerOn(ll, z) {                   // точка видна над панелью, а не под ней
-  const sh = rideSheet.on ? rideSheet : formSheet;
+function centerOn(ll, z) {
+  const sh = activeSheet();
   const off = Math.min(sh.vis || 0, innerHeight * 0.62) / 2;
   map.setView(map.unproject(map.project(ll, z).add([0, off]), z), z);
 }
@@ -655,7 +741,7 @@ function makeSheet(el, snapsFn) {
     el.style.height = v + 'px';
     if (sh.on) {
       document.documentElement.style.setProperty('--sheet', v + 'px');
-      document.body.classList.toggle('sheet-full', v > innerHeight * 0.75);
+      document.body.classList.toggle('sheet-full', v > innerHeight * 0.72);
     }
   };
   sh.snap = (i, anim = true) => {
@@ -664,7 +750,6 @@ function makeSheet(el, snapsFn) {
   };
   sh.show = i => { sh.on = true; el.classList.remove('off'); sh.snap(i ?? sh.i); };
   sh.hide = () => { sh.on = false; el.classList.add('off'); };
-
   let y0 = 0, v0 = 0, t0 = 0, drag = false, moved = false, pid = null;
   el.addEventListener('pointerdown', e => {
     const g = e.target.closest('.grab');
@@ -688,12 +773,12 @@ function makeSheet(el, snapsFn) {
     if (!drag || e.pointerId !== pid) return;
     drag = false; document.body.classList.remove('dragging');
     const dy = e.clientY - y0, dt = performance.now() - t0, v = sh.vis;
-    if (!moved) { sh.snap(sh.i < 2 ? sh.i + 1 : 1); return; }            // тап по ручке
+    if (!moved) { sh.snap(sh.i < 2 ? sh.i + 1 : 1); return; }
     let i;
-    if (dt < 280 && Math.abs(dy) > 25) {                                  // быстрый взмах
+    if (dt < 280 && Math.abs(dy) > 25) {
       if (dy < 0) { i = sh.snaps.findIndex(s => s > v + 5); if (i < 0) i = 2; }
       else { i = 0; sh.snaps.forEach((s, k) => { if (s < v - 5) i = k; }); }
-    } else {                                                              // к ближайшему положению
+    } else {
       i = 0; sh.snaps.forEach((s, k) => { if (Math.abs(s - v) < Math.abs(sh.snaps[i] - v)) i = k; });
     }
     sh.snap(i);
@@ -704,22 +789,58 @@ function makeSheet(el, snapsFn) {
   return sh;
 }
 const formSheet = makeSheet($('#formSheet'), C.formSnaps);
-const rideSheet = makeSheet($('#rideSheet'), C.rideSnaps);
+const sheets = { form: formSheet, ride: makeSheet($('#rideSheet'), C.rideSnaps) };
+if ($('#orderSheet')) sheets.order = makeSheet($('#orderSheet'), C.orderSnaps);
+if ($('#searchSheet')) sheets.search = makeSheet($('#searchSheet'), C.searchSnaps);
+const rideSheet = sheets.ride;
+// экраны приложения: form → (order) → search → ride
+function go(name, snapIdx) {
+  Object.entries(sheets).forEach(([k, sh]) => { if (k !== name) sh.hide(); });
+  S.state = name;
+  ['form', 'order', 'search', 'ride'].forEach(k => document.body.classList.toggle('st-' + k, k === name));
+  sheets[name].show(snapIdx);
+  setTimeout(() => map.invalidateSize({ pan: false }), 360);
+}
 addEventListener('resize', () => {
-  [formSheet, rideSheet].forEach(sh => { sh.calc(); sh.set(sh.snaps[sh.i], false); });
+  Object.values(sheets).forEach(sh => { sh.calc(); if (sh.on) sh.set(sh.snaps[sh.i], false); });
 });
 
 /* ---------------- класс и цена ---------------- */
+function estimateStd() {                         // ориентировочная цена «Стандарта», если своя не введена
+  const km = S.trip ? S.trip.dist / 1000 : 4;
+  return Math.round(55 + 11 * km);
+}
+function priceFor(id) {
+  const d = CLASS_DEF[id];
+  if (S.price && id === S.cls) return +S.price;
+  const std = S.price ? +S.price / CLASS_DEF[S.cls].ratio : estimateStd();
+  return Math.round(std * d.ratio);
+}
+const fmtP = v => String(v).replace('.', ',');
+function renderClasses() {
+  const box = $('#clsList');
+  if (box) {
+    box.innerHTML = CLASS_IDS.map(id => {
+      const d = CLASS_DEF[id];
+      return `<button class="clsr js-cls${id === S.cls ? ' on' : ''}" data-c="${id}"><span class="cimg">${C.clsImg(id)}</span><span class="cn"><b>${d.n}</b><small>${C.seats}</small></span><span class="cp">${d.upto ? 'до ' : ''}${fmtP(priceFor(id))} ₴</span>${C.clsChevron || ''}</button>`;
+    }).join('');
+  }
+  $$('.js-price').forEach(x => { x.placeholder = String(priceFor(S.cls)); });
+  setText('.js-price-cur', fmtP(S.price || priceFor(S.cls)) + ' ₴');
+}
 function setCls(c) {
-  if (!CLS[c]) return;
+  if (!CLASS_DEF[c]) return;
   S.cls = c; localStorage.setItem('taxi.cls', c);
   $$('.js-cls').forEach(b => b.classList.toggle('on', b.dataset.c === c));
-  $$('.js-cls-name').forEach(el => { el.textContent = CLS[c]; });
+  setText('.js-cls-name', CLASS_DEF[c].n);
+  renderClasses();
 }
-function syncPrice(src) {
-  const shown = S.price ? S.price.replace('.', ',') : '';
+function setPrice(v, src) {
+  S.price = v; localStorage.setItem('taxi.price', v);
+  const shown = v ? fmtP(v) : '';
   $$('.js-price').forEach(x => { if (x !== src) x.value = shown; });
   $$('.js-price-show').forEach(x => { x.textContent = shown ? shown + ' ₴' : ''; x.classList.toggle('hidden', !shown); });
+  renderClasses();
 }
 document.addEventListener('input', e => {
   const t = e.target.closest('.js-price'); if (!t) return;
@@ -727,16 +848,35 @@ document.addEventListener('input', e => {
   const k = v.indexOf('.');
   if (k >= 0) v = v.slice(0, k + 1) + v.slice(k + 1).replace(/\./g, '').slice(0, 2);
   v = v.slice(0, 9);
-  const shown = v.replace('.', ',');
-  if (t.value !== shown) t.value = shown;
-  S.price = v; localStorage.setItem('taxi.price', v);
-  syncPrice(t);
+  if (t.value !== fmtP(v)) t.value = fmtP(v);
+  setPrice(v, t);
 });
+
+/* ---------------- такси рядом (декор на главной) ---------------- */
+let nearSeq = 0;
+async function spawnNearby(center) {
+  if (!C.nearby) return;
+  const seq = ++nearSeq;
+  layers.nearby.clearLayers();
+  const jobs = Array.from({ length: C.nearby }, async () => {
+    const a = destPoint(center, rnd(250, 1100), rnd(0, 360));
+    const b = destPoint(a, 250, rnd(0, 360));
+    try {
+      const j = await getJSON(`${OSRM}/route/v1/driving/${a[1].toFixed(6)},${a[0].toFixed(6)};${b[1].toFixed(6)},${b[0].toFixed(6)}?overview=full&geometries=geojson`, 8000);
+      const cs = j.routes?.[0]?.geometry?.coordinates?.map(c => [c[1], c[0]]);
+      if (!cs || cs.length < 2 || seq !== nearSeq) return;
+      let k = 1; while (k < cs.length - 1 && dist(cs[0], cs[k]) < 8) k++;
+      const h = bearing(cs[0], cs[k]);
+      L.marker(cs[0], { icon: icon(`<div class="near-car" style="transform:rotate(${h.toFixed(0)}deg)">${carTop(C.taxiColor || '#FFC928', { w: 20 })}</div>`, [20, 40], [10, 20]), interactive: false }).addTo(layers.nearby);
+    } catch (_) {}
+  });
+  await Promise.all(jobs);
+}
 
 /* ---------------- поиск машины ---------------- */
 async function makeCar(p) {
-  let start = destPoint(p, rnd(500, 2500), rnd(0, 360));          // случайная точка в 0.5–2.5 км
-  try {                                                             // прилипание к дороге
+  let start = destPoint(p, rnd(500, 2500), rnd(0, 360));
+  try {
     const j = await getJSON(`${OSRM}/nearest/v1/driving/${start[1].toFixed(6)},${start[0].toFixed(6)}?number=1`, 8000);
     if (j.code === 'Ok' && j.waypoints?.length) start = [j.waypoints[0].location[1], j.waypoints[0].location[0]];
   } catch (_) {}
@@ -748,64 +888,97 @@ async function makeCar(p) {
   return {
     pos: start, route: r, head,
     eta: Math.max(2, Math.round(r.dur / 60)),
-    model: pick(MODELS[S.cls]), color: pick(COLORS),
-    plate: `${pick(['AX', 'KX'])} ${d()}${d()}${d()}${d()} ${pick(PLATE_L)}${pick(PLATE_L)}`,
-    driver: pick(NAMES), rating: rnd(4.7, 5.0).toFixed(1), trips: Math.round(rnd(150, 3200))
+    model: pick(CLASS_DEF[S.cls].models), color: pick(COLORS),
+    plate: [pick(['AX', 'KX']), `${d()}${d()}${d()}${d()}`, pick(PLATE_L) + pick(PLATE_L)],
+    driver: pick(NAMES), rating: rnd(4.85, 5.0).toFixed(2),
+    trips: Math.round(rnd(1200, 12000)), years: Math.round(rnd(2, 9))
   };
 }
-function fillRide(car) {
-  $('#rcEta').textContent = car.eta + ' мин';
-  $('#rcDist').textContent = fmtKm(car.route.dist);
-  $('#rcModel').textContent = car.model;
-  $('#rcColor').textContent = car.color.n[0].toUpperCase() + car.color.n.slice(1);
-  $('#rcPlate').innerHTML = `<span class="ua">UA</span><span class="pn">${esc(car.plate)}</span>`;
-  $('#rcDriver').textContent = car.driver;
-  $('#rcRating').textContent = car.rating;
-  $$('.js-trips').forEach(el => { el.textContent = car.trips + ' поездок'; });
-  $('#rcAva').textContent = car.driver[0];
-  $('#rcCarPic').innerHTML = `<div style="transform:rotate(90deg)">${carSvg(car.color.hex, 30)}</div>`;
-  const t = new Date(Date.now() + car.eta * 60000);
-  $$('.js-eta-clock').forEach(el => { el.textContent = t.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }); });
+function routeListHTML() {
   let sn = 0;
-  $('#rcRoute').innerHTML = S.pts.filter(p => p.ll).map(p => {
-    const lbl = p.k === 'stop' ? ++sn : '';
-    return `<div class="rr ${p.k}"><span class="rdot">${lbl}</span><span class="rt">${esc(p.text)}</span></div>`;
+  return S.pts.filter(p => p.ll).map(p => {
+    const n = p.k === 'stop' ? ++sn : '';
+    return `<div class="rl ${p.k}"><i class="rd">${n}</i><div class="rx"><small>${SUBL[p.k]}</small><span>${esc(p.text)}</span>${p.k === 'to' && C.editLink ? '<button class="elink js-deco">Изменить</button>' : ''}</div></div>`;
   }).join('');
-  $('#rcTrip').textContent = S.trip ? `${fmtKm(S.trip.dist)} · ${fmtDur(S.trip.dur)} в пути` : '';
-  syncPrice();
 }
+function fillRide(car) {
+  setText('.js-eta', car.eta + ' мин');
+  setText('.js-car-dist', fmtKm(car.route.dist));
+  setText('.js-plate', car.plate.join(C.plateJoin ?? ' '));
+  setText('.js-car-full', `${car.color.n} ${car.model}`);
+  setText('.js-car-model', car.model);
+  setText('.js-car-color', car.color.n);
+  setHTML('.js-car-side', carSide(car.color.hex, { w: +($('.js-car-side')?.dataset.w || 120), dark: car.color.hex === '#26272b' }));
+  setText('.js-driver', car.driver);
+  setText('.js-rating', car.rating);
+  setText('.js-trips-n', String(car.trips));
+  setText('.js-trips', `${car.trips} поездок`);
+  setText('.js-years', `Больше ${car.years} ${car.years < 5 ? 'лет' : 'лет'}`);
+  setHTML('.js-ava', avatarSvg);
+  const t = new Date(Date.now() + car.eta * 60000);
+  setText('.js-eta-clock', t.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
+  setHTML('.js-route-list', routeListHTML());
+  setText('.js-trip2', S.trip ? `${fmtKm(S.trip.dist)} · ${fmtDur(S.trip.dur)} в пути` : '');
+  setPrice(S.price);
+}
+let stageT = [];
+function setSteps(n, title) {
+  $$('.js-steps i').forEach((el, k) => { el.className = k < n ? 'done' : (k === n ? 'act' : ''); });
+  $$('.js-steps b').forEach((el, k) => { el.className = k < n ? 'done' : ''; });
+  if (title) setText('.js-stage', title);
+}
+function runStages() {
+  stageT.forEach(clearTimeout); stageT = [];
+  (C.stages || []).forEach(([ms, n, title]) => stageT.push(setTimeout(() => { if (S.busy) setSteps(n, title); }, ms)));
+}
+let searchLayers = [];
 async function findCar() {
   if (S.busy) return;
   const from = S.pts[0], to = S.pts[S.pts.length - 1];
-  if (!from.ll) { toast('Укажите адрес подачи'); $('#fields .finput[data-i="0"]')?.focus(); return; }
-  if (!to.ll) { toast('Укажите, куда едем'); $(`#fields .finput[data-i="${S.pts.length - 1}"]`)?.focus(); return; }
-  S.busy = true;
+  if (!from.ll) { toast('Укажите адрес подачи'); go('form', 2); return; }
+  if (!to.ll) { toast('Укажите, куда едем'); go('form', 2); return; }
+  S.busy = true; S.cancelled = false;
   $$('.js-find').forEach(b => { b.disabled = true; });
-  document.body.classList.add('searching');
   document.activeElement?.blur();
-  formSheet.snap(0);
-  layers.car.clearLayers();
-  const pulse = L.marker(from.ll, { icon: icon('<div class="pulse"><i></i><i></i><i></i></div>', [24, 24], [12, 12]), interactive: false, zIndexOffset: -100 }).addTo(layers.car);
-  map.flyTo(from.ll, 15, { duration: 0.6 });
-  const [car] = await Promise.all([makeCar(from.ll), sleep(rnd(2000, 3000))]);
-  layers.car.removeLayer(pulse);
+  layers.car.clearLayers(); layers.nearby.clearLayers();
+  if (sheets.search) {
+    $('#searchSheet').classList.remove('price-changed');
+    go('search', 1); runStages();
+    if (C.searchCircle) searchLayers.push(L.circle(from.ll, { radius: 330, color: '#ffffff', weight: 1, opacity: .9, fillColor: '#ffffff', fillOpacity: .5, interactive: false }).addTo(layers.car));
+  } else {
+    document.body.classList.add('searching');
+    formSheet.snap(0);
+    searchLayers.push(L.marker(from.ll, { icon: icon('<div class="pulse"><i></i><i></i><i></i></div>', [24, 24], [12, 12]), interactive: false, zIndexOffset: -100 }).addTo(layers.car));
+  }
+  centerOn(from.ll, 15.5);
+  const [car] = await Promise.all([makeCar(from.ll), sleep(C.searchMs || rnd(2200, 3000))]);
+  searchLayers.forEach(l => layers.car.removeLayer(l)); searchLayers = [];
   document.body.classList.remove('searching');
   $$('.js-find').forEach(b => { b.disabled = false; });
-  S.busy = false; S.car = car;
+  S.busy = false;
+  if (S.cancelled) return;
+  S.car = car;
+
+  const cs = C.carRoute;
+  drawLine(layers.car, car.route.coords, cs, true);
   if (C.etaBubble) L.marker(from.ll, { icon: icon(C.etaBubble(car.eta), [0, 0], [0, 0]), interactive: false, zIndexOffset: 600 }).addTo(layers.car);
-  startCountdown(car.eta * 60);
-
-  drawLine(layers.car, car.route.coords, C.carRoute, true);
-  layers.car.eachLayer(l => l.setStyle && l.setStyle({ dashArray: '1 11', weight: 6, lineCap: 'round' }));
-  L.marker(car.pos, {
-    icon: icon(`<div class="car-ic" style="transform:rotate(${car.head.toFixed(0)}deg)">${carSvg(C.taxiColor || '#FFC928')}</div>`, [24, 44], [12, 22]),
-    interactive: false, zIndexOffset: 500
-  }).addTo(layers.car);
+  const real = C.mapCar === 'real';
+  const html = real ? carTop(car.color.hex === '#f2f3f5' ? '#e9ebee' : car.color.hex, { glass: '#15181b', roof: '#15181b' }) : carTop(C.taxiColor || '#FFC928');
+  L.marker(car.pos, { icon: icon(`<div class="car-ic" style="transform:rotate(${car.head.toFixed(0)}deg)">${html}</div>`, [24, 48], [12, 24]), interactive: false, zIndexOffset: 500 }).addTo(layers.car);
   if (!car.route.ok) toast('Маршрут машины построен примерно — сервис маршрутов не ответил');
-
   fillRide(car);
-  formSheet.hide(); rideSheet.show(1);
-  fitTo([...car.route.coords, ...(S.trip ? S.trip.coords : S.pts.filter(p => p.ll).map(p => p.ll))]);
+  if (C.rideHideTrip) map.removeLayer(layers.route);
+  go('ride', 1);
+  startCountdown(car.eta * 60);
+  setTimeout(() => fitTo([...car.route.coords, ...(C.rideFitTrip === false || C.rideHideTrip ? [] : (S.trip ? S.trip.coords : []))]), 380);
+}
+function cancelSearch() {
+  S.cancelled = true; stageT.forEach(clearTimeout);
+  searchLayers.forEach(l => layers.car.removeLayer(l)); searchLayers = [];
+  layers.car.clearLayers();
+  if (S.pts[0].ll) spawnNearby(S.pts[0].ll);
+  go(sheets.order ? 'order' : 'form', 1);
+  setTimeout(fitAll, 380);
 }
 let cdT;
 const mmss = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
@@ -814,7 +987,7 @@ function timer(sec, onTick, onEnd) {
   const end = Date.now() + sec * 1000;
   const tick = () => {
     const left = Math.max(0, Math.round((end - Date.now()) / 1000));
-    onTick(mmss(left));
+    onTick(left);
     if (left === 0) { clearInterval(cdT); onEnd?.(); }
   };
   tick(); cdT = setInterval(tick, 1000);
@@ -822,12 +995,16 @@ function timer(sec, onTick, onEnd) {
 function startCountdown(sec) {
   document.body.classList.remove('arrived');
   $$('.js-arrive-title').forEach(el => { if (el.dataset.t) el.textContent = el.dataset.t; });
-  timer(sec, t => $$('.js-countdown').forEach(el => { el.textContent = t; }), () => {
-    // машина подана: заголовок меняется, идёт бесплатное ожидание
+  timer(sec, left => {
+    setText('.js-countdown', mmss(left));
+    setText('.js-eta-min', Math.max(1, Math.ceil(left / 60)) + ' мин');
+    document.documentElement.style.setProperty('--prog', (1 - left / sec).toFixed(3));
+  }, () => {
     document.body.classList.add('arrived');
-    $$('.js-arrive-title').forEach(el => { el.textContent = C.arrivedTitle || 'Водитель на месте'; });
+    $$('.js-arrive-title').forEach(el => { el.textContent = el.dataset.arrived || C.arrivedTitle || 'Водитель на месте'; });
+    setText('.js-eta-min', 'на месте');
     toast('Водитель ожидает вас');
-    timer(180, t => $$('.js-wait').forEach(el => { el.textContent = t; }));
+    timer(180, left => setText('.js-wait', mmss(left)));
   });
 }
 function fitAll() {
@@ -837,9 +1014,11 @@ function fitAll() {
   if (lls.length) fitTo(lls); else if (S.me) centerOn(S.me, 16);
 }
 function cancelRide() {
-  layers.car.clearLayers(); S.car = null; clearInterval(cdT); document.body.classList.remove("arrived");
-  rideSheet.hide(); formSheet.show(1);
-  fitTo(S.trip ? S.trip.coords : S.pts.filter(p => p.ll).map(p => p.ll));
+  layers.car.clearLayers(); S.car = null; clearInterval(cdT); document.body.classList.remove('arrived');
+  if (!map.hasLayer(layers.route)) layers.route.addTo(map);
+  if (S.pts[0].ll) spawnNearby(S.pts[0].ll);
+  go(sheets.order ? 'order' : 'form', 1);
+  setTimeout(fitAll, 380);
 }
 
 /* ---------------- геолокация ---------------- */
@@ -850,15 +1029,15 @@ function drawMe(ll, acc) {
 }
 async function setFrom(ll) {
   const p = S.pts[0];
-  if (p.ll || p.text.trim()) return;          // пользователь уже ввёл адрес сам
+  if (p.ll || p.text.trim()) return;
   p.ll = ll; p.text = 'Определяем адрес…'; p.city = '';
-  syncField(0); centerOn(ll, 16); updateRoute(false);
+  syncField(0); centerOn(ll, 16); updateRoute(false); spawnNearby(ll);
   let txt, city = '';
   try {
     const j = await getJSON(`${NOM}/reverse?format=jsonv2&addressdetails=1&zoom=18&accept-language=uk,ru&lat=${ll[0]}&lon=${ll[1]}`);
     const a = fmtAddr(j); txt = a.main; city = a.city;
   } catch (_) { txt = `${ll[0].toFixed(5)}, ${ll[1].toFixed(5)}`; }
-  if (S.pts[0] === p && p.ll === ll) { p.text = txt || 'Моё местоположение'; p.city = city; syncField(0); }
+  if (S.pts[0] === p && p.ll === ll) { p.text = txt || 'Моё местоположение'; p.city = city; syncField(0); drawMarkers(); }
 }
 function geolocate(initial) {
   let done = false;
@@ -884,25 +1063,37 @@ document.addEventListener('click', e => {
   else if (t.matches('.js-cls-open')) { formSheet.snap(2); setTimeout(() => $('#classes')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 320); }
   else if (t.matches('.js-find')) findCar();
   else if (t.matches('.js-cancel')) cancelRide();
+  else if (t.matches('.js-cancel-search')) cancelSearch();
   else if (t.matches('.js-add-stop')) addStop();
+  else if (t.matches('.js-back')) { go('form', 1); setTimeout(fitAll, 380); }
   else if (t.matches('.js-locate')) { if (S.me) centerOn(S.me, 16); else geolocate(false); }
   else if (t.matches('.js-call')) toast(`Звонок водителю (${S.car?.driver || ''}) — недоступен в демо`);
-  else if (t.matches('.js-msg')) toast('Сообщения недоступны в демо');
+  else if (t.matches('.js-msg')) toast('Чат с водителем недоступен в демо');
   else if (t.matches('.js-fit')) fitAll();
+  else if (t.matches('.js-collapse')) activeSheet().snap(1);
+  else if (t.matches('.js-expand')) activeSheet().snap(1);
+  else if (t.matches('.js-pedit')) { const r = $('#priceEdit'); r?.classList.toggle('hidden'); if (r && !r.classList.contains('hidden')) $('input', r)?.focus(); }
+  else if (t.matches('.js-pdone')) { $('#priceEdit')?.classList.add('hidden'); document.activeElement?.blur(); }
+  else if (t.matches('.js-pstep')) {
+    const v = Math.max(10, Math.round((+S.price || priceFor(S.cls)) + +t.dataset.d));
+    setPrice(String(v)); $('#searchSheet')?.classList.add('price-changed');
+  }
+  else if (t.matches('.js-search-at')) { $('#searchSheet')?.classList.remove('price-changed'); toast(`Ищем по ${fmtP(S.price)} ₴`); }
   else if (t.matches('.js-hint-close')) { $('#installHint')?.classList.add('hidden'); localStorage.setItem('taxi.hint', '1'); }
   else if (t.matches('.js-menu')) toast(`${C.name} — демо-эмулятор заказа такси`);
+  else if (t.matches('.js-share')) toast('Поделиться поездкой — недоступно в демо');
   else if (t.dataset.addr) {
     const i = S.pts.length - 1, p = S.pts[i];
     p.text = t.dataset.addr; p.ll = null; p.city = ''; syncField(i); resolveField(i);
   }
-  else if (t.matches('.js-deco')) toast('Раздел недоступен в демо');
+  else if (t.matches('.js-deco')) toast('Недоступно в демо');
 });
 map.on('click', () => { if (document.activeElement?.matches('input')) document.activeElement.blur(); });
 
 /* ---------------- как приложение (PWA) ---------------- */
 const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
 document.documentElement.classList.toggle('standalone', standalone);
-document.addEventListener('gesturestart', e => e.preventDefault());   // интерфейс не масштабируется щипком, карта — да
+document.addEventListener('gesturestart', e => e.preventDefault());
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
@@ -921,7 +1112,8 @@ if (!standalone && isIOS && !localStorage.getItem('taxi.hint')) {
 /* ---------------- старт ---------------- */
 renderFields();
 setCls(S.cls);
-syncPrice();
+setPrice(S.price);
+go('form', 1);
 geolocate(true);
 })();
 

@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<title>Сонях — такси (демо)</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,6 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
+<title>Сонях — такси (демо)</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.css">
 <style>
@@ -97,118 +97,229 @@ input{-webkit-user-select:text;user-select:text}
 body.dragging .mapbtn{transition:none}
 body.sheet-full .mapbtn{opacity:0;pointer-events:none}
 
-body{--accent:#FFD900;--accent2:#222;--to-bg:#222;--to-fg:#FFE033;--stop-bg:#555}
-.base-tiles{filter:grayscale(1) brightness(1.07) contrast(.9)}
-.menu{position:fixed;left:12px;top:calc(env(safe-area-inset-top) + 12px);z-index:15;width:76px;height:76px;border-radius:18px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.14);display:grid;place-items:center}
-.bonus{position:fixed;right:12px;top:calc(env(safe-area-inset-top) + 22px);z-index:15;height:58px;padding:0 10px 0 18px;border-radius:16px;background:linear-gradient(90deg,#FF7A1A,#FFB51E);color:#fff;box-shadow:0 2px 12px rgba(255,120,0,.3);display:flex;align-items:center;gap:8px;font-weight:600;font-size:22px}
-.locate{width:76px;height:76px;border-radius:18px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.16);display:grid;place-items:center}
-.sheet{background:#EDEDEE;border-radius:24px 24px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.12)}
-.grab{background:#fff}
+/* --- v4: общие элементы экранов --- */
+.ftext{display:none}
+.fbox .ftext{display:block;cursor:text;overflow-wrap:anywhere}
+.frow:not(.editing) .ftext~.finput{position:absolute;opacity:0;pointer-events:none;height:0!important;width:0}
+.frow.editing .ftext{display:none}
+.ftext.ph{color:#9aa3a8}
+.mk-to{width:24px;height:24px;border-radius:50%;background:radial-gradient(circle,#fff 0 4px,#1f2a30 4.6px);box-shadow:0 0 0 2px #fff,0 1px 5px rgba(0,0,0,.35)}
+.near-car,.car-ic{filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.car-ic{width:24px;height:48px}
+.apill{position:absolute;white-space:nowrap;display:flex;align-items:center;gap:8px;pointer-events:auto}
+.apill span{background:#fff;border-radius:8px;padding:7px 11px;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.14)}
+.pill-plus{width:32px;height:32px;border-radius:8px;background:#2b2d31;color:#fff;font-size:22px;line-height:1;display:grid;place-items:center}
+.js-steps{display:flex;align-items:center;justify-content:center;gap:6px}
+.js-steps i{width:28px;height:28px;border-radius:50%;border:3px solid #e6e6e6;display:grid;place-items:center;flex:none;font-style:normal;background:#fff}
+.js-steps i.act{border-color:#2aa883}
+.js-steps i.done{background:#2aa883;border-color:#2aa883}
+.js-steps i.done::after{content:"";width:9px;height:5px;border-left:2.5px solid #fff;border-bottom:2.5px solid #fff;transform:translateY(-1px) rotate(-45deg)}
+.js-steps b{width:40px;height:3px;border-radius:2px;background:#ececec}
+.js-steps b.done{background:#2aa883}
+
+/* ===== Жёлтый стиль: по скринам пользователя (главная, выбор класса, поиск, поездка) ===== */
+body{--y:#FFDD2D;--ink:#222326;--mute:#7c7f85;--bg:#F1F1F1;--line:#ececec;--red:#D0021B;--mint:#33D19B;--accent:#ffffff;--accent2:#222;--to-bg:#222326;color:var(--ink);font-size:17px;background:var(--bg)}
+.base-tiles.vector{filter:saturate(.4) brightness(1.05)}
+.leaflet-container{background:#ededed}
+
+/* кнопки на карте */
+.sq{position:fixed;z-index:15;width:42px;height:42px;border-radius:10px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.14);display:grid;place-items:center}
+.menu{left:6px;top:calc(env(safe-area-inset-top) + 8px)}
+.back,.down{left:6px;top:calc(env(safe-area-inset-top) + 8px);display:none}
+.bonus{position:fixed;z-index:15;right:6px;top:calc(env(safe-area-inset-top) + 12px);height:31px;padding:0 6px 0 11px;border-radius:9px;background:linear-gradient(90deg,#FF6E1A,#FFB01E);color:#fff;display:flex;align-items:center;gap:6px;font-weight:600;font-size:17px}
+.mapbtn{width:42px;height:42px;border-radius:10px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.14);display:grid;place-items:center;right:6px}
+.locate{bottom:calc(var(--sheet,280px) + 14px)}
+.fit{bottom:calc(var(--sheet,280px) + 64px)}
+.shield{bottom:calc(var(--sheet,280px) + 14px);display:none}
+.task{position:fixed;z-index:15;right:16px;top:calc(env(safe-area-inset-top) + 10px);width:84px;padding:6px 10px 8px;border-radius:10px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.14);display:none;text-align:center;font-weight:700;font-size:19px}
+.task i{display:block;height:7px;border-radius:4px;margin-top:3px;background:linear-gradient(90deg,#9ee6d3 0 55%,#2fb894 55% 60%,#e3e3e3 60%)}
+/* видимость по экранам */
+body:not(.st-form) .menu,body:not(.st-form) .bonus,body:not(.st-form) .locate,body:not(.st-form) .fit{display:none}
+body.st-order .back{display:grid}
+body.st-search .down,body.st-ride .down{display:grid}
+body.st-search .shield,body.st-ride .shield{display:grid}
+body.st-ride .task{display:block}
+.leaflet-top.leaflet-right{top:calc(env(safe-area-inset-top) + 50px)}
+body.st-ride .leaflet-top.leaflet-right{top:calc(env(safe-area-inset-top) + 64px)}
+/* карта в рамке на экране поездки */
+body.st-ride #map{top:calc(env(safe-area-inset-top) + 2px);left:8px;right:8px;border-radius:16px;border:1px solid #dcdcdc;overflow:hidden}
+body.st-ride .down{left:16px;top:calc(env(safe-area-inset-top) + 10px)}
+body.st-ride .shield{right:16px}
+
+/* панели */
+.sheet{background:#fff;border-radius:14px 14px 0 0;box-shadow:0 -2px 14px rgba(0,0,0,.08)}
+.handle{width:24px;height:4px;background:#d2d2d2;margin:6px auto 6px}
 .sbody{padding:0 0 10px}
-.card{background:#fff;padding:2px 16px 14px;border-radius:0 0 22px 22px;margin-bottom:10px}
-.card+.card{border-radius:22px;padding:14px 16px}
 
-/* адреса */
-.frow{gap:10px;margin-bottom:10px;align-items:center}
-.fdot{position:absolute;left:16px;top:23px;width:26px;height:26px;z-index:1;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;pointer-events:none}
-.frow.stop .fdot{background:#555;border-radius:50%;width:24px;height:24px;left:17px;top:24px}
-.fbox{background:#F0F0F0;border-radius:14px;height:72px;display:flex;align-items:center;padding:0 14px 0 56px}
-.finput{font-size:20px;line-height:30px;height:30px;color:#222}
-.hw{display:flex;align-items:center;background:#F0F0F0;border-radius:14px;height:72px;flex:none}
-.hw button{width:62px;height:72px;display:grid;place-items:center}
-.hw span{width:1px;height:36px;background:#cfcfd2}
-.sb{background:#F0F0F0;border-radius:12px;width:34px;height:34px}
-.sugg{background:#fff;border:1px solid #ececec;border-radius:14px;padding:0 10px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
-.addstop{display:flex;align-items:center;gap:12px;font-size:17px;font-weight:500;color:#222;padding:2px 2px 8px}
-.addstop i{width:28px;height:28px;border-radius:50%;background:#FFE033;display:grid;place-items:center;font-style:normal;font-size:20px;line-height:1}
-.recent{display:flex;overflow-x:auto;padding:12px 0 4px;margin:0 -16px;scrollbar-width:none}
+/* ----- главная ----- */
+#formSheet{background:var(--bg)}
+#formSheet .grab{background:#fff}
+.card{background:#fff;padding:2px 12px 12px;border-radius:0 0 14px 14px;margin-bottom:8px}
+.card+.card{border-radius:14px;padding:12px}
+.frow{gap:6px;margin-bottom:6px;align-items:center}
+.fdot{position:absolute;left:12px;top:13px;width:22px;height:22px;z-index:1;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;pointer-events:none}
+.frow.stop .fdot{background:#555;border-radius:50%;width:20px;height:20px;left:13px;top:14px}
+.fbox{background:#F0F0F0;border-radius:9px;height:48px;display:flex;align-items:center;padding:0 12px 0 44px}
+.finput{font-size:17px;line-height:24px;height:24px;color:var(--ink)}
+.hw{display:flex;align-items:center;background:#F0F0F0;border-radius:9px;height:48px;flex:none}
+.hw button{width:52px;height:48px;display:grid;place-items:center}
+.hw span{width:1px;height:24px;background:#cfcfd2}
+.sb{background:#F0F0F0;border-radius:9px;width:30px;height:30px}
+.sugg{background:#fff;border:1px solid #ececec;border-radius:10px;padding:0 10px}
+.addstop{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--ink);padding:2px 2px 4px}
+.addstop i{width:22px;height:22px;border-radius:50%;background:var(--y);display:grid;place-items:center;font-style:normal;font-size:17px;line-height:1}
+.recent{display:flex;overflow-x:auto;padding:10px 0 2px;margin:0 -12px;scrollbar-width:none}
 .recent::-webkit-scrollbar{display:none}
-.rc{flex:none;display:flex;align-items:center;gap:12px;padding:4px 16px;font-size:19px;white-space:nowrap;border-right:1px solid #ddd}
+.rc{flex:none;display:flex;align-items:center;gap:8px;padding:2px 12px;font-size:16px;white-space:nowrap;border-right:1px solid #ddd}
 .rc:last-child{border-right:0}
-.trip{margin-top:10px;display:inline-block;background:#FFF5BF;color:#222;border-radius:10px;padding:8px 12px;font-size:15px;font-weight:600}
-.lbl{font-size:15px;color:#777;margin-bottom:8px}
-.pricefield{display:flex;align-items:center;gap:6px;background:#F0F0F0;border-radius:14px;padding:0 16px;height:64px}
-.pricefield input{flex:1;min-width:0;border:0;outline:0;background:none;font-size:21px;font-weight:600}
-.pricefield span{font-size:21px;color:#777}
-.clsrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
-.cls{background:#F0F0F0;border-radius:14px;padding:10px;text-align:left;border:2px solid transparent;display:flex;flex-direction:column;align-items:flex-start}
-.cls.on{background:#FFE033;border-color:#222}
-.cls b{font-size:16px;font-weight:600}
-.cls small{font-size:12px;color:#666}
-.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.tile{position:relative;height:98px;border-radius:16px;background:#F2F2F2;padding:12px;text-align:left;font-size:17px;font-weight:500;overflow:hidden;display:block}
-.tile .em{position:absolute;right:8px;bottom:4px;font-size:38px;line-height:1}
-.tile .beta{display:inline-block;margin-top:6px;background:#3a3a3a;color:#fff;font-size:12px;font-weight:700;border-radius:6px;padding:3px 7px}
-.sfoot{background:#fff;padding:10px 16px calc(10px + env(safe-area-inset-bottom));border-top:1px solid #e6e6e6}
-.gobig{width:100%;height:60px;border-radius:16px;background:#FFE033;font-size:19px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px}
-.gobig .js-price-show{background:#222;color:#FFE033;border-radius:10px;padding:4px 10px;font-size:16px}
+.trip{margin-top:8px;display:inline-block;background:#FFF5BF;border-radius:8px;padding:5px 10px;font-size:14px;font-weight:600}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{position:relative;height:52px;border-radius:10px;background:#F2F2F2;padding:7px 8px;text-align:left;font-size:14px;overflow:hidden;display:block}
+.tile .em{position:absolute;right:4px;bottom:1px;font-size:22px;line-height:1}
+.tile .beta{position:absolute;left:8px;bottom:6px;background:#3a3a3a;color:#fff;font-size:10px;font-weight:700;border-radius:4px;padding:1px 5px}
 
-/* карточка поездки */
-.eta{padding:0 16px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.eta-t{font-size:19px;color:#555}
-.eta-t b{display:block;color:#222;font-size:28px;margin-top:2px}
-.eta-s{color:#777;font-size:15px;margin-top:4px}
-.eta-badge{flex:none;width:74px;height:74px;border-radius:18px;background:#FFE033;display:grid;place-items:center;text-align:center;font-weight:800;font-size:26px;line-height:1}
-.eta-badge small{display:block;font-size:13px;font-weight:600}
-.carrow{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.car-n{font-size:20px;font-weight:700;margin-top:10px}
-.car-c{color:#777;font-size:15px;margin-top:2px}
-.car-pic{width:90px;height:56px;display:grid;place-items:center;flex:none;background:#F2F2F2;border-radius:14px}
-.drv{display:flex;align-items:center;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid #eee}
-.ava{width:50px;height:50px;border-radius:14px;background:#FFE033;display:grid;place-items:center;font-weight:800;font-size:21px;flex:none}
-.drv b{display:block;font-size:18px}
-.drv .rate{color:#777;font-size:15px}
-.acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-.act{height:54px;border-radius:14px;background:#F0F0F0;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:600}
-.sec-h{font-size:15px;color:#777;margin-bottom:8px}
-.rr{display:flex;gap:12px;align-items:flex-start;padding:6px 0;position:relative;font-size:17px}
-.rr:not(:last-child)::after{content:"";position:absolute;left:9px;top:30px;bottom:-6px;width:2px;background:#ddd}
-.rdot{width:20px;height:20px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;background:#555}
-.rr.from .rdot{background:#FFE033;box-shadow:inset 0 0 0 6px #FFE033,inset 0 0 0 10px #222}
-.rr.to .rdot{background:#222}
-.rt{min-width:0;overflow-wrap:anywhere}
-.trip2{margin-top:8px;font-weight:700;font-size:16px}
-.prow{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.prow .pricefield{width:150px;height:56px}
-.cancel{width:100%;height:58px;border-radius:16px;background:#F0F0F0;color:#e5383b;font-weight:700;font-size:18px}
+/* пин «Откуда»: большой на главной и в поиске, точка — на выборе класса и в поездке */
+.pin2{position:relative;width:36px;height:60px}
+.pin2 .h{position:absolute;left:0;top:0;width:36px;height:36px;border-radius:50%;background:var(--y);display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.pin2 .h i{width:6px;height:6px;border-radius:50%;background:#333;margin-left:-14px}
+.pin2 .l{position:absolute;left:17px;top:34px;width:2.5px;height:22px;background:var(--y)}
+.pin2 .b{position:absolute;left:11px;bottom:-7px;width:14px;height:14px;border-radius:50%;background:rgba(255,221,45,.55);display:grid;place-items:center}
+.pin2 .b::after{content:"";width:4px;height:4px;border-radius:50%;background:#555}
+.pin2 .d{display:none;position:absolute;left:8px;bottom:-10px;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle,#222 0 3px,var(--y) 3.6px);box-shadow:0 0 0 6px rgba(120,170,255,.18)}
+body.st-order .pin2 .h,body.st-order .pin2 .l,body.st-order .pin2 .b,
+body.st-ride .pin2 .h,body.st-ride .pin2 .l,body.st-ride .pin2 .b{display:none}
+body.st-order .pin2 .d,body.st-ride .pin2 .d{display:block}
+.mk-num{width:22px;height:22px;font-size:11px;background:#222;border:2px solid #fff}
+.apill{display:none}
+body.st-order .apill{display:flex}
+.apill.from{transform:translate(-30%,14px)}
+.apill.to{transform:translate(-60%,-60px)}
+.ebub{transform:translate(-50%,-118%);width:48px;height:48px;border-radius:50%;background:rgba(255,221,45,.78);display:grid;place-content:center;text-align:center;font-size:19px;font-weight:500;color:#555;line-height:1}
+.ebub small{display:block;font-size:11px;margin-top:2px}
+body.st-search #searchSheet{display:flex}
 
-/* пин «Откуда» */
-.pin2{position:relative;width:56px;height:84px}
-.pin2 .h{position:absolute;left:0;top:0;width:56px;height:56px;border-radius:50%;background:#FFE033;box-shadow:0 3px 8px rgba(0,0,0,.22);display:grid;place-items:center}
-.pin2 .h i{width:9px;height:9px;border-radius:50%;background:#333}
-.pin2 .l{position:absolute;left:26.5px;top:54px;width:3px;height:30px;background:#FFD400;border-radius:2px}
+/* ----- выбор класса ----- */
+.chips{position:fixed;left:0;right:0;z-index:16;bottom:calc(var(--sheet,280px) + 10px);display:none;gap:8px;padding:0 8px;overflow-x:auto;scrollbar-width:none;transition:bottom .3s cubic-bezier(.2,.8,.2,1)}
+.chips::-webkit-scrollbar{display:none}
+body.dragging .chips{transition:none}
+body.st-order:not(.sheet-full) .chips{display:flex}
+.chips button{flex:none;height:36px;padding:0 14px;border-radius:10px;background:#fff;font-size:16px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+#orderSheet .sbody{padding:0 8px}
+.clsr{display:flex;align-items:center;gap:14px;width:100%;min-height:70px;padding:8px 14px 8px 8px;border-radius:10px;border:1.5px solid transparent;text-align:left;margin-bottom:2px}
+.clsr.on{border-color:#F2C230}
+.clsr .cimg{width:58px;flex:none;display:grid;place-items:center;position:relative;height:28px}
+.clsr .cimg svg{position:absolute}
+.clsr .cn{flex:1;min-width:0}
+.clsr b{display:block;font-weight:400;font-size:17px}
+.clsr small{display:flex;align-items:center;gap:4px;color:var(--mute);font-size:14px;margin-top:3px}
+.clsr .cp{font-size:16px}
+.promo{margin:6px 0 4px;background:#FCEB8F;border-radius:12px;padding:9px 12px;font-size:15px;display:flex;align-items:center;gap:6px}
+#orderSheet .sfoot{padding:8px 16px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.payrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cash{display:flex;align-items:center;gap:8px;font-size:16px}
+.gbtn{height:42px;padding:0 20px;border-radius:10px;background:#F1F1F1;font-size:16px}
+.order{width:100%;height:54px;border-radius:12px;background:var(--y);font-size:21px;font-weight:500;display:flex;align-items:center}
+.order span:first-child{flex:1;text-align:center;padding-left:52px}
+.order .cal{width:56px;height:30px;border-left:1.5px solid rgba(0,0,0,.18);display:grid;place-items:center}
+#priceEdit{display:flex;gap:8px;margin-bottom:8px}
+#priceEdit.hidden{display:none}
+.pricefield{flex:1;display:flex;align-items:center;gap:6px;background:#F1F1F1;border-radius:10px;padding:0 14px;height:44px}
+.pricefield input{flex:1;min-width:0;border:0;outline:0;background:none;font-size:18px;font-weight:600}
+.pricefield span{color:var(--mute)}
 
-/* v2: детали как в реальном приложении */
-body{--to-bg:#1d1d1f;--to-fg:#fff;--stop-bg:#1d1d1f}
-.base-tiles.vector{filter:saturate(.5) brightness(1.03)}
-.mk-num.to{font-size:0;background:radial-gradient(circle,#fff 0 4px,#1d1d1f 4.5px);border-color:#fff}
-.mapbtn.fit{width:76px;height:76px;border-radius:18px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.16);display:grid;place-items:center;bottom:calc(var(--sheet,280px) + 104px)}
-.dbub{transform:translate(-50%,-125%);width:46px;height:46px;border-radius:50%;background:#1d1d1f;color:#fff;display:grid;place-items:center;text-align:center;font-weight:700;font-size:15px;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.25)}
-.dbub small{display:block;font-size:10px;font-weight:500;opacity:.8}
-.ebub{transform:translate(18px,-104px);background:#FFE033;color:#1d1d1f;border-radius:10px;padding:4px 8px;font-size:14px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.2);text-align:center;line-height:1.05}
-.ebub small{display:block;font-size:10px;font-weight:600}
-.arr{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px 14px}
-.arr b{display:block;font-size:20px}
-.arr small{display:block;color:#777;font-size:14px;margin-top:3px;line-height:1.3}
-.arr .js-countdown{flex:none;background:#F0F0F0;border-radius:12px;padding:10px 12px;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
-.bigplate{font-size:26px;font-weight:800;letter-spacing:1px}
-.bigplate .ua{display:none}.bigplate .pn{padding:0}
-.ava{position:relative;border-radius:50%;background:#e9e9ea}
-.ava .rb{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.2);font-size:11px;font-weight:700;padding:1px 5px;white-space:nowrap}
+/* ----- поиск ----- */
+#searchSheet,#rideSheet{background:var(--bg);border-radius:16px 16px 0 0;box-shadow:0 -2px 14px rgba(0,0,0,.08)}
+#searchSheet .sbody,#rideSheet .sbody{padding-top:0!important}
+#searchSheet .sbody,#rideSheet .sbody{padding:0 8px calc(10px + env(safe-area-inset-bottom))}
+.wcard{background:#fff;border-radius:16px;margin:0 8px 8px}
+.sbody .wcard{margin:0 0 8px}
+.scard{padding:6px 0 0;text-align:center}
+.scard .js-steps{margin:14px 0 18px}
+.stage{font-size:18px;font-weight:600}
+.stsub{font-size:15px;color:var(--mute);margin:6px 0 16px}
+.prow{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding:16px 32px 6px}
+.pbtn{width:72px;height:44px;border-radius:10px;background:#F1F1F1;font-size:15px}
+.pbig{font-size:30px;font-weight:700;letter-spacing:-.5px}
+.hint{font-size:15px;color:var(--mute);padding:14px 16px 20px}
+.searchat{display:none;margin:10px 16px 16px;width:calc(100% - 32px);height:46px;border-radius:10px;background:var(--y);font-size:16px}
+#searchSheet.price-changed .hint{display:none}
+#searchSheet.price-changed .searchat{display:block}
+.redbtn{width:100%;height:62px;display:flex;align-items:center;justify-content:center;gap:12px;color:var(--red);font-size:17px}
+.sharebtn{width:100%;height:62px;display:flex;align-items:center;justify-content:center;gap:12px;font-size:17px}
+.h2{font-size:17px;font-weight:600;margin:18px 16px 10px}
+.routecard{padding:4px 16px 4px 16px}
+.rl{display:flex;gap:16px;align-items:center;position:relative;padding:10px 0}
+.rl+.rl .rx{border-top:1px solid var(--line);padding-top:10px}
+.rl+.rl{padding-top:0}
+.rl .rd{width:20px;height:20px;flex:none;border-radius:50%;font-style:normal;font-size:10px;font-weight:700;color:#fff;display:grid;place-items:center;background:#555}
+.rl.from .rd{background:radial-gradient(circle,#222 0 3px,var(--y) 3.6px)}
+.rl.to .rd{background:radial-gradient(circle,#fff 0 3px,#222 3.6px)}
+.rl:not(:last-child)::after{content:"";position:absolute;left:9px;top:34px;bottom:-14px;border-left:2px dotted #c9c9c9}
+.rx{flex:1;min-width:0}
+.rx small{display:block;color:var(--mute);font-size:14px}
+.rx span{display:block;font-size:17px;margin-top:1px}
+.paycard{display:flex;align-items:center;gap:14px;padding:12px 16px}
+.paycard .pv{flex:1}
+.paycard .pv small{display:block;color:var(--mute);font-size:16px}
+.paycard input{border:0;outline:0;background:transparent;font-size:17px;width:3.4em;padding:0}
+.taskcard{padding:14px 16px}
+.taskcard .tt{display:flex;gap:14px;align-items:flex-start}
+.taskcard b{display:block;font-weight:400;font-size:17px}
+.taskcard small{display:block;color:var(--mute);font-size:15px;margin-top:2px}
+.taskcard .bar{height:8px;border-radius:4px;background:#e9e9e9;margin-top:14px}
+#dim{position:fixed;inset:0;z-index:18;background:rgba(36,39,46,.92);display:none}
+#dim button{position:absolute;left:16px;top:calc(env(safe-area-inset-top) + 12px);height:40px;padding:0 16px;border-radius:10px;background:rgba(255,255,255,.1);color:#fff;font-size:16px}
+body.st-search.sheet-full #dim{display:block}
 
+/* ----- поездка ----- */
+.arr{display:flex;align-items:center;justify-content:space-between;padding:4px 16px 14px}
+.arr b{font-weight:500;font-size:19px}
+.etapill{background:#F1F1F1;border-radius:10px;padding:7px 14px;font-size:19px;font-weight:600}
+.carcard{padding:16px 0 0 16px;overflow:hidden}
+.carrow{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.bigplate{font-size:22px;font-weight:700;letter-spacing:.2px}
+.carsub{color:var(--mute);font-size:14px;margin-top:5px}
+.carpic{flex:none;width:96px;height:44px;position:relative}
+.carpic svg{position:absolute;left:0;top:0}
+.drv{display:flex;align-items:center;gap:14px;margin:14px 16px 0 0;padding:14px 0 16px;border-top:1px solid var(--line)}
+.ava{position:relative;width:46px;height:46px;flex:none}
+.ava .js-ava{display:block;width:44px;height:44px;border-radius:50%;overflow:hidden;border:1px solid #ddd}
+.ava .js-ava svg{width:100%;height:100%;display:block}
+.ava .rb{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);background:#fff;border:1px solid #d9d9d9;border-radius:7px;font-size:12px;padding:0 4px;white-space:nowrap}
+.dn{flex:1;min-width:0;padding-left:8px}
+.dn b{display:block;font-weight:500;font-size:17px}
+.dn small{display:block;color:var(--mute);font-size:14px;margin-top:2px}
+.cc{width:44px;height:44px;border-radius:10px;background:#F1F1F1;display:grid;place-items:center;flex:none}
+#miniBar{position:fixed;z-index:19;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 2px);height:62px;border-radius:16px;background:#fff;border:1px solid #dcdcdc;display:none;align-items:center;gap:12px;padding:0 14px 0 8px}
+body.st-ride.sheet-full #miniBar{display:flex}
+#miniBar .sqb{width:42px;height:42px;border-radius:10px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.14);display:grid;place-items:center;flex:none}
+.track{position:relative;flex:1;height:30px}
+.track::before{content:"";position:absolute;left:0;right:10px;top:13px;height:4px;border-radius:2px;background:#e2e2e2}
+.track .done{position:absolute;left:0;top:13px;height:4px;border-radius:2px;background:#222;width:calc(var(--prog,0) * (100% - 20px))}
+.track .tcar{position:absolute;display:block;top:50%;left:calc(var(--prog,0) * (100% - 34px));width:14px;height:28px;transform:translate(7px,-50%) rotate(90deg);filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+.track .tcar svg{display:block}
+.track .tend{position:absolute;right:0;top:5px;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle,#222 0 3px,var(--y) 3.6px)}
+body.arrived .etapill{background:#E5F7EF}
 </style>
 </head>
 <body>
 <div id="map"></div>
 
-<button class="menu js-menu" aria-label="Меню"><svg width="30" height="22" viewBox="0 0 30 22"><path d="M2 2h26M2 11h26M2 20h26" stroke="#333" stroke-width="2.6" stroke-linecap="round"/></svg></button>
-<div class="bonus">680<svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#FFD43A"/><circle cx="17" cy="17" r="11" fill="#FFB800"/><path d="M13 12.5c2-1.4 6-1 6.6 1.6.5 2.3-3.5 3-3.5 5.6" fill="none" stroke="#FFE680" stroke-width="2.4" stroke-linecap="round"/></svg></div>
-<button class="locate mapbtn js-locate" aria-label="Моё местоположение"><svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="#333" stroke-width="2.4"><circle cx="17" cy="17" r="9"/><circle cx="17" cy="17" r="3.6" fill="#333"/><path d="M17 2v6M17 26v6M2 17h6M26 17h6" stroke-linecap="round"/></svg></button>
-<button class="mapbtn fit js-fit" aria-label="Показать весь маршрут"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#333" stroke-width="2.2" stroke-linecap="round"><circle cx="6" cy="20" r="3"/><circle cx="20" cy="6" r="3"/><path d="M8.5 18 17.5 8"/></svg></button>
+<button class="sq menu js-menu" aria-label="Меню"><svg width="20" height="14" viewBox="0 0 20 14"><path d="M1 1h18M1 7h18M1 13h18" stroke="#333" stroke-width="2" stroke-linecap="round"/></svg></button>
+<button class="sq back js-back" aria-label="Назад"><svg width="20" height="16" viewBox="0 0 20 16"><path d="M19 8H2M8 1 1 8l7 7" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+<button class="sq down js-collapse" aria-label="Свернуть"><svg width="16" height="10" viewBox="0 0 16 10"><path d="M1.5 1.5 8 8l6.5-6.5" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+<div class="bonus">680<svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="10" fill="#FFD43A"/><circle cx="11" cy="11" r="7.4" fill="#FFB800"/><path d="M8.3 8.2c1.4-1 4.1-.7 4.5 1.1.3 1.6-2.4 2-2.4 3.8" fill="none" stroke="#FFE680" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+<div class="task">+40 <svg width="16" height="16" viewBox="0 0 16 16" style="vertical-align:-1px"><circle cx="8" cy="8" r="7.5" fill="#FFC41F"/><circle cx="8" cy="8" r="5" fill="#FFD84F"/></svg><i></i></div>
+<button class="mapbtn fit js-fit" aria-label="Весь маршрут"><svg width="20" height="20" viewBox="0 0 22 22" fill="none" stroke="#333" stroke-width="2"><circle cx="5" cy="5" r="3"/><circle cx="17" cy="17" r="3"/><path d="M7.2 7.2l7.6 7.6" stroke-linecap="round"/></svg></button>
+<button class="mapbtn locate js-locate" aria-label="Моё местоположение"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#333" stroke-width="2"><circle cx="11" cy="11" r="6"/><circle cx="11" cy="11" r="2.4" fill="#333"/><path d="M11 1v3.5M11 17.5V21M1 11h3.5M17.5 11H21" stroke-linecap="round"/></svg></button>
+<button class="mapbtn shield js-fit" aria-label="Безопасность"><svg width="14" height="20" viewBox="0 0 14 20" fill="none" stroke="#333" stroke-width="1.6"><path d="M7 1 13 3.5V9c0 4.6-2.6 8.3-6 10C3.6 17.3 1 13.6 1 9V3.5Z"/><path d="M7 1v18" /></svg></button>
+<div class="chips"><button class="js-deco">Комментарий</button><button class="js-deco">Еду я</button><button class="js-deco">Дополнительные услуги</button></div>
+<div id="dim"><button class="js-collapse">Скрыть детали</button></div>
+<div id="miniBar"><button class="sqb js-expand" aria-label="Развернуть карту"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#222" stroke-width="1.8" stroke-linecap="round"><path d="M10.5 1.5h6v6M16.5 1.5l-6 6M7.5 16.5h-6v-6M1.5 16.5l6-6"/></svg></button><div class="track"><span class="done"></span><span class="tcar" data-car-top="#FFD21F" data-w="14" data-glass="#222"></span><span class="tend"></span></div></div>
 <div id="searching"><span class="spin"></span>Ищем машину…</div>
 <div id="toast" role="status"></div>
 
-<!-- Панель заказа -->
+<!-- Главная: адреса -->
 <section class="sheet" id="formSheet">
   <div class="grab"><div class="handle"></div></div>
   <div class="sbody">
@@ -216,25 +327,16 @@ body{--to-bg:#1d1d1f;--to-fg:#fff;--stop-bg:#1d1d1f}
       <div id="fields"></div>
       <button class="addstop js-add-stop"><i>+</i>Добавить остановку</button>
       <div class="recent">
-        <button class="rc" data-addr="Соляниковский переулок, 11, Харьков"><svg width="20" height="26" viewBox="0 0 20 26"><path d="M10 1a8.5 8.5 0 0 0-8.5 8.5C1.5 16 10 25 10 25s8.5-9 8.5-15.5A8.5 8.5 0 0 0 10 1z" fill="#555"/><circle cx="10" cy="9.5" r="3.2" fill="#fff"/></svg>Соляниковский переулок, 11</button>
-        <button class="rc" data-addr="Академика Павлова улица, 120, Харьков"><svg width="20" height="26" viewBox="0 0 20 26"><path d="M10 1a8.5 8.5 0 0 0-8.5 8.5C1.5 16 10 25 10 25s8.5-9 8.5-15.5A8.5 8.5 0 0 0 10 1z" fill="#555"/><circle cx="10" cy="9.5" r="3.2" fill="#fff"/></svg>Академика Павлова улица, 120</button>
-        <button class="rc" data-addr="Сумская улица, 25, Харьков"><svg width="20" height="26" viewBox="0 0 20 26"><path d="M10 1a8.5 8.5 0 0 0-8.5 8.5C1.5 16 10 25 10 25s8.5-9 8.5-15.5A8.5 8.5 0 0 0 10 1z" fill="#555"/><circle cx="10" cy="9.5" r="3.2" fill="#fff"/></svg>Сумская улица, 25</button>
+        <button class="rc" data-addr="Соляниковский переулок, 11, Харьков"><svg width="14" height="18" viewBox="0 0 20 26"><path d="M10 1a8.5 8.5 0 0 0-8.5 8.5C1.5 16 10 25 10 25s8.5-9 8.5-15.5A8.5 8.5 0 0 0 10 1z" fill="#555"/><circle cx="10" cy="9.5" r="3.2" fill="#fff"/></svg>Соляниковский переулок, 11</button>
+        <button class="rc" data-addr="Академика Павлова улица, 120, Харьков"><svg width="14" height="18" viewBox="0 0 20 26"><path d="M10 1a8.5 8.5 0 0 0-8.5 8.5C1.5 16 10 25 10 25s8.5-9 8.5-15.5A8.5 8.5 0 0 0 10 1z" fill="#555"/><circle cx="10" cy="9.5" r="3.2" fill="#fff"/></svg>Академика Павлова улица, 120</button>
+        <button class="rc" data-addr="Сумская улица, 25, Харьков"><svg width="14" height="18" viewBox="0 0 20 26"><path d="M10 1a8.5 8.5 0 0 0-8.5 8.5C1.5 16 10 25 10 25s8.5-9 8.5-15.5A8.5 8.5 0 0 0 10 1z" fill="#555"/><circle cx="10" cy="9.5" r="3.2" fill="#fff"/></svg>Сумская улица, 25</button>
       </div>
       <div class="trip js-trip hidden"></div>
-    </div>
-    <div class="card" id="classes">
-      <div class="lbl">Стоимость, ₴</div>
-      <label class="pricefield"><input class="js-price" type="text" inputmode="decimal" placeholder="Введите сумму" autocomplete="off"><span>₴</span></label>
-      <div class="clsrow">
-        <button class="cls js-cls" data-c="economy"><b>Эконом</b><small>1-4 пассажира</small></button>
-        <button class="cls js-cls" data-c="standard"><b>Стандарт</b><small>1-4 пассажира</small></button>
-        <button class="cls js-cls" data-c="comfort"><b>Комфорт</b><small>1-4 пассажира</small></button>
-      </div>
     </div>
     <div class="card">
       <div class="tiles">
         <button class="tile js-deco">Доставка<span class="em">📦</span></button>
-        <button class="tile js-deco">Путешествия<br><span class="beta">BETA</span><span class="em">🚌</span></button>
+        <button class="tile js-deco">Путешествия<span class="beta">BETA</span><span class="em">🚌</span></button>
         <button class="tile js-deco">Автопомощь<span class="em">🛠️</span></button>
         <button class="tile js-deco">Перегон авто<span class="em">🚗</span></button>
         <button class="tile js-deco">Межгород<span class="em">🛣️</span></button>
@@ -242,36 +344,74 @@ body{--to-bg:#1d1d1f;--to-fg:#fff;--stop-bg:#1d1d1f}
       </div>
     </div>
   </div>
+</section>
+
+<!-- Выбор класса и заказ -->
+<section class="sheet off" id="orderSheet">
+  <div class="grab"><div class="handle"></div></div>
+  <div class="sbody">
+    <div id="clsList"></div>
+    <div class="promo">Еще 2 поездки и +40 <svg width="18" height="18" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.5" fill="#FFC41F"/><circle cx="8" cy="8" r="5" fill="#FFD84F"/></svg></div>
+  </div>
   <div class="sfoot">
-    <button class="gobig js-find">Найти машину <span class="js-price-show hidden"></span></button>
+    <div id="priceEdit" class="hidden"><label class="pricefield"><input class="js-price" type="text" inputmode="decimal" autocomplete="off" aria-label="Своя цена"><span>₴</span></label><button class="gbtn js-pdone">Готово</button></div>
+    <div class="payrow">
+      <button class="cash js-deco"><svg width="26" height="24" viewBox="0 0 26 24"><rect x="2" y="5" width="15" height="17" rx="2" transform="rotate(-14 9 13)" fill="#e7f6ef" stroke="#1d7a55" stroke-width="1.4"/><rect x="8" y="3" width="15" height="17" rx="2" transform="rotate(10 15 11)" fill="#e7f6ef" stroke="#1d7a55" stroke-width="1.4"/><circle cx="15.5" cy="11.5" r="2.6" fill="#2fb894"/></svg>Наличные <svg width="7" height="12" viewBox="0 0 7 12"><path d="M1 1l5 5-5 5" fill="none" stroke="#222" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+      <button class="gbtn js-pedit">Изменить цену</button>
+    </div>
+    <button class="order js-find"><span>Заказать</span><span class="cal"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#222" stroke-width="1.6"><rect x="1.5" y="3.5" width="16" height="15" rx="2"/><path d="M1.5 8h16M6 1.5v4M13 1.5v4" stroke-linecap="round"/><circle cx="16.5" cy="16.5" r="4.5" fill="#FFDD2D"/><path d="M16.5 14.5v2.2l1.4 1" stroke-linecap="round"/></svg></span></button>
   </div>
 </section>
 
-<!-- Карточка поездки -->
+<!-- Поиск машины -->
+<section class="sheet off" id="searchSheet">
+  <div class="sbody" style="padding-top:0">
+    <div class="wcard scard">
+      <div class="grab" style="padding-top:2px"><div class="handle"></div>
+        <div class="js-steps"><i></i><b></b><i></i><b></b><i></i><b></b><i></i></div>
+        <div class="stage js-stage">Приняли заказ...</div>
+        <div class="stsub js-cls-name">Стандарт</div>
+      </div>
+      <div class="prow"><button class="pbtn js-pstep" data-d="-10">-10 ₴</button><span class="pbig js-price-cur"></span><button class="pbtn js-pstep" data-d="10">+10 ₴</button></div>
+      <div class="hint">↑ Повышай цену, чтобы быстрее найти водителя</div>
+      <button class="searchat js-search-at">Искать по <span class="js-price-cur"></span></button>
+    </div>
+    <div class="wcard"><button class="redbtn js-cancel-search">Отменить заказ</button></div>
+    <div class="h2">Маршрут</div>
+    <div class="wcard routecard js-route-list"></div>
+    <div class="h2">Метод оплаты</div>
+    <div class="wcard paycard"><svg width="26" height="24" viewBox="0 0 26 24"><rect x="2" y="5" width="15" height="17" rx="2" transform="rotate(-14 9 13)" fill="#e7f6ef" stroke="#1d7a55" stroke-width="1.4"/><rect x="8" y="3" width="15" height="17" rx="2" transform="rotate(10 15 11)" fill="#e7f6ef" stroke="#1d7a55" stroke-width="1.4"/><circle cx="15.5" cy="11.5" r="2.6" fill="#2fb894"/></svg><div class="pv"><span class="js-price-cur"></span><small>Наличные</small></div><button class="gbtn js-deco">Изменить</button></div>
+  </div>
+</section>
+
+<!-- Поездка -->
 <section class="sheet off" id="rideSheet">
-  <div class="grab">
-    <div class="handle"></div>
-    <div class="arr">
-      <div><b class="js-arrive-title" data-t="Время прибытия">Время прибытия</b><small>Машина в <span id="rcDist"></span> · <span id="rcEta"></span>.<br>Маршрут может измениться из-за дорожной ситуации</small></div>
-      <span class="js-countdown">00:00</span>
+  <div class="sbody" style="padding-top:0">
+    <div class="wcard">
+      <div class="grab"><div class="handle"></div>
+        <div class="arr"><b class="js-arrive-title" data-t="Приедет через" data-arrived="Водитель на месте">Приедет через</b><span class="etapill js-eta-min"></span></div>
+      </div>
     </div>
-  </div>
-  <div class="sbody">
-    <div class="card" style="padding-top:14px">
+    <div class="wcard carcard">
       <div class="carrow">
-        <div><div class="bigplate" id="rcPlate"></div><div class="car-c"><span id="rcModel"></span> · <span id="rcColor"></span></div></div>
-        <div class="car-pic" id="rcCarPic"></div>
+        <div><div class="bigplate js-plate"></div><div class="carsub"><span class="js-car-full"></span> • <span class="js-cls-name"></span></div></div>
+        <div class="carpic js-car-side" data-w="100"></div>
       </div>
-      <div class="drv"><div class="ava"><span id="rcAva"></span><span class="rb"><span id="rcRating"></span> ★</span></div><div><b id="rcDriver"></b><span class="rate js-trips"></span></div></div>
-      <div class="acts">
-        <button class="act js-call"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M6.6 10.8a15.2 15.2 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z" fill="#333"/></svg>Позвонить</button>
-        <button class="act js-msg"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 3h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 1-2z" fill="#333"/></svg>Сообщение</button>
+      <div class="drv">
+        <div class="ava"><span class="js-ava"></span><span class="rb"><span class="js-rating"></span> ⭐</span></div>
+        <div class="dn"><b class="js-driver"></b><small class="js-trips"></small></div>
+        <button class="cc js-call" aria-label="Связаться с водителем"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#222" stroke-width="1.7"><path d="M4.6 9.4a12.6 12.6 0 0 0 5.5 5.5l1.8-1.8a.8.8 0 0 1 .85-.2 9.5 9.5 0 0 0 3 .47.8.8 0 0 1 .8.8v2.9a.8.8 0 0 1-.8.8A14 14 0 0 1 2 3.8.8.8 0 0 1 2.8 3h2.9a.8.8 0 0 1 .8.8c0 1 .16 2 .47 3a.8.8 0 0 1-.2.85z"/><path d="M13 2h8a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-4l-3 2.5V9h-1a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" fill="#222" stroke="none"/><circle cx="15" cy="5.5" r=".9" fill="#fff" stroke="none"/><circle cx="17.5" cy="5.5" r=".9" fill="#fff" stroke="none"/><circle cx="20" cy="5.5" r=".9" fill="#fff" stroke="none"/></svg></button>
       </div>
     </div>
-    <div class="card"><div class="sec-h">Маршрут поездки · <span class="js-cls-name"></span></div><div id="rcRoute"></div><div class="trip2" id="rcTrip"></div></div>
-    <div class="card prow"><div><div class="sec-h" style="margin:0">Стоимость</div><small style="color:#777">можно изменить</small></div><label class="pricefield"><input class="js-price" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span>₴</span></label></div>
+    <div class="wcard"><button class="redbtn js-cancel"><svg width="18" height="18" viewBox="0 0 18 18" stroke="#D0021B" stroke-width="2.2" stroke-linecap="round"><path d="M2 2l14 14M16 2 2 16"/></svg>Отменить заказ</button></div>
+    <div class="wcard"><button class="sharebtn js-share"><svg width="20" height="22" viewBox="0 0 20 22" fill="none" stroke="#222" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14V1.5M5.5 6 10 1.5 14.5 6M6.5 9H2.5v11.5h15V9h-4"/></svg>Поделиться поездкой</button></div>
+    <div class="h2">Маршрут</div>
+    <div class="wcard routecard js-route-list"></div>
+    <div class="h2">Метод оплаты</div>
+    <div class="wcard paycard"><svg width="26" height="24" viewBox="0 0 26 24"><rect x="2" y="5" width="15" height="17" rx="2" transform="rotate(-14 9 13)" fill="#e7f6ef" stroke="#1d7a55" stroke-width="1.4"/><rect x="8" y="3" width="15" height="17" rx="2" transform="rotate(10 15 11)" fill="#e7f6ef" stroke="#1d7a55" stroke-width="1.4"/><circle cx="15.5" cy="11.5" r="2.6" fill="#2fb894"/></svg><div class="pv"><label><input class="js-price" type="text" inputmode="decimal" autocomplete="off" aria-label="Стоимость"> ₴</label><small>Наличные</small></div></div>
+    <div class="h2">Текущее задание</div>
+    <div class="wcard taskcard"><div class="tt"><svg width="22" height="22" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.5" fill="#FFC41F"/><circle cx="8" cy="8" r="5" fill="#FFD84F"/></svg><div><b>+40 бонусов</b><small>После выполнения этой и ещё 1 поездки</small></div></div><div class="bar"></div></div>
   </div>
-  <div class="sfoot"><button class="cancel js-cancel">Отменить</button></div>
 </section>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -279,26 +419,37 @@ body{--to-bg:#1d1d1f;--to-fg:#fff;--stop-bg:#1d1d1f}
 <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
 <script>
 window.APP = {
-  vectorStyle: 'https://tiles.openfreemap.org/styles/liberty',
-  taxiColor: '#FFC928',
-  destBubble: (km, min) => `<div class="bubble"><div class="dbub">${min}<small>мин</small></div></div>`,
-  etaBubble: min => `<div class="bubble"><div class="ebub">${min}<small>мин</small></div></div>`,
   name: 'Сонях',
-  tiles: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-  fallbackTiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-  attr: '© OpenStreetMap',
+  vectorStyle: 'https://tiles.openfreemap.org/styles/liberty',
+  classes: ['fast', 'standard', 'comfort', 'business'],
+  seats: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#7c7f85" stroke-width="1.4"><circle cx="7" cy="4.5" r="3"/><path d="M1.5 13c.5-3 2.6-4.6 5.5-4.6s5 1.6 5.5 4.6z"/></svg> 4',
+  clsImg: id => id === 'fast'
+    ? `<span style="position:absolute;left:-2px;top:2px">${carSide('#FFD21F', { w: 40 })}</span><span style="position:absolute;left:18px;top:0">${carSide('#2b2d31', { w: 42, dark: true })}</span>`
+    : carSide(id === 'business' ? '#2b2d31' : '#FFD21F', { w: 56, dark: id === 'business' }),
   ph: { from: 'Откуда', to: 'Куда едем?', stop: 'Остановка' },
   showSub: false,
   dot: {
-    from: '<svg width="22" height="28" viewBox="0 0 22 28"><path d="M11 2a8.5 8.5 0 0 0-8.5 8.5C2.5 17 11 26 11 26s8.5-9 8.5-15.5A8.5 8.5 0 0 0 11 2z" fill="none" stroke="#333" stroke-width="2.2"/><circle cx="11" cy="10.5" r="2.6" fill="#333"/></svg>',
-    to: '<svg width="24" height="20" viewBox="0 0 24 20"><path d="M2 10h19M13 2l8 8-8 8" fill="none" stroke="#333" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    from: '<svg width="18" height="22" viewBox="0 0 22 28"><path d="M11 2a8.5 8.5 0 0 0-8.5 8.5C2.5 17 11 26 11 26s8.5-9 8.5-15.5A8.5 8.5 0 0 0 11 2z" fill="none" stroke="#333" stroke-width="2.2"/><circle cx="11" cy="10.5" r="2.6" fill="#333"/></svg>',
+    to: '<svg width="20" height="16" viewBox="0 0 24 20"><path d="M2 10h19M13 2l8 8-8 8" fill="none" stroke="#333" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
   },
-  toExtra: '<div class="hw"><button class="js-deco" aria-label="Дом"><svg width="30" height="28" viewBox="0 0 30 28" fill="none" stroke="#444" stroke-width="2"><path d="M3 13 14 4l11 9M6 11v13h16V11"/><path d="M24 2v7M20.5 5.5h7" stroke-linecap="round"/></svg></button><span></span><button class="js-deco" aria-label="Работа"><svg width="30" height="28" viewBox="0 0 30 28" fill="none" stroke="#444" stroke-width="2"><rect x="3" y="9" width="20" height="15" rx="2"/><path d="M9 9V6h8v3M3 15h20"/><path d="M25 2v7M21.5 5.5h7" stroke-linecap="round"/></svg></button></div>',
-  pin: { html: '<div class="pin2"><div class="h"><i></i></div><div class="l"></div></div>', size: [56, 84], anchor: [28, 84] },
-  route: { color: '#222222', casing: '#FFE033' },
-  carRoute: '#2f6fe0',
-  formSnaps: (H, top) => { const lo = Math.min(290, H * 0.45); return [lo, Math.max(lo + 80, H * 0.6), H - top - 64]; },
-  rideSnaps: (H, top) => { const lo = Math.min(210, H * 0.32); return [lo, Math.max(lo + 80, H * 0.58), H - top - 64]; }
+  toExtra: '<div class="hw"><button class="js-deco" aria-label="Дом"><svg width="24" height="22" viewBox="0 0 30 28" fill="none" stroke="#444" stroke-width="2"><path d="M3 13 14 4l11 9M6 11v13h16V11"/><path d="M24 2v7M20.5 5.5h7" stroke-linecap="round"/></svg></button><span></span><button class="js-deco" aria-label="Работа"><svg width="24" height="22" viewBox="0 0 30 28" fill="none" stroke="#444" stroke-width="2"><rect x="3" y="9" width="20" height="15" rx="2"/><path d="M9 9V6h8v3M3 15h20"/><path d="M25 2v7M21.5 5.5h7" stroke-linecap="round"/></svg></button></div>',
+  pin: { html: '<div class="pin2"><div class="h"><i></i></div><div class="l"></div><div class="b"></div><div class="d"></div></div>', size: [36, 60], anchor: [18, 60] },
+  route: { color: '#2b2d31', weight: 4 },
+  carRoute: { color: '#33D19B', weight: 5 },
+  mapCar: 'real', taxiColor: '#FFD21F',
+  addrPills: true,
+  searchCircle: true,
+  searchMs: 4200,
+  stages: [[0, 1, 'Приняли заказ...'], [1400, 2, 'Ожидание ответа...'], [2800, 3, 'Большой спрос, но ищем...']],
+  plateJoin: '',
+  rideHideTrip: true,
+  fitExtraBottom: 64,
+  etaBubble: min => `<div class="bubble"><div class="ebub">${min}<small>мин</small></div></div>`,
+  fitTop: 70,
+  formSnaps: (H, top) => [Math.round(H * 0.3), Math.round(H * 0.45), H - top - 60],
+  orderSnaps: (H, top) => [Math.round(H * 0.32), Math.max(430, Math.round(H * 0.52)), H - top - 60],
+  searchSnaps: (H, top) => [Math.round(H * 0.26), Math.max(370, Math.round(H * 0.45)), H - top - 72],
+  rideSnaps: (H, top) => [96, Math.max(330, Math.round(H * 0.42)), H - top - 72]
 };
 (() => {
 'use strict';
@@ -315,6 +466,8 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = a => a[Math.floor(Math.random() * a.length)];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const setText = (sel, v) => $$(sel).forEach(el => { el.textContent = v; });
+const setHTML = (sel, v) => $$(sel).forEach(el => { el.innerHTML = v; });
 
 /* ---------------- геометрия ---------------- */
 const ER = 6371000, rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
@@ -352,12 +505,50 @@ async function getJSON(url, ms = 10000, outer) {
     throw e;
   } finally { clearTimeout(t); }
 }
-
 let toastT;
 function toast(msg, ms = 3400) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms);
 }
+
+/* ---------------- рисунки машин (свои SVG) ---------------- */
+// вид сверху: для карты. glass — стёкла, roof — крыша (у «Теслы» стеклянная)
+function carTop(body, { glass = '#1f2429', roof = body, w = 24, shade = 'rgba(0,0,0,.35)' } = {}) {
+  const h = Math.round(w * 2);
+  return `<svg viewBox="0 0 24 48" width="${w}" height="${h}" aria-hidden="true">
+<path d="M6 3.2Q12 .6 18 3.2L20.6 9.5Q21.3 12 21.3 15V39.5Q21.3 45.6 12 45.8Q2.7 45.6 2.7 39.5V15Q2.7 12 3.4 9.5Z" fill="${body}" stroke="${shade}" stroke-width=".8"/>
+<rect x=".4" y="15.2" width="3.4" height="2.6" rx="1.2" fill="${body}" stroke="${shade}" stroke-width=".5"/>
+<rect x="20.2" y="15.2" width="3.4" height="2.6" rx="1.2" fill="${body}" stroke="${shade}" stroke-width=".5"/>
+<path d="M4.6 15.6Q12 11.6 19.4 15.6L18.2 21.6Q12 20 5.8 21.6Z" fill="${glass}"/>
+<rect x="5.9" y="21.8" width="12.2" height="12.6" rx="2.4" fill="${roof}"/>
+<path d="M5.4 21.9 4.3 34.2" stroke="${glass}" stroke-width="1.1"/><path d="M18.6 21.9 19.7 34.2" stroke="${glass}" stroke-width="1.1"/>
+<path d="M5.8 35Q12 36.6 18.2 35L19.2 39.6Q12 42 4.8 39.6Z" fill="${glass}"/>
+<path d="M6.2 4.2Q7.6 3.4 9 3.2L8.6 5.2Z" fill="#fffbe0"/><path d="M17.8 4.2Q16.4 3.4 15 3.2L15.4 5.2Z" fill="#fffbe0"/>
+<rect x="4.2" y="43.2" width="3.2" height="1.3" rx=".6" fill="#e0453a"/><rect x="16.6" y="43.2" width="3.2" height="1.3" rx=".6" fill="#e0453a"/>
+</svg>`;
+}
+// вид сбоку: для карточек и списка классов
+function carSide(body, { w = 120, glass = '#2b3036', dark = false } = {}) {
+  const h = Math.round(w * 50 / 120);
+  const hl = dark ? '#d9e6ff' : '#fff8d6';
+  return `<svg viewBox="0 0 120 50" width="${w}" height="${h}" aria-hidden="true">
+<ellipse cx="60" cy="45.5" rx="55" ry="3" fill="rgba(0,0,0,.16)"/>
+<path d="M4.5 33.5Q4 27 11 25.4L33 21.6Q43.5 11.2 57 10.2H76Q88 10.8 99 20.6L110.5 23Q116.5 24.6 116 32.5V36.5Q116 40.6 112 40.6H8.4Q4.6 40.6 4.5 37Z" fill="${body}" stroke="rgba(0,0,0,.25)" stroke-width=".7"/>
+<path d="M37.5 21.4Q46.5 13 57.5 12.6H66V21.4Z" fill="${glass}"/>
+<path d="M69 12.6H76Q86.5 13.2 94.5 21.4H69Z" fill="${glass}"/>
+<path d="M8 30.2H113" stroke="rgba(0,0,0,.14)" stroke-width="1"/>
+<path d="M67.5 12.6V39" stroke="rgba(0,0,0,.18)" stroke-width=".8"/>
+<rect x="58" y="24.5" width="5.5" height="1.6" rx=".8" fill="rgba(0,0,0,.3)"/><rect x="86" y="24.5" width="5.5" height="1.6" rx=".8" fill="rgba(0,0,0,.3)"/>
+<path d="M108 24.6 115 27.2 114.4 29.6 107.6 28.4Z" fill="${hl}"/>
+<rect x="4.6" y="26.6" width="4.4" height="3.4" rx="1" fill="#d8392f"/>
+<circle cx="30" cy="40" r="8.6" fill="#1b1d20"/><circle cx="30" cy="40" r="4.6" fill="#c9ccd1"/><circle cx="30" cy="40" r="1.6" fill="#6b7077"/>
+<circle cx="92" cy="40" r="8.6" fill="#1b1d20"/><circle cx="92" cy="40" r="4.6" fill="#c9ccd1"/><circle cx="92" cy="40" r="1.6" fill="#6b7077"/>
+</svg>`;
+}
+const avatarSvg = `<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" fill="#d9dde2"/><circle cx="32" cy="25" r="11" fill="#9aa3ad"/><path d="M11 60Q13 41 32 41Q51 41 53 60Z" fill="#9aa3ad"/></svg>`;
+window.carTop = carTop; window.carSide = carSide;
+$$('[data-car-side]').forEach(el => { el.innerHTML = carSide(el.dataset.carSide, { w: +el.dataset.w || 120 }); });
+$$('[data-car-top]').forEach(el => { el.innerHTML = carTop(el.dataset.carTop, { w: +el.dataset.w || 24, glass: el.dataset.glass || '#1f2429' }); });
 
 /* ---------------- карта ---------------- */
 const map = L.map('map', { zoomControl: false, attributionControl: false, zoomSnap: 0.25 }).setView(KH, 15);
@@ -366,7 +557,6 @@ function rasterBase() {
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap', className: 'base-tiles raster' }).addTo(map);
 }
 if (C.vectorStyle && window.L.maplibreGL && hasWebGL) {
-  // векторная карта (OpenFreeMap, без ключа): чистая, как в приложениях такси
   try {
     const gl = L.maplibreGL({
       style: C.vectorStyle, className: 'base-tiles vector',
@@ -388,44 +578,37 @@ if (C.vectorStyle && window.L.maplibreGL && hasWebGL) {
 } else rasterBase();
 L.control.attribution({ position: 'topright', prefix: false }).addTo(map);
 const layers = {
-  me: L.layerGroup().addTo(map), route: L.layerGroup().addTo(map),
+  me: L.layerGroup().addTo(map), nearby: L.layerGroup().addTo(map), route: L.layerGroup().addTo(map),
   car: L.layerGroup().addTo(map), mk: L.layerGroup().addTo(map)
 };
 const icon = (html, size, anchor) => L.divIcon({ html, className: '', iconSize: size, iconAnchor: anchor });
 
-function carSvg(color, w = 24) {
-  const h = Math.round(w * 44 / 24);
-  return `<svg viewBox="0 0 24 44" width="${w}" height="${h}" aria-hidden="true">
-<rect x="1.5" y="1.5" width="21" height="41" rx="7" fill="${color}" stroke="rgba(0,0,0,.45)" stroke-width="1"/>
-<path d="M4.3 13.6Q12 9.6 19.7 13.6L18.6 18.4H5.4Z" fill="#26313d"/>
-<path d="M5.4 33H18.6L19.2 37.3Q12 39.8 4.8 37.3Z" fill="#26313d"/>
-<rect x="5.6" y="19.2" width="12.8" height="12.8" rx="2.5" fill="${color}" stroke="rgba(0,0,0,.18)"/>
-<rect x="3.2" y="3.4" width="4" height="2" rx="1" fill="#fff6bf"/><rect x="16.8" y="3.4" width="4" height="2" rx="1" fill="#fff6bf"/>
-</svg>`;
-}
-window.carSvg = carSvg;
-
-/* ---------------- состояние ---------------- */
-const CLS = { economy: 'Эконом', standard: 'Стандарт', comfort: 'Комфорт' };
-const MODELS = {
-  economy: ['Skoda Fabia', 'Hyundai Accent', 'Kia Rio', 'Renault Logan', 'Chevrolet Aveo'],
-  standard: ['Skoda Octavia', 'Toyota Corolla', 'Hyundai Elantra', 'Kia Ceed', 'Volkswagen Jetta', 'Mitsubishi Lancer', 'Nissan Leaf'],
-  comfort: ['Toyota Camry', 'Volkswagen Passat']
+/* ---------------- классы и машины ---------------- */
+const M_ECO = ['Skoda Fabia', 'Hyundai Accent', 'Kia Rio', 'Renault Logan', 'Chevrolet Aveo'];
+const M_STD = ['Skoda Octavia', 'Toyota Corolla', 'Hyundai Elantra', 'Kia Ceed', 'Volkswagen Jetta', 'Mitsubishi Lancer', 'Nissan Leaf'];
+const M_COMF = ['Toyota Camry', 'Volkswagen Passat'];
+const CLASS_DEF = {
+  economy: { n: 'Эконом', ratio: 0.86, models: M_ECO },
+  fast: { n: 'Быстрый поиск', ratio: 1.38, upto: true, models: [...M_ECO, ...M_STD] },
+  standard: { n: 'Стандарт', ratio: 1, models: M_STD },
+  comfort: { n: 'Комфорт', ratio: 1.13, models: M_COMF },
+  business: { n: 'Бизнес', ratio: 1.38, models: M_COMF }
 };
+const CLASS_IDS = C.classes || ['economy', 'standard', 'comfort'];
 const COLORS = [
-  { n: 'белый', hex: '#f4f4f4' }, { n: 'серый', hex: '#7d838b' }, { n: 'чёрный', hex: '#26272b' },
-  { n: 'серебристый', hex: '#c4c8ce' }, { n: 'синий', hex: '#2d5aa8' }
+  { n: 'Белый', hex: '#f2f3f5' }, { n: 'Серый', hex: '#8b9096' }, { n: 'Темно-серый', hex: '#55595f' },
+  { n: 'Чёрный', hex: '#26272b' }, { n: 'Серебристый', hex: '#c3c7cd' }, { n: 'Синий', hex: '#2d5aa8' }
 ];
-const NAMES = ['Александр', 'Сергей', 'Дмитрий', 'Андрей', 'Виталий', 'Игорь', 'Максим', 'Руслан', 'Евгений', 'Владимир', 'Олег', 'Николай', 'Артём', 'Денис', 'Роман'];
+const NAMES = ['Олександр', 'Сергій', 'Дмитро', 'Андрій', 'Віталій', 'Ігор', 'Максим', 'Руслан', 'Євген', 'Володимир', 'Олег', 'Микола', 'Артем', 'Денис', 'Роман', 'Костянтин'];
 const PLATE_L = 'ABCEHIKMOPTX'.split('');
 
 const S = {
   pts: [{ k: 'from', text: '', city: '', ll: null }, { k: 'to', text: '', city: '', ll: null }],
-  sug: [], sugI: -1, trip: null, car: null, me: null, busy: false,
+  sug: [], sugI: -1, trip: null, car: null, me: null, busy: false, state: 'form',
   cls: localStorage.getItem('taxi.cls') || 'standard',
   price: localStorage.getItem('taxi.price') || ''
 };
-if (!CLS[S.cls]) S.cls = 'standard';
+if (!CLASS_IDS.includes(S.cls)) S.cls = CLASS_IDS.includes('standard') ? 'standard' : CLASS_IDS[0];
 
 /* ---------------- адреса (Nominatim) ---------------- */
 function fmtAddr(r) {
@@ -436,7 +619,7 @@ function fmtAddr(r) {
   const street = [road, house].filter(Boolean).join(', ');
   const poi = r.name && r.name !== road && r.name !== city ? r.name : '';
   const first = (r.display_name || '').split(',').slice(0, 2).join(',').trim();
-  if (house) return { main: street, sub: [poi, city].filter(Boolean).join(', '), city };   // есть номер дома — показываем адрес
+  if (house) return { main: street, sub: [poi, city].filter(Boolean).join(', '), city };
   return { main: poi || street || first, sub: [poi ? street : '', city].filter(Boolean).join(', '), city };
 }
 let typeT, typeCtl;
@@ -445,8 +628,8 @@ async function geocode(q) {
   typeCtl = new AbortController();
   const sig = typeCtl.signal;
   const base = `${NOM}/search?format=jsonv2&addressdetails=1&limit=5&countrycodes=ua&accept-language=uk,ru&viewbox=${VB}&q=${encodeURIComponent(q)}`;
-  let r = await getJSON(base + '&bounded=1', 10000, sig);       // сначала только Харьков
-  if (!r.length) r = await getJSON(base, 10000, sig);           // потом вся Украина, Харьков в приоритете
+  let r = await getJSON(base + '&bounded=1', 10000, sig);
+  if (!r.length) r = await getJSON(base, 10000, sig);
   return r.map(x => ({ ...fmtAddr(x), ll: [+x.lat, +x.lon] }));
 }
 
@@ -466,7 +649,8 @@ function rowHTML(p, i, n) {
   const sub = C.showSub ? `<div class="fsub">${subHTML(p)}</div>` : '';
   const ctl = stop ? `<div class="sctl"><button class="sb" data-a="up" ${i <= 1 ? 'disabled' : ''} aria-label="Выше">↑</button><button class="sb" data-a="down" ${i >= n - 2 ? 'disabled' : ''} aria-label="Ниже">↓</button><button class="sb del" data-a="del" aria-label="Удалить остановку">×</button></div>` : '';
   const extra = p.k === 'to' && C.toExtra ? C.toExtra : '';
-  return `<div class="frow ${p.k}" data-i="${i}"><span class="fdot">${dot}</span><div class="fbox"><input class="finput" data-i="${i}" type="text" placeholder="${esc(ph)}" value="${esc(p.text)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">${sub}</div>${ctl}${extra}<div class="sugg" data-i="${i}"></div></div>`;
+  const ftext = C.wrapFields ? `<div class="ftext${p.text ? '' : ' ph'}">${esc(p.text || ph)}</div>` : '';
+  return `<div class="frow ${p.k}" data-i="${i}"><span class="fdot">${dot}</span><div class="fbox">${ftext}<input class="finput" data-i="${i}" type="text" placeholder="${esc(ph)}" value="${esc(p.text)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">${sub}</div>${ctl}${extra}<div class="sugg" data-i="${i}"></div></div>`;
 }
 function renderFields() {
   const n = S.pts.length;
@@ -478,6 +662,8 @@ function syncField(i) {
   const row = $(`#fields .frow[data-i="${i}"]`); if (!row) return;
   const p = S.pts[i];
   $('.finput', row).value = p.text;
+  const ft = $('.ftext', row);
+  if (ft) { ft.textContent = p.text || $('.finput', row).placeholder; ft.classList.toggle('ph', !p.text); }
   const sub = $('.fsub', row);
   if (sub) sub.innerHTML = subHTML(p);
 }
@@ -493,7 +679,7 @@ function onType(i, v) {
   if (p.ll) { p.ll = null; p.city = ''; updateRoute(false); }
   clearTimeout(typeT); typeCtl?.abort();
   if (v.trim().length < 3) { showSugg(i, []); return; }
-  typeT = setTimeout(async () => {                                // debounce 400 мс
+  typeT = setTimeout(async () => {
     try {
       const r = await geocode(v);
       if (S.pts[i] !== p || p.text !== v) return;
@@ -510,7 +696,8 @@ function applyPick(i, item) {
   showSugg(i, []); syncField(i);
   document.activeElement?.blur();
   formSheet.snap(1);
-  updateRoute(true);
+  if (i === 0) spawnNearby(p.ll);
+  updateRoute(true, true);
 }
 async function resolveField(i) {
   const p = S.pts[i]; if (!p || !p.text.trim() || p.ll || p.busy) return;
@@ -525,7 +712,6 @@ async function resolveField(i) {
     if (e.name !== 'AbortError') toast('Сервис поиска адресов не отвечает. Проверьте интернет');
   } finally { p.busy = false; }
 }
-
 fieldsBox.addEventListener('input', e => {
   const inp = e.target.closest('.finput'); if (inp) onType(+inp.dataset.i, inp.value);
 });
@@ -533,17 +719,24 @@ fieldsBox.addEventListener('keydown', e => {
   const inp = e.target.closest('.finput');
   if (inp && e.key === 'Enter') { e.preventDefault(); resolveField(+inp.dataset.i); inp.blur(); }
 });
-fieldsBox.addEventListener('focusin', e => { if (e.target.closest('.finput')) formSheet.snap(2); });
+fieldsBox.addEventListener('focusin', e => {
+  const inp = e.target.closest('.finput'); if (!inp) return;
+  inp.closest('.frow').classList.add('editing');
+  formSheet.snap(2);
+});
 fieldsBox.addEventListener('focusout', e => {
   const inp = e.target.closest('.finput'); if (!inp) return;
   const i = +inp.dataset.i, p = S.pts[i];
-  setTimeout(() => {                         // даём сработать клику по подсказке
+  setTimeout(() => {
     if (S.pts[i] !== p || document.activeElement === inp) return;
+    inp.closest('.frow')?.classList.remove('editing');
     $(`#fields .sugg[data-i="${i}"]`)?.replaceChildren();
     if (p.text.trim() && !p.ll) resolveField(i);
   }, 300);
 });
 fieldsBox.addEventListener('click', e => {
+  const ft = e.target.closest('.ftext');
+  if (ft) { const row = ft.closest('.frow'); row.classList.add('editing'); const inp = $('.finput', row); inp.focus(); inp.select(); return; }
   const it = e.target.closest('.sitem');
   if (it) { const i = +it.parentElement.dataset.i; const item = S.sug[+it.dataset.k]; if (item && S.sugI === i) applyPick(i, item); return; }
   const b = e.target.closest('.sb'); if (!b) return;
@@ -551,13 +744,14 @@ fieldsBox.addEventListener('click', e => {
   if (a === 'del') S.pts.splice(i, 1);
   else { const j = a === 'up' ? i - 1 : i + 1; if (j < 1 || j > S.pts.length - 2) return; [S.pts[i], S.pts[j]] = [S.pts[j], S.pts[i]]; }
   renderFields(); updateRoute(true);
-  S.pts.forEach((_, k) => syncField(k));
 });
 function addStop() {
   const n = S.pts.length; if (n - 2 >= MAX_STOPS) return;
+  if (S.state !== 'form') go('form', 2);
   S.pts.splice(n - 1, 0, { k: 'stop', text: '', city: '', ll: null });
   renderFields();
-  $(`#fields .finput[data-i="${n - 1}"]`)?.focus();
+  const inp = $(`#fields .finput[data-i="${n - 1}"]`);
+  inp?.closest('.frow').classList.add('editing'); inp?.focus();
 }
 
 /* ---------------- маршрут (OSRM) ---------------- */
@@ -568,28 +762,33 @@ async function osrmRoute(lls) {
     if (j.code !== 'Ok' || !j.routes?.length) throw new Error(j.code);
     const rt = j.routes[0];
     return { coords: rt.geometry.coordinates.map(c => [c[1], c[0]]), dist: rt.distance, dur: rt.duration, ok: true };
-  } catch (e) {                              // заглушка: прямая линия, ~30 км/ч
+  } catch (e) {
     let d = 0; for (let k = 1; k < lls.length; k++) d += dist(lls[k - 1], lls[k]);
     d *= 1.3;
     return { coords: lls, dist: d, dur: d / (30 / 3.6), ok: false };
   }
 }
+const short = s => s.length > 24 ? s.slice(0, 11) + '...' + s.slice(-10) : s;
 function drawMarkers() {
   layers.mk.clearLayers();
-  const n = S.pts.length;
+  const last = S.pts.length - 1;
   S.pts.forEach((p, i) => {
     if (!p.ll) return;
     let ic;
     if (p.k === 'from') ic = icon(C.pin.html, C.pin.size, C.pin.anchor);
     else if (C.pointPin) ic = icon(C.pointPin(p.k === 'to' ? '' : i), [30, 40], [15, 40]);
-    else if (p.k === 'to') ic = icon('<div class="mk-num to">B</div>', [28, 28], [14, 14]);
+    else if (p.k === 'to') ic = icon('<div class="mk-to"></div>', [30, 30], [15, 15]);
     else ic = icon(`<div class="mk-num">${i}</div>`, [28, 28], [14, 14]);
     L.marker(p.ll, { icon: ic, interactive: false, zIndexOffset: p.k === 'from' ? 400 : 300 }).addTo(layers.mk);
+    if (C.addrPills && (p.k === 'from' || i === last)) {   // подписи адресов на карте (экран выбора класса)
+      const plus = i === last ? '<button class="pill-plus js-add-stop" aria-label="Добавить остановку">+</button>' : '';
+      L.marker(p.ll, { icon: icon(`<div class="bubble"><div class="apill ${p.k}"><span>${esc(short(p.text))}</span>${plus}</div></div>`, [0, 0], [0, 0]), zIndexOffset: 700 }).addTo(layers.mk);
+    }
   });
 }
-function drawLine(layer, coords, color, ok, casing) {
-  if (casing) L.polyline(coords, { color: casing, weight: 10, opacity: 1, lineJoin: 'round', interactive: false }).addTo(layer);
-  L.polyline(coords, { color, weight: 6, opacity: .95, lineJoin: 'round', lineCap: 'round', dashArray: ok ? null : '10 10', interactive: false }).addTo(layer);
+function drawLine(layer, coords, st, ok) {
+  if (st.casing) L.polyline(coords, { color: st.casing, weight: (st.weight || 6) + 4, opacity: 1, lineJoin: 'round', interactive: false }).addTo(layer);
+  L.polyline(coords, { color: st.color, weight: st.weight || 6, opacity: 1, lineJoin: 'round', lineCap: 'round', dashArray: ok === false ? '10 10' : (st.dash || null), interactive: false }).addTo(layer);
 }
 function showTripInfo(state) {
   let txt = '';
@@ -598,21 +797,25 @@ function showTripInfo(state) {
   $$('.js-trip').forEach(el => { el.textContent = txt; el.classList.toggle('hidden', !txt); });
 }
 let rseq = 0;
-async function updateRoute(fit) {
+async function updateRoute(fit, fromPick) {
   drawMarkers();
   const ps = S.pts.filter(p => p.ll);
   const from = S.pts[0], to = S.pts[S.pts.length - 1];
-  layers.route.clearLayers(); S.trip = null; showTripInfo();
+  layers.route.clearLayers(); S.trip = null; showTripInfo(); renderClasses();
+  document.body.classList.remove('has-route');
   const seq = ++rseq;
   if (!from.ll || !to.ll) { if (fit && ps.length) fitTo(ps.map(p => p.ll)); return; }
   showTripInfo('loading');
   const r = await osrmRoute(ps.map(p => p.ll));
   if (seq !== rseq) return;
   S.trip = r;
-  drawLine(layers.route, r.coords, C.route.color, r.ok, C.route.casing);
+  document.body.classList.add('has-route');
+  drawLine(layers.route, r.coords, C.route, r.ok);
   if (C.destBubble) L.marker(to.ll, { icon: icon(C.destBubble(fmtKm(r.dist), Math.max(1, Math.round(r.dur / 60))), [0, 0], [0, 0]), interactive: false, zIndexOffset: 350 }).addTo(layers.route);
-  showTripInfo();
+  showTripInfo(); renderClasses();
   if (!r.ok) toast('Сервис маршрутов не ответил — показана прямая линия');
+  // жёлтый стиль: после выбора адресов открывается экран выбора класса
+  if (fromPick && sheets.order && S.state === 'form' && S.pts.every(p => p.ll)) { go('order', 1); }
   if (fit) fitTo(r.coords);
 }
 
@@ -622,15 +825,15 @@ const safeTop = (() => {
   d.style.cssText = 'position:fixed;top:0;height:env(safe-area-inset-top);visibility:hidden';
   document.body.appendChild(d); const h = d.offsetHeight; d.remove(); return h;
 })();
+const activeSheet = () => sheets[S.state] || formSheet;
 function fitTo(lls) {
   if (!lls.length) return;
-  const sh = rideSheet.on ? rideSheet : formSheet;
-  const bottom = Math.min(sh.snaps[1], sh.vis || 0, innerHeight * 0.62) + 24;
-  map.fitBounds(L.latLngBounds(lls), { paddingTopLeft: [36, safeTop + 96], paddingBottomRight: [36, bottom], maxZoom: 16.5 });
+  const sh = activeSheet();
+  const bottom = Math.min(sh.snaps[1], sh.vis || 0, innerHeight * 0.62) + (C.fitExtraBottom || 24);
+  map.fitBounds(L.latLngBounds(lls), { paddingTopLeft: [40, safeTop + (C.fitTop || 100)], paddingBottomRight: [40, bottom], maxZoom: 16.5 });
 }
-
-function centerOn(ll, z) {                   // точка видна над панелью, а не под ней
-  const sh = rideSheet.on ? rideSheet : formSheet;
+function centerOn(ll, z) {
+  const sh = activeSheet();
   const off = Math.min(sh.vis || 0, innerHeight * 0.62) / 2;
   map.setView(map.unproject(map.project(ll, z).add([0, off]), z), z);
 }
@@ -645,7 +848,7 @@ function makeSheet(el, snapsFn) {
     el.style.height = v + 'px';
     if (sh.on) {
       document.documentElement.style.setProperty('--sheet', v + 'px');
-      document.body.classList.toggle('sheet-full', v > innerHeight * 0.75);
+      document.body.classList.toggle('sheet-full', v > innerHeight * 0.72);
     }
   };
   sh.snap = (i, anim = true) => {
@@ -654,7 +857,6 @@ function makeSheet(el, snapsFn) {
   };
   sh.show = i => { sh.on = true; el.classList.remove('off'); sh.snap(i ?? sh.i); };
   sh.hide = () => { sh.on = false; el.classList.add('off'); };
-
   let y0 = 0, v0 = 0, t0 = 0, drag = false, moved = false, pid = null;
   el.addEventListener('pointerdown', e => {
     const g = e.target.closest('.grab');
@@ -678,12 +880,12 @@ function makeSheet(el, snapsFn) {
     if (!drag || e.pointerId !== pid) return;
     drag = false; document.body.classList.remove('dragging');
     const dy = e.clientY - y0, dt = performance.now() - t0, v = sh.vis;
-    if (!moved) { sh.snap(sh.i < 2 ? sh.i + 1 : 1); return; }            // тап по ручке
+    if (!moved) { sh.snap(sh.i < 2 ? sh.i + 1 : 1); return; }
     let i;
-    if (dt < 280 && Math.abs(dy) > 25) {                                  // быстрый взмах
+    if (dt < 280 && Math.abs(dy) > 25) {
       if (dy < 0) { i = sh.snaps.findIndex(s => s > v + 5); if (i < 0) i = 2; }
       else { i = 0; sh.snaps.forEach((s, k) => { if (s < v - 5) i = k; }); }
-    } else {                                                              // к ближайшему положению
+    } else {
       i = 0; sh.snaps.forEach((s, k) => { if (Math.abs(s - v) < Math.abs(sh.snaps[i] - v)) i = k; });
     }
     sh.snap(i);
@@ -694,22 +896,58 @@ function makeSheet(el, snapsFn) {
   return sh;
 }
 const formSheet = makeSheet($('#formSheet'), C.formSnaps);
-const rideSheet = makeSheet($('#rideSheet'), C.rideSnaps);
+const sheets = { form: formSheet, ride: makeSheet($('#rideSheet'), C.rideSnaps) };
+if ($('#orderSheet')) sheets.order = makeSheet($('#orderSheet'), C.orderSnaps);
+if ($('#searchSheet')) sheets.search = makeSheet($('#searchSheet'), C.searchSnaps);
+const rideSheet = sheets.ride;
+// экраны приложения: form → (order) → search → ride
+function go(name, snapIdx) {
+  Object.entries(sheets).forEach(([k, sh]) => { if (k !== name) sh.hide(); });
+  S.state = name;
+  ['form', 'order', 'search', 'ride'].forEach(k => document.body.classList.toggle('st-' + k, k === name));
+  sheets[name].show(snapIdx);
+  setTimeout(() => map.invalidateSize({ pan: false }), 360);
+}
 addEventListener('resize', () => {
-  [formSheet, rideSheet].forEach(sh => { sh.calc(); sh.set(sh.snaps[sh.i], false); });
+  Object.values(sheets).forEach(sh => { sh.calc(); if (sh.on) sh.set(sh.snaps[sh.i], false); });
 });
 
 /* ---------------- класс и цена ---------------- */
+function estimateStd() {                         // ориентировочная цена «Стандарта», если своя не введена
+  const km = S.trip ? S.trip.dist / 1000 : 4;
+  return Math.round(55 + 11 * km);
+}
+function priceFor(id) {
+  const d = CLASS_DEF[id];
+  if (S.price && id === S.cls) return +S.price;
+  const std = S.price ? +S.price / CLASS_DEF[S.cls].ratio : estimateStd();
+  return Math.round(std * d.ratio);
+}
+const fmtP = v => String(v).replace('.', ',');
+function renderClasses() {
+  const box = $('#clsList');
+  if (box) {
+    box.innerHTML = CLASS_IDS.map(id => {
+      const d = CLASS_DEF[id];
+      return `<button class="clsr js-cls${id === S.cls ? ' on' : ''}" data-c="${id}"><span class="cimg">${C.clsImg(id)}</span><span class="cn"><b>${d.n}</b><small>${C.seats}</small></span><span class="cp">${d.upto ? 'до ' : ''}${fmtP(priceFor(id))} ₴</span>${C.clsChevron || ''}</button>`;
+    }).join('');
+  }
+  $$('.js-price').forEach(x => { x.placeholder = String(priceFor(S.cls)); });
+  setText('.js-price-cur', fmtP(S.price || priceFor(S.cls)) + ' ₴');
+}
 function setCls(c) {
-  if (!CLS[c]) return;
+  if (!CLASS_DEF[c]) return;
   S.cls = c; localStorage.setItem('taxi.cls', c);
   $$('.js-cls').forEach(b => b.classList.toggle('on', b.dataset.c === c));
-  $$('.js-cls-name').forEach(el => { el.textContent = CLS[c]; });
+  setText('.js-cls-name', CLASS_DEF[c].n);
+  renderClasses();
 }
-function syncPrice(src) {
-  const shown = S.price ? S.price.replace('.', ',') : '';
+function setPrice(v, src) {
+  S.price = v; localStorage.setItem('taxi.price', v);
+  const shown = v ? fmtP(v) : '';
   $$('.js-price').forEach(x => { if (x !== src) x.value = shown; });
   $$('.js-price-show').forEach(x => { x.textContent = shown ? shown + ' ₴' : ''; x.classList.toggle('hidden', !shown); });
+  renderClasses();
 }
 document.addEventListener('input', e => {
   const t = e.target.closest('.js-price'); if (!t) return;
@@ -717,16 +955,35 @@ document.addEventListener('input', e => {
   const k = v.indexOf('.');
   if (k >= 0) v = v.slice(0, k + 1) + v.slice(k + 1).replace(/\./g, '').slice(0, 2);
   v = v.slice(0, 9);
-  const shown = v.replace('.', ',');
-  if (t.value !== shown) t.value = shown;
-  S.price = v; localStorage.setItem('taxi.price', v);
-  syncPrice(t);
+  if (t.value !== fmtP(v)) t.value = fmtP(v);
+  setPrice(v, t);
 });
+
+/* ---------------- такси рядом (декор на главной) ---------------- */
+let nearSeq = 0;
+async function spawnNearby(center) {
+  if (!C.nearby) return;
+  const seq = ++nearSeq;
+  layers.nearby.clearLayers();
+  const jobs = Array.from({ length: C.nearby }, async () => {
+    const a = destPoint(center, rnd(250, 1100), rnd(0, 360));
+    const b = destPoint(a, 250, rnd(0, 360));
+    try {
+      const j = await getJSON(`${OSRM}/route/v1/driving/${a[1].toFixed(6)},${a[0].toFixed(6)};${b[1].toFixed(6)},${b[0].toFixed(6)}?overview=full&geometries=geojson`, 8000);
+      const cs = j.routes?.[0]?.geometry?.coordinates?.map(c => [c[1], c[0]]);
+      if (!cs || cs.length < 2 || seq !== nearSeq) return;
+      let k = 1; while (k < cs.length - 1 && dist(cs[0], cs[k]) < 8) k++;
+      const h = bearing(cs[0], cs[k]);
+      L.marker(cs[0], { icon: icon(`<div class="near-car" style="transform:rotate(${h.toFixed(0)}deg)">${carTop(C.taxiColor || '#FFC928', { w: 20 })}</div>`, [20, 40], [10, 20]), interactive: false }).addTo(layers.nearby);
+    } catch (_) {}
+  });
+  await Promise.all(jobs);
+}
 
 /* ---------------- поиск машины ---------------- */
 async function makeCar(p) {
-  let start = destPoint(p, rnd(500, 2500), rnd(0, 360));          // случайная точка в 0.5–2.5 км
-  try {                                                             // прилипание к дороге
+  let start = destPoint(p, rnd(500, 2500), rnd(0, 360));
+  try {
     const j = await getJSON(`${OSRM}/nearest/v1/driving/${start[1].toFixed(6)},${start[0].toFixed(6)}?number=1`, 8000);
     if (j.code === 'Ok' && j.waypoints?.length) start = [j.waypoints[0].location[1], j.waypoints[0].location[0]];
   } catch (_) {}
@@ -738,64 +995,97 @@ async function makeCar(p) {
   return {
     pos: start, route: r, head,
     eta: Math.max(2, Math.round(r.dur / 60)),
-    model: pick(MODELS[S.cls]), color: pick(COLORS),
-    plate: `${pick(['AX', 'KX'])} ${d()}${d()}${d()}${d()} ${pick(PLATE_L)}${pick(PLATE_L)}`,
-    driver: pick(NAMES), rating: rnd(4.7, 5.0).toFixed(1), trips: Math.round(rnd(150, 3200))
+    model: pick(CLASS_DEF[S.cls].models), color: pick(COLORS),
+    plate: [pick(['AX', 'KX']), `${d()}${d()}${d()}${d()}`, pick(PLATE_L) + pick(PLATE_L)],
+    driver: pick(NAMES), rating: rnd(4.85, 5.0).toFixed(2),
+    trips: Math.round(rnd(1200, 12000)), years: Math.round(rnd(2, 9))
   };
 }
-function fillRide(car) {
-  $('#rcEta').textContent = car.eta + ' мин';
-  $('#rcDist').textContent = fmtKm(car.route.dist);
-  $('#rcModel').textContent = car.model;
-  $('#rcColor').textContent = car.color.n[0].toUpperCase() + car.color.n.slice(1);
-  $('#rcPlate').innerHTML = `<span class="ua">UA</span><span class="pn">${esc(car.plate)}</span>`;
-  $('#rcDriver').textContent = car.driver;
-  $('#rcRating').textContent = car.rating;
-  $$('.js-trips').forEach(el => { el.textContent = car.trips + ' поездок'; });
-  $('#rcAva').textContent = car.driver[0];
-  $('#rcCarPic').innerHTML = `<div style="transform:rotate(90deg)">${carSvg(car.color.hex, 30)}</div>`;
-  const t = new Date(Date.now() + car.eta * 60000);
-  $$('.js-eta-clock').forEach(el => { el.textContent = t.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }); });
+function routeListHTML() {
   let sn = 0;
-  $('#rcRoute').innerHTML = S.pts.filter(p => p.ll).map(p => {
-    const lbl = p.k === 'stop' ? ++sn : '';
-    return `<div class="rr ${p.k}"><span class="rdot">${lbl}</span><span class="rt">${esc(p.text)}</span></div>`;
+  return S.pts.filter(p => p.ll).map(p => {
+    const n = p.k === 'stop' ? ++sn : '';
+    return `<div class="rl ${p.k}"><i class="rd">${n}</i><div class="rx"><small>${SUBL[p.k]}</small><span>${esc(p.text)}</span>${p.k === 'to' && C.editLink ? '<button class="elink js-deco">Изменить</button>' : ''}</div></div>`;
   }).join('');
-  $('#rcTrip').textContent = S.trip ? `${fmtKm(S.trip.dist)} · ${fmtDur(S.trip.dur)} в пути` : '';
-  syncPrice();
 }
+function fillRide(car) {
+  setText('.js-eta', car.eta + ' мин');
+  setText('.js-car-dist', fmtKm(car.route.dist));
+  setText('.js-plate', car.plate.join(C.plateJoin ?? ' '));
+  setText('.js-car-full', `${car.color.n} ${car.model}`);
+  setText('.js-car-model', car.model);
+  setText('.js-car-color', car.color.n);
+  setHTML('.js-car-side', carSide(car.color.hex, { w: +($('.js-car-side')?.dataset.w || 120), dark: car.color.hex === '#26272b' }));
+  setText('.js-driver', car.driver);
+  setText('.js-rating', car.rating);
+  setText('.js-trips-n', String(car.trips));
+  setText('.js-trips', `${car.trips} поездок`);
+  setText('.js-years', `Больше ${car.years} ${car.years < 5 ? 'лет' : 'лет'}`);
+  setHTML('.js-ava', avatarSvg);
+  const t = new Date(Date.now() + car.eta * 60000);
+  setText('.js-eta-clock', t.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
+  setHTML('.js-route-list', routeListHTML());
+  setText('.js-trip2', S.trip ? `${fmtKm(S.trip.dist)} · ${fmtDur(S.trip.dur)} в пути` : '');
+  setPrice(S.price);
+}
+let stageT = [];
+function setSteps(n, title) {
+  $$('.js-steps i').forEach((el, k) => { el.className = k < n ? 'done' : (k === n ? 'act' : ''); });
+  $$('.js-steps b').forEach((el, k) => { el.className = k < n ? 'done' : ''; });
+  if (title) setText('.js-stage', title);
+}
+function runStages() {
+  stageT.forEach(clearTimeout); stageT = [];
+  (C.stages || []).forEach(([ms, n, title]) => stageT.push(setTimeout(() => { if (S.busy) setSteps(n, title); }, ms)));
+}
+let searchLayers = [];
 async function findCar() {
   if (S.busy) return;
   const from = S.pts[0], to = S.pts[S.pts.length - 1];
-  if (!from.ll) { toast('Укажите адрес подачи'); $('#fields .finput[data-i="0"]')?.focus(); return; }
-  if (!to.ll) { toast('Укажите, куда едем'); $(`#fields .finput[data-i="${S.pts.length - 1}"]`)?.focus(); return; }
-  S.busy = true;
+  if (!from.ll) { toast('Укажите адрес подачи'); go('form', 2); return; }
+  if (!to.ll) { toast('Укажите, куда едем'); go('form', 2); return; }
+  S.busy = true; S.cancelled = false;
   $$('.js-find').forEach(b => { b.disabled = true; });
-  document.body.classList.add('searching');
   document.activeElement?.blur();
-  formSheet.snap(0);
-  layers.car.clearLayers();
-  const pulse = L.marker(from.ll, { icon: icon('<div class="pulse"><i></i><i></i><i></i></div>', [24, 24], [12, 12]), interactive: false, zIndexOffset: -100 }).addTo(layers.car);
-  map.flyTo(from.ll, 15, { duration: 0.6 });
-  const [car] = await Promise.all([makeCar(from.ll), sleep(rnd(2000, 3000))]);
-  layers.car.removeLayer(pulse);
+  layers.car.clearLayers(); layers.nearby.clearLayers();
+  if (sheets.search) {
+    $('#searchSheet').classList.remove('price-changed');
+    go('search', 1); runStages();
+    if (C.searchCircle) searchLayers.push(L.circle(from.ll, { radius: 330, color: '#ffffff', weight: 1, opacity: .9, fillColor: '#ffffff', fillOpacity: .5, interactive: false }).addTo(layers.car));
+  } else {
+    document.body.classList.add('searching');
+    formSheet.snap(0);
+    searchLayers.push(L.marker(from.ll, { icon: icon('<div class="pulse"><i></i><i></i><i></i></div>', [24, 24], [12, 12]), interactive: false, zIndexOffset: -100 }).addTo(layers.car));
+  }
+  centerOn(from.ll, 15.5);
+  const [car] = await Promise.all([makeCar(from.ll), sleep(C.searchMs || rnd(2200, 3000))]);
+  searchLayers.forEach(l => layers.car.removeLayer(l)); searchLayers = [];
   document.body.classList.remove('searching');
   $$('.js-find').forEach(b => { b.disabled = false; });
-  S.busy = false; S.car = car;
+  S.busy = false;
+  if (S.cancelled) return;
+  S.car = car;
+
+  const cs = C.carRoute;
+  drawLine(layers.car, car.route.coords, cs, true);
   if (C.etaBubble) L.marker(from.ll, { icon: icon(C.etaBubble(car.eta), [0, 0], [0, 0]), interactive: false, zIndexOffset: 600 }).addTo(layers.car);
-  startCountdown(car.eta * 60);
-
-  drawLine(layers.car, car.route.coords, C.carRoute, true);
-  layers.car.eachLayer(l => l.setStyle && l.setStyle({ dashArray: '1 11', weight: 6, lineCap: 'round' }));
-  L.marker(car.pos, {
-    icon: icon(`<div class="car-ic" style="transform:rotate(${car.head.toFixed(0)}deg)">${carSvg(C.taxiColor || '#FFC928')}</div>`, [24, 44], [12, 22]),
-    interactive: false, zIndexOffset: 500
-  }).addTo(layers.car);
+  const real = C.mapCar === 'real';
+  const html = real ? carTop(car.color.hex === '#f2f3f5' ? '#e9ebee' : car.color.hex, { glass: '#15181b', roof: '#15181b' }) : carTop(C.taxiColor || '#FFC928');
+  L.marker(car.pos, { icon: icon(`<div class="car-ic" style="transform:rotate(${car.head.toFixed(0)}deg)">${html}</div>`, [24, 48], [12, 24]), interactive: false, zIndexOffset: 500 }).addTo(layers.car);
   if (!car.route.ok) toast('Маршрут машины построен примерно — сервис маршрутов не ответил');
-
   fillRide(car);
-  formSheet.hide(); rideSheet.show(1);
-  fitTo([...car.route.coords, ...(S.trip ? S.trip.coords : S.pts.filter(p => p.ll).map(p => p.ll))]);
+  if (C.rideHideTrip) map.removeLayer(layers.route);
+  go('ride', 1);
+  startCountdown(car.eta * 60);
+  setTimeout(() => fitTo([...car.route.coords, ...(C.rideFitTrip === false || C.rideHideTrip ? [] : (S.trip ? S.trip.coords : []))]), 380);
+}
+function cancelSearch() {
+  S.cancelled = true; stageT.forEach(clearTimeout);
+  searchLayers.forEach(l => layers.car.removeLayer(l)); searchLayers = [];
+  layers.car.clearLayers();
+  if (S.pts[0].ll) spawnNearby(S.pts[0].ll);
+  go(sheets.order ? 'order' : 'form', 1);
+  setTimeout(fitAll, 380);
 }
 let cdT;
 const mmss = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
@@ -804,7 +1094,7 @@ function timer(sec, onTick, onEnd) {
   const end = Date.now() + sec * 1000;
   const tick = () => {
     const left = Math.max(0, Math.round((end - Date.now()) / 1000));
-    onTick(mmss(left));
+    onTick(left);
     if (left === 0) { clearInterval(cdT); onEnd?.(); }
   };
   tick(); cdT = setInterval(tick, 1000);
@@ -812,12 +1102,16 @@ function timer(sec, onTick, onEnd) {
 function startCountdown(sec) {
   document.body.classList.remove('arrived');
   $$('.js-arrive-title').forEach(el => { if (el.dataset.t) el.textContent = el.dataset.t; });
-  timer(sec, t => $$('.js-countdown').forEach(el => { el.textContent = t; }), () => {
-    // машина подана: заголовок меняется, идёт бесплатное ожидание
+  timer(sec, left => {
+    setText('.js-countdown', mmss(left));
+    setText('.js-eta-min', Math.max(1, Math.ceil(left / 60)) + ' мин');
+    document.documentElement.style.setProperty('--prog', (1 - left / sec).toFixed(3));
+  }, () => {
     document.body.classList.add('arrived');
-    $$('.js-arrive-title').forEach(el => { el.textContent = C.arrivedTitle || 'Водитель на месте'; });
+    $$('.js-arrive-title').forEach(el => { el.textContent = el.dataset.arrived || C.arrivedTitle || 'Водитель на месте'; });
+    setText('.js-eta-min', 'на месте');
     toast('Водитель ожидает вас');
-    timer(180, t => $$('.js-wait').forEach(el => { el.textContent = t; }));
+    timer(180, left => setText('.js-wait', mmss(left)));
   });
 }
 function fitAll() {
@@ -827,9 +1121,11 @@ function fitAll() {
   if (lls.length) fitTo(lls); else if (S.me) centerOn(S.me, 16);
 }
 function cancelRide() {
-  layers.car.clearLayers(); S.car = null; clearInterval(cdT); document.body.classList.remove("arrived");
-  rideSheet.hide(); formSheet.show(1);
-  fitTo(S.trip ? S.trip.coords : S.pts.filter(p => p.ll).map(p => p.ll));
+  layers.car.clearLayers(); S.car = null; clearInterval(cdT); document.body.classList.remove('arrived');
+  if (!map.hasLayer(layers.route)) layers.route.addTo(map);
+  if (S.pts[0].ll) spawnNearby(S.pts[0].ll);
+  go(sheets.order ? 'order' : 'form', 1);
+  setTimeout(fitAll, 380);
 }
 
 /* ---------------- геолокация ---------------- */
@@ -840,15 +1136,15 @@ function drawMe(ll, acc) {
 }
 async function setFrom(ll) {
   const p = S.pts[0];
-  if (p.ll || p.text.trim()) return;          // пользователь уже ввёл адрес сам
+  if (p.ll || p.text.trim()) return;
   p.ll = ll; p.text = 'Определяем адрес…'; p.city = '';
-  syncField(0); centerOn(ll, 16); updateRoute(false);
+  syncField(0); centerOn(ll, 16); updateRoute(false); spawnNearby(ll);
   let txt, city = '';
   try {
     const j = await getJSON(`${NOM}/reverse?format=jsonv2&addressdetails=1&zoom=18&accept-language=uk,ru&lat=${ll[0]}&lon=${ll[1]}`);
     const a = fmtAddr(j); txt = a.main; city = a.city;
   } catch (_) { txt = `${ll[0].toFixed(5)}, ${ll[1].toFixed(5)}`; }
-  if (S.pts[0] === p && p.ll === ll) { p.text = txt || 'Моё местоположение'; p.city = city; syncField(0); }
+  if (S.pts[0] === p && p.ll === ll) { p.text = txt || 'Моё местоположение'; p.city = city; syncField(0); drawMarkers(); }
 }
 function geolocate(initial) {
   let done = false;
@@ -874,25 +1170,37 @@ document.addEventListener('click', e => {
   else if (t.matches('.js-cls-open')) { formSheet.snap(2); setTimeout(() => $('#classes')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 320); }
   else if (t.matches('.js-find')) findCar();
   else if (t.matches('.js-cancel')) cancelRide();
+  else if (t.matches('.js-cancel-search')) cancelSearch();
   else if (t.matches('.js-add-stop')) addStop();
+  else if (t.matches('.js-back')) { go('form', 1); setTimeout(fitAll, 380); }
   else if (t.matches('.js-locate')) { if (S.me) centerOn(S.me, 16); else geolocate(false); }
   else if (t.matches('.js-call')) toast(`Звонок водителю (${S.car?.driver || ''}) — недоступен в демо`);
-  else if (t.matches('.js-msg')) toast('Сообщения недоступны в демо');
+  else if (t.matches('.js-msg')) toast('Чат с водителем недоступен в демо');
   else if (t.matches('.js-fit')) fitAll();
+  else if (t.matches('.js-collapse')) activeSheet().snap(1);
+  else if (t.matches('.js-expand')) activeSheet().snap(1);
+  else if (t.matches('.js-pedit')) { const r = $('#priceEdit'); r?.classList.toggle('hidden'); if (r && !r.classList.contains('hidden')) $('input', r)?.focus(); }
+  else if (t.matches('.js-pdone')) { $('#priceEdit')?.classList.add('hidden'); document.activeElement?.blur(); }
+  else if (t.matches('.js-pstep')) {
+    const v = Math.max(10, Math.round((+S.price || priceFor(S.cls)) + +t.dataset.d));
+    setPrice(String(v)); $('#searchSheet')?.classList.add('price-changed');
+  }
+  else if (t.matches('.js-search-at')) { $('#searchSheet')?.classList.remove('price-changed'); toast(`Ищем по ${fmtP(S.price)} ₴`); }
   else if (t.matches('.js-hint-close')) { $('#installHint')?.classList.add('hidden'); localStorage.setItem('taxi.hint', '1'); }
   else if (t.matches('.js-menu')) toast(`${C.name} — демо-эмулятор заказа такси`);
+  else if (t.matches('.js-share')) toast('Поделиться поездкой — недоступно в демо');
   else if (t.dataset.addr) {
     const i = S.pts.length - 1, p = S.pts[i];
     p.text = t.dataset.addr; p.ll = null; p.city = ''; syncField(i); resolveField(i);
   }
-  else if (t.matches('.js-deco')) toast('Раздел недоступен в демо');
+  else if (t.matches('.js-deco')) toast('Недоступно в демо');
 });
 map.on('click', () => { if (document.activeElement?.matches('input')) document.activeElement.blur(); });
 
 /* ---------------- как приложение (PWA) ---------------- */
 const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
 document.documentElement.classList.toggle('standalone', standalone);
-document.addEventListener('gesturestart', e => e.preventDefault());   // интерфейс не масштабируется щипком, карта — да
+document.addEventListener('gesturestart', e => e.preventDefault());
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
@@ -911,7 +1219,8 @@ if (!standalone && isIOS && !localStorage.getItem('taxi.hint')) {
 /* ---------------- старт ---------------- */
 renderFields();
 setCls(S.cls);
-syncPrice();
+setPrice(S.price);
+go('form', 1);
 geolocate(true);
 })();
 
