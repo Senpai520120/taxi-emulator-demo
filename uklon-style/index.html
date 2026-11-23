@@ -455,7 +455,9 @@ const fieldsBox = $('#fields');
 const SUBL = { from: 'Откуда', stop: 'Через', to: 'Куда' };
 function subHTML(p) {
   if (p.k !== 'from' && !p.ll) return '';
-  return `<span>${SUBL[p.k]}</span>${p.city ? ' • ' + esc(p.city) : ''}`;
+  const n = S.pts.length - 2;
+  const stops = p.k === 'to' && n > 0 ? ` • ${n} ${n === 1 ? 'остановка' : 'остановки'}` : '';
+  return `<span>${SUBL[p.k]}</span>${p.city ? ' • ' + esc(p.city) : ''}${stops}`;
 }
 function rowHTML(p, i, n) {
   const stop = p.k === 'stop';
@@ -549,6 +551,7 @@ fieldsBox.addEventListener('click', e => {
   if (a === 'del') S.pts.splice(i, 1);
   else { const j = a === 'up' ? i - 1 : i + 1; if (j < 1 || j > S.pts.length - 2) return; [S.pts[i], S.pts[j]] = [S.pts[j], S.pts[i]]; }
   renderFields(); updateRoute(true);
+  S.pts.forEach((_, k) => syncField(k));
 });
 function addStop() {
   const n = S.pts.length; if (n - 2 >= MAX_STOPS) return;
@@ -578,6 +581,7 @@ function drawMarkers() {
     if (!p.ll) return;
     let ic;
     if (p.k === 'from') ic = icon(C.pin.html, C.pin.size, C.pin.anchor);
+    else if (C.pointPin) ic = icon(C.pointPin(p.k === 'to' ? '' : i), [30, 40], [15, 40]);
     else if (p.k === 'to') ic = icon('<div class="mk-num to">B</div>', [28, 28], [14, 14]);
     else ic = icon(`<div class="mk-num">${i}</div>`, [28, 28], [14, 14]);
     L.marker(p.ll, { icon: ic, interactive: false, zIndexOffset: p.k === 'from' ? 400 : 300 }).addTo(layers.mk);
@@ -794,21 +798,27 @@ async function findCar() {
   fitTo([...car.route.coords, ...(S.trip ? S.trip.coords : S.pts.filter(p => p.ll).map(p => p.ll))]);
 }
 let cdT;
-function startCountdown(sec) {
+const mmss = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+function timer(sec, onTick, onEnd) {
   clearInterval(cdT);
   const end = Date.now() + sec * 1000;
-  $$('.js-arrive-title').forEach(el => { if (el.dataset.t) el.textContent = el.dataset.t; });
   const tick = () => {
     const left = Math.max(0, Math.round((end - Date.now()) / 1000));
-    const txt = String(Math.floor(left / 60)).padStart(2, '0') + ':' + String(left % 60).padStart(2, '0');
-    $$('.js-countdown').forEach(el => { el.textContent = txt; });
-    if (left === 0) {
-      clearInterval(cdT);
-      $$('.js-arrive-title').forEach(el => { el.textContent = 'Водитель на месте'; });
-      toast('Водитель ожидает вас');
-    }
+    onTick(mmss(left));
+    if (left === 0) { clearInterval(cdT); onEnd?.(); }
   };
   tick(); cdT = setInterval(tick, 1000);
+}
+function startCountdown(sec) {
+  document.body.classList.remove('arrived');
+  $$('.js-arrive-title').forEach(el => { if (el.dataset.t) el.textContent = el.dataset.t; });
+  timer(sec, t => $$('.js-countdown').forEach(el => { el.textContent = t; }), () => {
+    // машина подана: заголовок меняется, идёт бесплатное ожидание
+    document.body.classList.add('arrived');
+    $$('.js-arrive-title').forEach(el => { el.textContent = C.arrivedTitle || 'Водитель на месте'; });
+    toast('Водитель ожидает вас');
+    timer(180, t => $$('.js-wait').forEach(el => { el.textContent = t; }));
+  });
 }
 function fitAll() {
   const lls = [];
@@ -817,7 +827,7 @@ function fitAll() {
   if (lls.length) fitTo(lls); else if (S.me) centerOn(S.me, 16);
 }
 function cancelRide() {
-  layers.car.clearLayers(); S.car = null; clearInterval(cdT);
+  layers.car.clearLayers(); S.car = null; clearInterval(cdT); document.body.classList.remove("arrived");
   rideSheet.hide(); formSheet.show(1);
   fitTo(S.trip ? S.trip.coords : S.pts.filter(p => p.ll).map(p => p.ll));
 }

@@ -48,7 +48,8 @@ body{--accent:#1DB954;--accent2:#1DB954;--to-bg:#1d1d1f;--stop-bg:#7a7a80}
 .pricefield span{font-size:21px;color:#8e8e93}
 .clsrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .cls{background:#F4F4F5;border-radius:16px;padding:10px 10px 9px;text-align:left;border:2px solid transparent;display:flex;flex-direction:column;align-items:flex-start;gap:1px}
-.cls.on{border-color:#1DB954;background:#fff}
+.cls.on{border-color:#1DA05B;background:#DFF5E5}
+.cls.on b{color:#1DA05B}
 .cls b{font-size:16px;font-weight:600}
 .cls small{font-size:12px;color:#8e8e93}
 .cls .cpic{height:28px;width:40px;display:flex;align-items:center;justify-content:center;margin-bottom:4px}
@@ -63,7 +64,7 @@ body{--accent:#1DB954;--accent2:#1DB954;--to-bg:#1d1d1f;--stop-bg:#7a7a80}
 .clsbtn small{display:block;color:#8e8e93;font-size:15px;white-space:nowrap}
 .fprice{display:flex;align-items:baseline;gap:2px;flex:none;font-weight:700;font-size:23px}
 .fprice input{width:76px;text-align:right;border:0;outline:0;background:transparent;font-weight:700;font-size:23px;padding:2px 0;border-bottom:2px dashed #dadade}
-.go{width:92px;height:72px;flex:none;border-radius:36px 0 0 36px;background:#FFD21F;display:grid;place-items:center}
+.go{width:92px;height:72px;flex:none;border-radius:36px 0 0 36px;background:#FFCC29;display:grid;place-items:center}
 
 /* карточка поездки */
 .eta{padding:0 20px 12px}
@@ -101,6 +102,20 @@ body{--accent:#1DB954;--accent2:#1DB954;--to-bg:#1d1d1f;--stop-bg:#7a7a80}
 .pin1 .h i{width:16px;height:16px;border-radius:50%;background:#fff}
 .pin1 .l{position:absolute;left:21.5px;top:44px;width:3px;height:26px;background:#1DB954;border-radius:2px}
 
+/* v3: по официальным скринам (сайт, Google Play, Instagram) */
+body{color:#263238}
+.base-tiles.vector{filter:saturate(.45) brightness(1.05)!important}
+.trip{background:#DFF5E5;color:#147a43}
+.act{border-radius:999px;background:#fff;border:1.5px solid #d5d9dc;color:#263238}
+.act.call{background:#1DA05B;border-color:#1DA05B;color:#fff}
+.plate{border:1.5px solid #9aa3a8;border-radius:6px}
+.plate .ua{display:none}
+.wait{display:none;color:#78858c;font-size:16px;margin-top:6px}
+.wait b{color:#263238;font-variant-numeric:tabular-nums}
+body.arrived .eta{text-align:center}
+body.arrived .eta-t{font-size:24px}
+body.arrived #rcEta,body.arrived .eta-t .js-countdown,body.arrived .eta-s{display:none}
+body.arrived .wait{display:block}
 /* v2: детали как в реальном приложении */
 body{--to-bg:#fff;--to-fg:#1d1d1f;--stop-bg:#fff}
 .mk-num{color:#1d1d1f;border:4px solid #1d1d1f;width:26px;height:26px;font-size:12px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
@@ -165,6 +180,7 @@ body{--to-bg:#fff;--to-fg:#1d1d1f;--stop-bg:#fff}
     <div class="eta">
       <div class="eta-t"><span class="js-arrive-title" data-t="Машина будет через" style="color:inherit">Машина будет через</span> <span id="rcEta"></span><span class="js-countdown">00:00</span></div>
       <div class="eta-s"><span id="rcDist"></span> до вас · подача в <span class="js-eta-clock"></span></div>
+      <div class="wait">Бесплатное ожидание: <b class="js-wait">03:00</b></div>
     </div>
   </div>
   <div class="sbody">
@@ -174,8 +190,8 @@ body{--to-bg:#fff;--to-fg:#1d1d1f;--stop-bg:#fff}
     </div>
     <div class="drv"><div class="ava"><span id="rcAva"></span><span class="rb">★ <span id="rcRating"></span></span></div><div><b id="rcDriver"></b><span class="rate"><span class="js-trips"></span></span></div></div>
     <div class="acts">
-      <button class="act js-call"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M6.6 10.8a15.2 15.2 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z" fill="#1DB954"/></svg>Позвонить</button>
-      <button class="act js-msg"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 3h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 1-2z" fill="#1DB954"/></svg>Сообщение</button>
+      <button class="act js-msg"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 3h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 1-2z" fill="#1DA05B"/></svg>Сообщение</button>
+      <button class="act call js-call"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M6.6 10.8a15.2 15.2 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z" fill="#fff"/></svg>Позвонить</button>
     </div>
     <div class="sec"><div class="sec-h">Маршрут поездки</div><div id="rcRoute"></div><div class="trip2" id="rcTrip"></div></div>
     <div class="sec prow"><div><div class="sec-h" style="margin:0">Стоимость</div><small style="color:#8e8e93">можно изменить</small></div><label class="pricefield"><input class="js-price" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span>₴</span></label></div>
@@ -207,7 +223,9 @@ window.APP = {
   showSub: true,
   toExtra: '<button class="star js-deco" aria-label="Избранное"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17l-5.7 3.1 1.2-6.3L2.9 9.4l6.3-.8z" fill="none" stroke="#1d1d1f" stroke-width="1.8" stroke-linejoin="round"/></svg></button>',
   pin: { html: '<div class="pin1"><div class="h"><i></i></div><div class="l"></div></div>', size: [46, 70], anchor: [23, 70] },
-  route: { color: '#1DB954', casing: '#ffffff' },
+  route: { color: '#1DA05B', casing: '#ffffff' },
+  arrivedTitle: 'Машина подана! Выходите',
+  pointPin: n => `<svg width="30" height="40" viewBox="0 0 30 40"><path d="M15 1C7.3 1 1 7.1 1 14.8 1 25 15 39 15 39s14-14 14-24.2C29 7.1 22.7 1 15 1z" fill="#263238" stroke="#fff" stroke-width="1.5"/>${n ? `<text x="15" y="19.5" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" font-family="system-ui,sans-serif">${n}</text>` : '<circle cx="15" cy="14.5" r="4.5" fill="#fff"/>'}</svg>`,
   carRoute: '#1d1d1f',
   formSnaps: (H, top) => { const lo = Math.min(300, H * 0.45); return [lo, Math.max(lo + 80, H * 0.58), H - top - 64]; },
   rideSnaps: (H, top) => { const lo = Math.min(200, H * 0.3); return [lo, Math.max(lo + 80, H * 0.56), H - top - 64]; }
