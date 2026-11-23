@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Сонях — такси (демо)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+/*__CSS__*/
+body{--accent:#FFD900;--accent2:#222;--to-bg:#222;--to-fg:#FFE033;--stop-bg:#555}
+.base-tiles{filter:grayscale(1) brightness(1.07) contrast(.9)}
+.menu{position:fixed;left:12px;top:calc(env(safe-area-inset-top) + 12px);z-index:15;width:76px;height:76px;border-radius:18px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.14);display:grid;place-items:center}
+.bonus{position:fixed;right:12px;top:calc(env(safe-area-inset-top) + 22px);z-index:15;height:58px;padding:0 10px 0 18px;border-radius:16px;background:linear-gradient(90deg,#FF7A1A,#FFB51E);color:#fff;box-shadow:0 2px 12px rgba(255,120,0,.3);display:flex;align-items:center;gap:8px;font-weight:600;font-size:22px}
+.locate{width:76px;height:76px;border-radius:18px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.16);display:grid;place-items:center}
+.sheet{background:#EDEDEE;border-radius:24px 24px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.12)}
+.grab{background:#fff}
+.sbody{padding:0 0 10px}
+.card{background:#fff;padding:2px 16px 14px;border-radius:0 0 22px 22px;margin-bottom:10px}
+.card+.card{border-radius:22px;padding:14px 16px}
+
+/* адреса */
+.frow{gap:10px;margin-bottom:10px;align-items:center}
+.fdot{position:absolute;left:16px;top:23px;width:26px;height:26px;z-index:1;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;pointer-events:none}
+.frow.stop .fdot{background:#555;border-radius:50%;width:24px;height:24px;left:17px;top:24px}
+.fbox{background:#F0F0F0;border-radius:14px;height:72px;display:flex;align-items:center;padding:0 14px 0 56px}
+.finput{font-size:20px;line-height:30px;height:30px;color:#222}
+.hw{display:flex;align-items:center;background:#F0F0F0;border-radius:14px;height:72px;flex:none}
+.hw button{width:62px;height:72px;display:grid;place-items:center}
+.hw span{width:1px;height:36px;background:#cfcfd2}
+.sb{background:#F0F0F0;border-radius:12px;width:34px;height:34px}
+.sugg{background:#fff;border:1px solid #ececec;border-radius:14px;padding:0 10px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.addstop{display:flex;align-items:center;gap:12px;font-size:17px;font-weight:500;color:#222;padding:2px 2px 8px}
+.addstop i{width:28px;height:28px;border-radius:50%;background:#FFE033;display:grid;place-items:center;font-style:normal;font-size:20px;line-height:1}
+.recent{display:flex;overflow-x:auto;padding:12px 0 4px;margin:0 -16px;scrollbar-width:none}
+.recent::-webkit-scrollbar{display:none}
+.rc{flex:none;display:flex;align-items:center;gap:12px;padding:4px 16px;font-size:19px;white-space:nowrap;border-right:1px solid #ddd}
+.rc:last-child{border-right:0}
+.trip{margin-top:10px;display:inline-block;background:#FFF5BF;color:#222;border-radius:10px;padding:8px 12px;font-size:15px;font-weight:600}
+.lbl{font-size:15px;color:#777;margin-bottom:8px}
+.pricefield{display:flex;align-items:center;gap:6px;background:#F0F0F0;border-radius:14px;padding:0 16px;height:64px}
+.pricefield input{flex:1;min-width:0;border:0;outline:0;background:none;font-size:21px;font-weight:600}
+.pricefield span{font-size:21px;color:#777}
+.clsrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.cls{background:#F0F0F0;border-radius:14px;padding:10px;text-align:left;border:2px solid transparent;display:flex;flex-direction:column;align-items:flex-start}
+.cls.on{background:#FFE033;border-color:#222}
+.cls b{font-size:16px;font-weight:600}
+.cls small{font-size:12px;color:#666}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{position:relative;height:98px;border-radius:16px;background:#F2F2F2;padding:12px;text-align:left;font-size:17px;font-weight:500;overflow:hidden;display:block}
+.tile .em{position:absolute;right:8px;bottom:4px;font-size:38px;line-height:1}
+.tile .beta{display:inline-block;margin-top:6px;background:#3a3a3a;color:#fff;font-size:12px;font-weight:700;border-radius:6px;padding:3px 7px}
+.sfoot{background:#fff;padding:10px 16px calc(10px + env(safe-area-inset-bottom));border-top:1px solid #e6e6e6}
+.gobig{width:100%;height:60px;border-radius:16px;background:#FFE033;font-size:19px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px}
+.gobig .js-price-show{background:#222;color:#FFE033;border-radius:10px;padding:4px 10px;font-size:16px}
+
+/* карточка поездки */
+.eta{padding:0 16px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.eta-t{font-size:19px;color:#555}
+.eta-t b{display:block;color:#222;font-size:28px;margin-top:2px}
+.eta-s{color:#777;font-size:15px;margin-top:4px}
+.eta-badge{flex:none;width:74px;height:74px;border-radius:18px;background:#FFE033;display:grid;place-items:center;text-align:center;font-weight:800;font-size:26px;line-height:1}
+.eta-badge small{display:block;font-size:13px;font-weight:600}
+.carrow{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.car-n{font-size:20px;font-weight:700;margin-top:10px}
+.car-c{color:#777;font-size:15px;margin-top:2px}
+.car-pic{width:90px;height:56px;display:grid;place-items:center;flex:none;background:#F2F2F2;border-radius:14px}
+.drv{display:flex;align-items:center;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid #eee}
+.ava{width:50px;height:50px;border-radius:14px;background:#FFE033;display:grid;place-items:center;font-weight:800;font-size:21px;flex:none}
+.drv b{display:block;font-size:18px}
+.drv .rate{color:#777;font-size:15px}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.act{height:54px;border-radius:14px;background:#F0F0F0;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:600}
+.sec-h{font-size:15px;color:#777;margin-bottom:8px}
+.rr{display:flex;gap:12px;align-items:flex-start;padding:6px 0;position:relative;font-size:17px}
+.rr:not(:last-child)::after{content:"";position:absolute;left:9px;top:30px;bottom:-6px;width:2px;background:#ddd}
+.rdot{width:20px;height:20px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;background:#555}
+.rr.from .rdot{background:#FFE033;box-shadow:inset 0 0 0 6px #FFE033,inset 0 0 0 10px #222}
+.rr.to .rdot{background:#222}
+.rt{min-width:0;overflow-wrap:anywhere}
+.trip2{margin-top:8px;font-weight:700;font-size:16px}
+.prow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.prow .pricefield{width:150px;height:56px}
+.cancel{width:100%;height:58px;border-radius:16px;background:#F0F0F0;color:#e5383b;font-weight:700;font-size:18px}
+
+/* пин «Откуда» */
+.pin2{position:relative;width:56px;height:84px}
+.pin2 .h{position:absolute;left:0;top:0;width:56px;height:56px;border-radius:50%;background:#FFE033;box-shadow:0 3px 8px rgba(0,0,0,.22);display:grid;place-items:center}
+.pin2 .h i{width:9px;height:9px;border-radius:50%;background:#333}
+.pin2 .l{position:absolute;left:26.5px;top:54px;width:3px;height:30px;background:#FFD400;border-radius:2px}
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<button class="menu js-menu" aria-label="Меню"><svg width="30" height="22" viewBox="0 0 30 22"><path d="M2 2h26M2 11h26M2 20h26" stroke="#333" stroke-width="2.6" stroke-linecap="round"/></svg></button>
+<div class="bonus">680<svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#FFD43A"/><circle cx="17" cy="17" r="11" fill="#FFB800"/><path d="M13 12.5c2-1.4 6-1 6.6 1.6.5 2.3-3.5 3-3.5 5.6" fill="none" stroke="#FFE680" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+<button class="locate js-locate" aria-label="Моё местоположение"><svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="#333" stroke-width="2.4"><circle cx="17" cy="17" r="9"/><circle cx="17" cy="17" r="3.6" fill="#333"/><path d="M17 2v6M17 26v6M2 17h6M26 17h6" stroke-linecap="round"/></svg></button>
+<div id="searching"><span class="spin"></span>Ищем машину…</div>
+<div id="toast" role="status"></div>
+
+<!-- Панель заказа -->
+<section class="sheet" id="formSheet">
+  <div class="grab"><div class="handle"></div></div>
+  <div class="sbody">
+    <div class="card">
+      <div id="fields"></div>
+      <button class="addstop js-add-stop"><i>+</i>Добавить остановку</button>
+      <div class="recent">
+        <button class="rc" data-addr="Соляниковский переулок, 11, Харьков"><svg width="20" height="26" viewBox="0 0 20 26"><path d="M10 1a8.5 8.5 0 0 0-8.5 8.5C1.5 16 10 25 10 25s8.5-9 8.5-15.5A8.5 8.5 0 0 0 10 1z" fill="#555"/><circle cx="10" cy="9.5" r="3.2" fill="#fff"/></svg>Соляниковский переулок, 11</button>
+        <button class="rc" data-addr="Академика Павлова улица, 120, Харьков"><svg width="20" height="26" viewBox="0 0 20 26"><path d="M10 1a8.5 8.5 0 0 0-8.5 8.5C1.5 16 10 25 10 25s8.5-9 8.5-15.5A8.5 8.5 0 0 0 10 1z" fill="#555"/><circle cx="10" cy="9.5" r="3.2" fill="#fff"/></svg>Академика Павлова улица, 120</button>
+        <button class="rc" data-addr="Сумская улица, 25, Харьков"><svg width="20" height="26" viewBox="0 0 20 26"><path d="M10 1a8.5 8.5 0 0 0-8.5 8.5C1.5 16 10 25 10 25s8.5-9 8.5-15.5A8.5 8.5 0 0 0 10 1z" fill="#555"/><circle cx="10" cy="9.5" r="3.2" fill="#fff"/></svg>Сумская улица, 25</button>
+      </div>
+      <div class="trip js-trip hidden"></div>
+    </div>
+    <div class="card" id="classes">
+      <div class="lbl">Стоимость, ₴</div>
+      <label class="pricefield"><input class="js-price" type="text" inputmode="decimal" placeholder="Введите сумму" autocomplete="off"><span>₴</span></label>
+      <div class="clsrow">
+        <button class="cls js-cls" data-c="economy"><b>Эконом</b><small>1-4 пассажира</small></button>
+        <button class="cls js-cls" data-c="standard"><b>Стандарт</b><small>1-4 пассажира</small></button>
+        <button class="cls js-cls" data-c="comfort"><b>Комфорт</b><small>1-4 пассажира</small></button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tiles">
+        <button class="tile js-deco">Доставка<span class="em">📦</span></button>
+        <button class="tile js-deco">Путешествия<br><span class="beta">BETA</span><span class="em">🚌</span></button>
+        <button class="tile js-deco">Автопомощь<span class="em">🛠️</span></button>
+        <button class="tile js-deco">Перегон авто<span class="em">🚗</span></button>
+        <button class="tile js-deco">Межгород<span class="em">🛣️</span></button>
+        <button class="tile js-deco">Донат<span class="em">💛</span></button>
+      </div>
+    </div>
+  </div>
+  <div class="sfoot">
+    <button class="gobig js-find">Найти машину <span class="js-price-show hidden"></span></button>
+  </div>
+</section>
+
+<!-- Карточка поездки -->
+<section class="sheet off" id="rideSheet">
+  <div class="grab">
+    <div class="handle"></div>
+    <div class="eta">
+      <div><div class="eta-t">Машина будет через<b id="rcEta"></b></div><div class="eta-s"><span id="rcDist"></span> до вас · подача в <span class="js-eta-clock"></span></div></div>
+      <div class="eta-badge"><span><span class="js-cls-name" style="font-size:13px;font-weight:700"></span></span></div>
+    </div>
+  </div>
+  <div class="sbody">
+    <div class="card" style="padding-top:14px">
+      <div class="carrow">
+        <div><div class="plate" id="rcPlate"></div><div class="car-n" id="rcModel"></div><div class="car-c" id="rcColor"></div></div>
+        <div class="car-pic" id="rcCarPic"></div>
+      </div>
+      <div class="drv"><div class="ava" id="rcAva"></div><div><b id="rcDriver"></b><span class="rate">★ <span id="rcRating"></span> · водитель</span></div></div>
+      <div class="acts">
+        <button class="act js-call"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M6.6 10.8a15.2 15.2 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z" fill="#333"/></svg>Позвонить</button>
+        <button class="act js-msg"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 3h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 1-2z" fill="#333"/></svg>Сообщение</button>
+      </div>
+    </div>
+    <div class="card"><div class="sec-h">Маршрут поездки</div><div id="rcRoute"></div><div class="trip2" id="rcTrip"></div></div>
+    <div class="card prow"><div><div class="sec-h" style="margin:0">Стоимость</div><small style="color:#777">можно изменить</small></div><label class="pricefield"><input class="js-price" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span>₴</span></label></div>
+  </div>
+  <div class="sfoot"><button class="cancel js-cancel">Отменить</button></div>
+</section>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+window.APP = {
+  name: 'Сонях',
+  tiles: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+  fallbackTiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  attr: '© OpenStreetMap',
+  ph: { from: 'Откуда', to: 'Куда едем?', stop: 'Остановка' },
+  showSub: false,
+  dot: {
+    from: '<svg width="22" height="28" viewBox="0 0 22 28"><path d="M11 2a8.5 8.5 0 0 0-8.5 8.5C2.5 17 11 26 11 26s8.5-9 8.5-15.5A8.5 8.5 0 0 0 11 2z" fill="none" stroke="#333" stroke-width="2.2"/><circle cx="11" cy="10.5" r="2.6" fill="#333"/></svg>',
+    to: '<svg width="24" height="20" viewBox="0 0 24 20"><path d="M2 10h19M13 2l8 8-8 8" fill="none" stroke="#333" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  },
+  toExtra: '<div class="hw"><button class="js-deco" aria-label="Дом"><svg width="30" height="28" viewBox="0 0 30 28" fill="none" stroke="#444" stroke-width="2"><path d="M3 13 14 4l11 9M6 11v13h16V11"/><path d="M24 2v7M20.5 5.5h7" stroke-linecap="round"/></svg></button><span></span><button class="js-deco" aria-label="Работа"><svg width="30" height="28" viewBox="0 0 30 28" fill="none" stroke="#444" stroke-width="2"><rect x="3" y="9" width="20" height="15" rx="2"/><path d="M9 9V6h8v3M3 15h20"/><path d="M25 2v7M21.5 5.5h7" stroke-linecap="round"/></svg></button></div>',
+  pin: { html: '<div class="pin2"><div class="h"><i></i></div><div class="l"></div></div>', size: [56, 84], anchor: [28, 84] },
+  route: { color: '#222222', casing: '#FFE033' },
+  carRoute: '#2f6fe0',
+  formSnaps: (H, top) => { const lo = Math.min(290, H * 0.45); return [lo, Math.max(lo + 80, H * 0.6), H - top - 64]; },
+  rideSnaps: (H, top) => { const lo = Math.min(210, H * 0.32); return [lo, Math.max(lo + 80, H * 0.58), H - top - 64]; }
+};
+/*__JS__*/
+</script>
+</body>
+</html>
