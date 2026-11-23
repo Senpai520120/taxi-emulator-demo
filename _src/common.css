@@ -62,3 +62,19 @@ body.searching #searching{display:flex}
 .plate .ua{background:#1e4fb4;color:#fff;font-size:10px;display:flex;align-items:flex-end;padding:0 3px 3px;letter-spacing:0;position:relative}
 .plate .ua::before{content:"";position:absolute;left:3px;right:3px;top:3px;height:7px;background:linear-gradient(#2f6fe0 50%,#ffd400 50%);border-radius:1px}
 .plate .pn{padding:5px 8px}
+
+/* --- ощущение нативного приложения --- */
+html{-webkit-text-size-adjust:100%;touch-action:manipulation}
+body{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+input{-webkit-user-select:text;user-select:text}
+.leaflet-container{background:#eef0f2;font-family:inherit}
+.base-tiles.vector canvas{outline:none}
+.bubble{position:absolute;left:0;top:0;white-space:nowrap;pointer-events:none}
+#installHint{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 92px);z-index:55;background:#fff;border-radius:18px;box-shadow:0 8px 30px rgba(0,0,0,.22);padding:14px 44px 14px 16px;font-size:15px;line-height:1.4;color:#333;animation:hintIn .35s ease}
+#installHint b{display:block;font-size:17px;color:#111;margin-bottom:3px}
+#installHint button{position:absolute;right:8px;top:8px;width:32px;height:32px;border-radius:50%;background:#f0f0f2;font-size:20px;line-height:1}
+#installHint .shr{display:inline-block;width:16px;height:19px;vertical-align:-3px;background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 20'%3E%3Cpath d='M8 1v12M4 5l4-4 4 4M3 9H1v10h14V9h-2' fill='none' stroke='%23007aff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+@keyframes hintIn{from{opacity:0;transform:translateY(-10px)}}
+.mapbtn{position:fixed;right:16px;z-index:15;transition:bottom .3s cubic-bezier(.2,.8,.2,1),opacity .2s}
+body.dragging .mapbtn{transition:none}
+body.sheet-full .mapbtn{opacity:0;pointer-events:none}

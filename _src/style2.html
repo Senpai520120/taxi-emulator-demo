@@ -4,9 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Сонях — такси (демо)</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Сонях">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.css">
 <style>
 /*__CSS__*/
 body{--accent:#FFD900;--accent2:#222;--to-bg:#222;--to-fg:#FFE033;--stop-bg:#555}
@@ -89,6 +97,25 @@ body{--accent:#FFD900;--accent2:#222;--to-bg:#222;--to-fg:#FFE033;--stop-bg:#555
 .pin2 .h{position:absolute;left:0;top:0;width:56px;height:56px;border-radius:50%;background:#FFE033;box-shadow:0 3px 8px rgba(0,0,0,.22);display:grid;place-items:center}
 .pin2 .h i{width:9px;height:9px;border-radius:50%;background:#333}
 .pin2 .l{position:absolute;left:26.5px;top:54px;width:3px;height:30px;background:#FFD400;border-radius:2px}
+
+/* v2: детали как в реальном приложении */
+body{--to-bg:#1d1d1f;--to-fg:#fff;--stop-bg:#1d1d1f}
+.base-tiles.vector{filter:saturate(.5) brightness(1.03)}
+.mk-num.to{font-size:0;background:radial-gradient(circle,#fff 0 4px,#1d1d1f 4.5px);border-color:#fff}
+.mapbtn.fit{width:76px;height:76px;border-radius:18px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.16);display:grid;place-items:center;bottom:calc(var(--sheet,280px) + 104px)}
+.dbub{transform:translate(-50%,-125%);width:46px;height:46px;border-radius:50%;background:#1d1d1f;color:#fff;display:grid;place-items:center;text-align:center;font-weight:700;font-size:15px;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.dbub small{display:block;font-size:10px;font-weight:500;opacity:.8}
+.ebub{transform:translate(18px,-104px);background:#FFE033;color:#1d1d1f;border-radius:10px;padding:4px 8px;font-size:14px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.2);text-align:center;line-height:1.05}
+.ebub small{display:block;font-size:10px;font-weight:600}
+.arr{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px 14px}
+.arr b{display:block;font-size:20px}
+.arr small{display:block;color:#777;font-size:14px;margin-top:3px;line-height:1.3}
+.arr .js-countdown{flex:none;background:#F0F0F0;border-radius:12px;padding:10px 12px;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.bigplate{font-size:26px;font-weight:800;letter-spacing:1px}
+.bigplate .ua{display:none}.bigplate .pn{padding:0}
+.ava{position:relative;border-radius:50%;background:#e9e9ea}
+.ava .rb{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.2);font-size:11px;font-weight:700;padding:1px 5px;white-space:nowrap}
+
 </style>
 </head>
 <body>
@@ -96,7 +123,8 @@ body{--accent:#FFD900;--accent2:#222;--to-bg:#222;--to-fg:#FFE033;--stop-bg:#555
 
 <button class="menu js-menu" aria-label="Меню"><svg width="30" height="22" viewBox="0 0 30 22"><path d="M2 2h26M2 11h26M2 20h26" stroke="#333" stroke-width="2.6" stroke-linecap="round"/></svg></button>
 <div class="bonus">680<svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#FFD43A"/><circle cx="17" cy="17" r="11" fill="#FFB800"/><path d="M13 12.5c2-1.4 6-1 6.6 1.6.5 2.3-3.5 3-3.5 5.6" fill="none" stroke="#FFE680" stroke-width="2.4" stroke-linecap="round"/></svg></div>
-<button class="locate js-locate" aria-label="Моё местоположение"><svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="#333" stroke-width="2.4"><circle cx="17" cy="17" r="9"/><circle cx="17" cy="17" r="3.6" fill="#333"/><path d="M17 2v6M17 26v6M2 17h6M26 17h6" stroke-linecap="round"/></svg></button>
+<button class="locate mapbtn js-locate" aria-label="Моё местоположение"><svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="#333" stroke-width="2.4"><circle cx="17" cy="17" r="9"/><circle cx="17" cy="17" r="3.6" fill="#333"/><path d="M17 2v6M17 26v6M2 17h6M26 17h6" stroke-linecap="round"/></svg></button>
+<button class="mapbtn fit js-fit" aria-label="Показать весь маршрут"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#333" stroke-width="2.2" stroke-linecap="round"><circle cx="6" cy="20" r="3"/><circle cx="20" cy="6" r="3"/><path d="M8.5 18 17.5 8"/></svg></button>
 <div id="searching"><span class="spin"></span>Ищем машину…</div>
 <div id="toast" role="status"></div>
 
@@ -143,32 +171,38 @@ body{--accent:#FFD900;--accent2:#222;--to-bg:#222;--to-fg:#FFE033;--stop-bg:#555
 <section class="sheet off" id="rideSheet">
   <div class="grab">
     <div class="handle"></div>
-    <div class="eta">
-      <div><div class="eta-t">Машина будет через<b id="rcEta"></b></div><div class="eta-s"><span id="rcDist"></span> до вас · подача в <span class="js-eta-clock"></span></div></div>
-      <div class="eta-badge"><span><span class="js-cls-name" style="font-size:13px;font-weight:700"></span></span></div>
+    <div class="arr">
+      <div><b class="js-arrive-title" data-t="Время прибытия">Время прибытия</b><small>Машина в <span id="rcDist"></span> · <span id="rcEta"></span>.<br>Маршрут может измениться из-за дорожной ситуации</small></div>
+      <span class="js-countdown">00:00</span>
     </div>
   </div>
   <div class="sbody">
     <div class="card" style="padding-top:14px">
       <div class="carrow">
-        <div><div class="plate" id="rcPlate"></div><div class="car-n" id="rcModel"></div><div class="car-c" id="rcColor"></div></div>
+        <div><div class="bigplate" id="rcPlate"></div><div class="car-c"><span id="rcModel"></span> · <span id="rcColor"></span></div></div>
         <div class="car-pic" id="rcCarPic"></div>
       </div>
-      <div class="drv"><div class="ava" id="rcAva"></div><div><b id="rcDriver"></b><span class="rate">★ <span id="rcRating"></span> · водитель</span></div></div>
+      <div class="drv"><div class="ava"><span id="rcAva"></span><span class="rb"><span id="rcRating"></span> ★</span></div><div><b id="rcDriver"></b><span class="rate js-trips"></span></div></div>
       <div class="acts">
         <button class="act js-call"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M6.6 10.8a15.2 15.2 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z" fill="#333"/></svg>Позвонить</button>
         <button class="act js-msg"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 3h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 1-2z" fill="#333"/></svg>Сообщение</button>
       </div>
     </div>
-    <div class="card"><div class="sec-h">Маршрут поездки</div><div id="rcRoute"></div><div class="trip2" id="rcTrip"></div></div>
+    <div class="card"><div class="sec-h">Маршрут поездки · <span class="js-cls-name"></span></div><div id="rcRoute"></div><div class="trip2" id="rcTrip"></div></div>
     <div class="card prow"><div><div class="sec-h" style="margin:0">Стоимость</div><small style="color:#777">можно изменить</small></div><label class="pricefield"><input class="js-price" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span>₴</span></label></div>
   </div>
   <div class="sfoot"><button class="cancel js-cancel">Отменить</button></div>
 </section>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
 <script>
 window.APP = {
+  vectorStyle: 'https://tiles.openfreemap.org/styles/liberty',
+  taxiColor: '#FFC928',
+  destBubble: (km, min) => `<div class="bubble"><div class="dbub">${min}<small>мин</small></div></div>`,
+  etaBubble: min => `<div class="bubble"><div class="ebub">${min}<small>мин</small></div></div>`,
   name: 'Сонях',
   tiles: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
   fallbackTiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',

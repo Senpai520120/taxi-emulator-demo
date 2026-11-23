@@ -59,16 +59,31 @@ function toast(msg, ms = 3400) {
 
 /* ---------------- карта ---------------- */
 const map = L.map('map', { zoomControl: false, attributionControl: false, zoomSnap: 0.25 }).setView(KH, 15);
-const tileOpts = { maxZoom: 19, subdomains: 'abcd', attribution: C.attr, className: 'base-tiles' };
-let tiles = L.tileLayer(C.tiles, tileOpts).addTo(map);
-if (C.fallbackTiles) {                       // если OSM отказал (бывает при открытии с file://) — запасные тайлы
-  let errs = 0;
-  tiles.on('tileerror', () => {
-    if (++errs !== 4) return;
-    map.removeLayer(tiles);
-    tiles = L.tileLayer(C.fallbackTiles, { ...tileOpts, attribution: '© OpenStreetMap, © CARTO' }).addTo(map);
-  });
+const hasWebGL = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (_) { return false; } })();
+function rasterBase() {
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap', className: 'base-tiles raster' }).addTo(map);
 }
+if (C.vectorStyle && window.L.maplibreGL && hasWebGL) {
+  // векторная карта (OpenFreeMap, без ключа): чистая, как в приложениях такси
+  try {
+    const gl = L.maplibreGL({
+      style: C.vectorStyle, className: 'base-tiles vector',
+      attribution: '© <a href="https://openfreemap.org">OpenFreeMap</a> © OpenStreetMap'
+    }).addTo(map);
+    const glMap = gl.getMaplibreMap();
+    glMap.once('load', () => {
+      try {                                    // подписи только на местном языке, без латиницы
+        for (const ly of glMap.getStyle().layers) {
+          if (ly.type === 'symbol' && ly.layout && /name/.test(JSON.stringify(ly.layout['text-field'] || ''))) {
+            glMap.setLayoutProperty(ly.id, 'text-field', ['coalesce', ['get', 'name:uk'], ['get', 'name']]);
+          }
+        }
+        C.mapTweak?.(glMap);
+      } catch (_) {}
+    });
+    glMap.on('error', e => console.warn('map', e?.error?.message));
+  } catch (e) { console.warn(e); rasterBase(); }
+} else rasterBase();
 L.control.attribution({ position: 'topright', prefix: false }).addTo(map);
 const layers = {
   me: L.layerGroup().addTo(map), route: L.layerGroup().addTo(map),
@@ -135,11 +150,16 @@ async function geocode(q) {
 
 /* ---------------- поля адресов ---------------- */
 const fieldsBox = $('#fields');
+const SUBL = { from: 'Откуда', stop: 'Через', to: 'Куда' };
+function subHTML(p) {
+  if (p.k !== 'from' && !p.ll) return '';
+  return `<span>${SUBL[p.k]}</span>${p.city ? ' • ' + esc(p.city) : ''}`;
+}
 function rowHTML(p, i, n) {
   const stop = p.k === 'stop';
   const ph = stop ? `${C.ph.stop} ${i}` : C.ph[p.k];
   const dot = stop ? i : (C.dot?.[p.k] || '');
-  const sub = C.showSub && p.k === 'from' ? `<div class="fsub"><span>Откуда</span>${p.city ? ' • ' + esc(p.city) : ''}</div>` : '';
+  const sub = C.showSub ? `<div class="fsub">${subHTML(p)}</div>` : '';
   const ctl = stop ? `<div class="sctl"><button class="sb" data-a="up" ${i <= 1 ? 'disabled' : ''} aria-label="Выше">↑</button><button class="sb" data-a="down" ${i >= n - 2 ? 'disabled' : ''} aria-label="Ниже">↓</button><button class="sb del" data-a="del" aria-label="Удалить остановку">×</button></div>` : '';
   const extra = p.k === 'to' && C.toExtra ? C.toExtra : '';
   return `<div class="frow ${p.k}" data-i="${i}"><span class="fdot">${dot}</span><div class="fbox"><input class="finput" data-i="${i}" type="text" placeholder="${esc(ph)}" value="${esc(p.text)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">${sub}</div>${ctl}${extra}<div class="sugg" data-i="${i}"></div></div>`;
@@ -155,7 +175,7 @@ function syncField(i) {
   const p = S.pts[i];
   $('.finput', row).value = p.text;
   const sub = $('.fsub', row);
-  if (sub) sub.innerHTML = `<span>Откуда</span>${p.city ? ' • ' + esc(p.city) : ''}`;
+  if (sub) sub.innerHTML = subHTML(p);
 }
 function showSugg(i, list, msg) {
   S.sug = list; S.sugI = i;
@@ -284,6 +304,7 @@ async function updateRoute(fit) {
   if (seq !== rseq) return;
   S.trip = r;
   drawLine(layers.route, r.coords, C.route.color, r.ok, C.route.casing);
+  if (C.destBubble) L.marker(to.ll, { icon: icon(C.destBubble(fmtKm(r.dist), Math.max(1, Math.round(r.dur / 60))), [0, 0], [0, 0]), interactive: false, zIndexOffset: 350 }).addTo(layers.route);
   showTripInfo();
   if (!r.ok) toast('Сервис маршрутов не ответил — показана прямая линия');
   if (fit) fitTo(r.coords);
@@ -413,7 +434,7 @@ async function makeCar(p) {
     eta: Math.max(2, Math.round(r.dur / 60)),
     model: pick(MODELS[S.cls]), color: pick(COLORS),
     plate: `${pick(['AX', 'KX'])} ${d()}${d()}${d()}${d()} ${pick(PLATE_L)}${pick(PLATE_L)}`,
-    driver: pick(NAMES), rating: rnd(4.7, 5.0).toFixed(1)
+    driver: pick(NAMES), rating: rnd(4.7, 5.0).toFixed(1), trips: Math.round(rnd(150, 3200))
   };
 }
 function fillRide(car) {
@@ -424,6 +445,7 @@ function fillRide(car) {
   $('#rcPlate').innerHTML = `<span class="ua">UA</span><span class="pn">${esc(car.plate)}</span>`;
   $('#rcDriver').textContent = car.driver;
   $('#rcRating').textContent = car.rating;
+  $$('.js-trips').forEach(el => { el.textContent = car.trips + ' поездок'; });
   $('#rcAva').textContent = car.driver[0];
   $('#rcCarPic').innerHTML = `<div style="transform:rotate(90deg)">${carSvg(car.color.hex, 30)}</div>`;
   const t = new Date(Date.now() + car.eta * 60000);
@@ -454,11 +476,13 @@ async function findCar() {
   document.body.classList.remove('searching');
   $$('.js-find').forEach(b => { b.disabled = false; });
   S.busy = false; S.car = car;
+  if (C.etaBubble) L.marker(from.ll, { icon: icon(C.etaBubble(car.eta), [0, 0], [0, 0]), interactive: false, zIndexOffset: 600 }).addTo(layers.car);
+  startCountdown(car.eta * 60);
 
   drawLine(layers.car, car.route.coords, C.carRoute, true);
   layers.car.eachLayer(l => l.setStyle && l.setStyle({ dashArray: '1 11', weight: 6, lineCap: 'round' }));
   L.marker(car.pos, {
-    icon: icon(`<div class="car-ic" style="transform:rotate(${car.head.toFixed(0)}deg)">${carSvg(car.color.hex)}</div>`, [24, 44], [12, 22]),
+    icon: icon(`<div class="car-ic" style="transform:rotate(${car.head.toFixed(0)}deg)">${carSvg(C.taxiColor || '#FFC928')}</div>`, [24, 44], [12, 22]),
     interactive: false, zIndexOffset: 500
   }).addTo(layers.car);
   if (!car.route.ok) toast('Маршрут машины построен примерно — сервис маршрутов не ответил');
@@ -467,8 +491,31 @@ async function findCar() {
   formSheet.hide(); rideSheet.show(1);
   fitTo([...car.route.coords, ...(S.trip ? S.trip.coords : S.pts.filter(p => p.ll).map(p => p.ll))]);
 }
+let cdT;
+function startCountdown(sec) {
+  clearInterval(cdT);
+  const end = Date.now() + sec * 1000;
+  $$('.js-arrive-title').forEach(el => { if (el.dataset.t) el.textContent = el.dataset.t; });
+  const tick = () => {
+    const left = Math.max(0, Math.round((end - Date.now()) / 1000));
+    const txt = String(Math.floor(left / 60)).padStart(2, '0') + ':' + String(left % 60).padStart(2, '0');
+    $$('.js-countdown').forEach(el => { el.textContent = txt; });
+    if (left === 0) {
+      clearInterval(cdT);
+      $$('.js-arrive-title').forEach(el => { el.textContent = 'Водитель на месте'; });
+      toast('Водитель ожидает вас');
+    }
+  };
+  tick(); cdT = setInterval(tick, 1000);
+}
+function fitAll() {
+  const lls = [];
+  if (S.trip) lls.push(...S.trip.coords); else S.pts.forEach(p => p.ll && lls.push(p.ll));
+  if (S.car) lls.push(...S.car.route.coords);
+  if (lls.length) fitTo(lls); else if (S.me) centerOn(S.me, 16);
+}
 function cancelRide() {
-  layers.car.clearLayers(); S.car = null;
+  layers.car.clearLayers(); S.car = null; clearInterval(cdT);
   rideSheet.hide(); formSheet.show(1);
   fitTo(S.trip ? S.trip.coords : S.pts.filter(p => p.ll).map(p => p.ll));
 }
@@ -519,6 +566,8 @@ document.addEventListener('click', e => {
   else if (t.matches('.js-locate')) { if (S.me) centerOn(S.me, 16); else geolocate(false); }
   else if (t.matches('.js-call')) toast(`Звонок водителю (${S.car?.driver || ''}) — недоступен в демо`);
   else if (t.matches('.js-msg')) toast('Сообщения недоступны в демо');
+  else if (t.matches('.js-fit')) fitAll();
+  else if (t.matches('.js-hint-close')) { $('#installHint')?.classList.add('hidden'); localStorage.setItem('taxi.hint', '1'); }
   else if (t.matches('.js-menu')) toast(`${C.name} — демо-эмулятор заказа такси`);
   else if (t.dataset.addr) {
     const i = S.pts.length - 1, p = S.pts[i];
@@ -527,6 +576,25 @@ document.addEventListener('click', e => {
   else if (t.matches('.js-deco')) toast('Раздел недоступен в демо');
 });
 map.on('click', () => { if (document.activeElement?.matches('input')) document.activeElement.blur(); });
+
+/* ---------------- как приложение (PWA) ---------------- */
+const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+document.documentElement.classList.toggle('standalone', standalone);
+document.addEventListener('gesturestart', e => e.preventDefault());   // интерфейс не масштабируется щипком, карта — да
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+if (!standalone && isIOS && !localStorage.getItem('taxi.hint')) {
+  setTimeout(() => {
+    const d = document.createElement('div');
+    d.id = 'installHint';
+    d.innerHTML = location.protocol === 'file:'
+      ? '<b>Откройте по ссылке в Safari</b>Из «Файлов» приложение не установить. Откройте сайт в Safari и добавьте его на экран «Домой».<button class="js-hint-close" aria-label="Закрыть">×</button>'
+      : '<b>Установите как приложение</b>Нажмите <span class="shr"></span> «Поделиться» → «На экран „Домой“». Запускайте с иконки — без панелей браузера.<button class="js-hint-close" aria-label="Закрыть">×</button>';
+    document.body.appendChild(d);
+  }, 1200);
+}
 
 /* ---------------- старт ---------------- */
 renderFields();

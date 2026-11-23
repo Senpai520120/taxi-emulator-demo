@@ -4,9 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
+<title>Рух — такси (демо)</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Сонях — такси (демо)</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Рух">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.css">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
@@ -73,94 +81,130 @@ body.searching #searching{display:flex}
 .plate .ua::before{content:"";position:absolute;left:3px;right:3px;top:3px;height:7px;background:linear-gradient(#2f6fe0 50%,#ffd400 50%);border-radius:1px}
 .plate .pn{padding:5px 8px}
 
-body{--accent:#FFD900;--accent2:#222;--to-bg:#222;--to-fg:#FFE033;--stop-bg:#555}
-.base-tiles{filter:grayscale(1) brightness(1.07) contrast(.9)}
-.menu{position:fixed;left:12px;top:calc(env(safe-area-inset-top) + 12px);z-index:15;width:76px;height:76px;border-radius:18px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.14);display:grid;place-items:center}
-.bonus{position:fixed;right:12px;top:calc(env(safe-area-inset-top) + 22px);z-index:15;height:58px;padding:0 10px 0 18px;border-radius:16px;background:linear-gradient(90deg,#FF7A1A,#FFB51E);color:#fff;box-shadow:0 2px 12px rgba(255,120,0,.3);display:flex;align-items:center;gap:8px;font-weight:600;font-size:22px}
-.locate{width:76px;height:76px;border-radius:18px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.16);display:grid;place-items:center}
-.sheet{background:#EDEDEE;border-radius:24px 24px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.12)}
-.grab{background:#fff}
-.sbody{padding:0 0 10px}
-.card{background:#fff;padding:2px 16px 14px;border-radius:0 0 22px 22px;margin-bottom:10px}
-.card+.card{border-radius:22px;padding:14px 16px}
+/* --- ощущение нативного приложения --- */
+html{-webkit-text-size-adjust:100%;touch-action:manipulation}
+body{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+input{-webkit-user-select:text;user-select:text}
+.leaflet-container{background:#eef0f2;font-family:inherit}
+.base-tiles.vector canvas{outline:none}
+.bubble{position:absolute;left:0;top:0;white-space:nowrap;pointer-events:none}
+#installHint{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 92px);z-index:55;background:#fff;border-radius:18px;box-shadow:0 8px 30px rgba(0,0,0,.22);padding:14px 44px 14px 16px;font-size:15px;line-height:1.4;color:#333;animation:hintIn .35s ease}
+#installHint b{display:block;font-size:17px;color:#111;margin-bottom:3px}
+#installHint button{position:absolute;right:8px;top:8px;width:32px;height:32px;border-radius:50%;background:#f0f0f2;font-size:20px;line-height:1}
+#installHint .shr{display:inline-block;width:16px;height:19px;vertical-align:-3px;background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 20'%3E%3Cpath d='M8 1v12M4 5l4-4 4 4M3 9H1v10h14V9h-2' fill='none' stroke='%23007aff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+@keyframes hintIn{from{opacity:0;transform:translateY(-10px)}}
+.mapbtn{position:fixed;right:16px;z-index:15;transition:bottom .3s cubic-bezier(.2,.8,.2,1),opacity .2s}
+body.dragging .mapbtn{transition:none}
+body.sheet-full .mapbtn{opacity:0;pointer-events:none}
+
+body{--accent:#1DB954;--accent2:#1DB954;--to-bg:#1d1d1f;--stop-bg:#7a7a80}
+.menu{position:fixed;left:20px;top:calc(env(safe-area-inset-top) + 14px);z-index:15;width:64px;height:64px;border-radius:50%;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.16);display:grid;place-items:center}
+.bonus{position:fixed;right:14px;top:calc(env(safe-area-inset-top) + 22px);z-index:15;height:50px;padding:0 18px 0 12px;border-radius:25px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.16);display:flex;align-items:center;gap:8px;font-weight:600;font-size:21px}
+.locate{width:62px;height:62px;border-radius:50%;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.18);display:grid;place-items:center}
+.sheet{background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.12)}
+.sbody{padding:0 20px 8px}
 
 /* адреса */
-.frow{gap:10px;margin-bottom:10px;align-items:center}
-.fdot{position:absolute;left:16px;top:23px;width:26px;height:26px;z-index:1;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;pointer-events:none}
-.frow.stop .fdot{background:#555;border-radius:50%;width:24px;height:24px;left:17px;top:24px}
-.fbox{background:#F0F0F0;border-radius:14px;height:72px;display:flex;align-items:center;padding:0 14px 0 56px}
-.finput{font-size:20px;line-height:30px;height:30px;color:#222}
-.hw{display:flex;align-items:center;background:#F0F0F0;border-radius:14px;height:72px;flex:none}
-.hw button{width:62px;height:72px;display:grid;place-items:center}
-.hw span{width:1px;height:36px;background:#cfcfd2}
-.sb{background:#F0F0F0;border-radius:12px;width:34px;height:34px}
-.sugg{background:#fff;border:1px solid #ececec;border-radius:14px;padding:0 10px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
-.addstop{display:flex;align-items:center;gap:12px;font-size:17px;font-weight:500;color:#222;padding:2px 2px 8px}
-.addstop i{width:28px;height:28px;border-radius:50%;background:#FFE033;display:grid;place-items:center;font-style:normal;font-size:20px;line-height:1}
-.recent{display:flex;overflow-x:auto;padding:12px 0 4px;margin:0 -16px;scrollbar-width:none}
-.recent::-webkit-scrollbar{display:none}
-.rc{flex:none;display:flex;align-items:center;gap:12px;padding:4px 16px;font-size:19px;white-space:nowrap;border-right:1px solid #ddd}
-.rc:last-child{border-right:0}
-.trip{margin-top:10px;display:inline-block;background:#FFF5BF;color:#222;border-radius:10px;padding:8px 12px;font-size:15px;font-weight:600}
-.lbl{font-size:15px;color:#777;margin-bottom:8px}
-.pricefield{display:flex;align-items:center;gap:6px;background:#F0F0F0;border-radius:14px;padding:0 16px;height:64px}
+.frow{gap:0 14px;padding:11px 0}
+.fdot{width:24px;height:24px;flex:none;margin-top:3px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;position:relative;z-index:1}
+.frow.from .fdot{background:radial-gradient(circle,#1DB954 0 4px,#fff 4.6px 7.4px,#1DB954 8px)}
+.frow.to .fdot{background:radial-gradient(circle,#1d1d1f 0 4px,#fff 4.6px 7.4px,#1d1d1f 8px)}
+.frow.stop .fdot{background:#8e8e93}
+.frow:not(:last-child)::after{content:"";position:absolute;left:11px;top:44px;bottom:-11px;border-left:2.5px dotted #1DB954}
+.finput{font-size:21px;line-height:30px;height:30px}
+.frow.from .finput{font-weight:500}
+.fsub{font-size:15px;color:#8e8e93;margin-top:3px}
+.fsub span{color:#1DB954}
+.star{width:46px;height:46px;flex:none;border-radius:50%;border:1px solid #e3e3e6;display:grid;place-items:center;margin:-8px 0 -8px 8px;align-self:center}
+.base-tiles{filter:saturate(.45) brightness(1.06) contrast(.92)}
+.sugg{flex:0 0 calc(100% - 38px);margin:6px 0 0 38px;background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.1);padding:0 10px}
+.addstop{display:flex;align-items:center;gap:14px;color:#1DB954;font-size:17px;font-weight:500;padding:6px 0 14px}
+.addstop i{width:24px;height:24px;border-radius:50%;border:2px solid #1DB954;display:grid;place-items:center;font-style:normal;font-size:18px;line-height:1}
+.trip{margin:0 0 14px 38px;display:inline-block;background:#EAF8EF;color:#13813b;border-radius:10px;padding:7px 12px;font-size:15px;font-weight:600}
+.block{border-top:1px solid #efeff1;padding:14px 0}
+.lbl{font-size:14px;color:#8e8e93;margin-bottom:8px}
+.pricefield{display:flex;align-items:center;gap:6px;background:#F4F4F5;border-radius:14px;padding:0 16px;height:56px}
 .pricefield input{flex:1;min-width:0;border:0;outline:0;background:none;font-size:21px;font-weight:600}
-.pricefield span{font-size:21px;color:#777}
-.clsrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
-.cls{background:#F0F0F0;border-radius:14px;padding:10px;text-align:left;border:2px solid transparent;display:flex;flex-direction:column;align-items:flex-start}
-.cls.on{background:#FFE033;border-color:#222}
+.pricefield span{font-size:21px;color:#8e8e93}
+.clsrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cls{background:#F4F4F5;border-radius:16px;padding:10px 10px 9px;text-align:left;border:2px solid transparent;display:flex;flex-direction:column;align-items:flex-start;gap:1px}
+.cls.on{border-color:#1DB954;background:#fff}
 .cls b{font-size:16px;font-weight:600}
-.cls small{font-size:12px;color:#666}
-.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.tile{position:relative;height:98px;border-radius:16px;background:#F2F2F2;padding:12px;text-align:left;font-size:17px;font-weight:500;overflow:hidden;display:block}
-.tile .em{position:absolute;right:8px;bottom:4px;font-size:38px;line-height:1}
-.tile .beta{display:inline-block;margin-top:6px;background:#3a3a3a;color:#fff;font-size:12px;font-weight:700;border-radius:6px;padding:3px 7px}
-.sfoot{background:#fff;padding:10px 16px calc(10px + env(safe-area-inset-bottom));border-top:1px solid #e6e6e6}
-.gobig{width:100%;height:60px;border-radius:16px;background:#FFE033;font-size:19px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px}
-.gobig .js-price-show{background:#222;color:#FFE033;border-radius:10px;padding:4px 10px;font-size:16px}
+.cls small{font-size:12px;color:#8e8e93}
+.cls .cpic{height:28px;width:40px;display:flex;align-items:center;justify-content:center;margin-bottom:4px}
+.cls .cpic svg{transform:rotate(90deg)}
+
+/* низ формы */
+.sfoot{display:flex;align-items:center;gap:8px;border-top:1px solid #efeff1;padding:14px 0 calc(14px + env(safe-area-inset-bottom)) 20px}
+.clsbtn{display:flex;align-items:center;gap:14px;text-align:left;flex:1 1 auto;min-width:0}
+.clsbtn .cv{flex:none}
+.clsbtn .ct{min-width:0}
+.clsbtn b{display:flex;align-items:center;gap:6px;font-size:21px;font-weight:500;white-space:nowrap}
+.clsbtn small{display:block;color:#8e8e93;font-size:15px;white-space:nowrap}
+.fprice{display:flex;align-items:baseline;gap:2px;flex:none;font-weight:700;font-size:23px}
+.fprice input{width:76px;text-align:right;border:0;outline:0;background:transparent;font-weight:700;font-size:23px;padding:2px 0;border-bottom:2px dashed #dadade}
+.go{width:92px;height:72px;flex:none;border-radius:36px 0 0 36px;background:#FFD21F;display:grid;place-items:center}
 
 /* карточка поездки */
-.eta{padding:0 16px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.eta-t{font-size:19px;color:#555}
-.eta-t b{display:block;color:#222;font-size:28px;margin-top:2px}
-.eta-s{color:#777;font-size:15px;margin-top:4px}
-.eta-badge{flex:none;width:74px;height:74px;border-radius:18px;background:#FFE033;display:grid;place-items:center;text-align:center;font-weight:800;font-size:26px;line-height:1}
-.eta-badge small{display:block;font-size:13px;font-weight:600}
-.carrow{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.car-n{font-size:20px;font-weight:700;margin-top:10px}
-.car-c{color:#777;font-size:15px;margin-top:2px}
-.car-pic{width:90px;height:56px;display:grid;place-items:center;flex:none;background:#F2F2F2;border-radius:14px}
-.drv{display:flex;align-items:center;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid #eee}
-.ava{width:50px;height:50px;border-radius:14px;background:#FFE033;display:grid;place-items:center;font-weight:800;font-size:21px;flex:none}
-.drv b{display:block;font-size:18px}
-.drv .rate{color:#777;font-size:15px}
-.acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-.act{height:54px;border-radius:14px;background:#F0F0F0;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:600}
-.sec-h{font-size:15px;color:#777;margin-bottom:8px}
-.rr{display:flex;gap:12px;align-items:flex-start;padding:6px 0;position:relative;font-size:17px}
-.rr:not(:last-child)::after{content:"";position:absolute;left:9px;top:30px;bottom:-6px;width:2px;background:#ddd}
-.rdot{width:20px;height:20px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;background:#555}
-.rr.from .rdot{background:#FFE033;box-shadow:inset 0 0 0 6px #FFE033,inset 0 0 0 10px #222}
-.rr.to .rdot{background:#222}
+.eta{padding:0 20px 12px}
+.eta-t{font-size:22px;font-weight:700;line-height:1.25}
+.eta-t span{color:#1DB954}
+.eta-s{color:#8e8e93;font-size:16px;margin-top:4px}
+.carrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-top:1px solid #efeff1}
+.car-n{font-size:20px;font-weight:600;margin-top:10px}
+.car-c{color:#8e8e93;font-size:15px;margin-top:2px}
+.car-pic{width:90px;height:56px;display:grid;place-items:center;flex:none}
+.drv{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid #efeff1}
+.ava{width:50px;height:50px;border-radius:50%;background:#EAF8EF;color:#13813b;display:grid;place-items:center;font-weight:700;font-size:21px;flex:none}
+.drv b{display:block;font-size:18px;font-weight:600}
+.drv .rate{color:#8e8e93;font-size:15px}
+.drv .rate i{color:#f5b800;font-style:normal}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:4px 0 14px}
+.act{height:52px;border-radius:16px;background:#F4F4F5;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:600}
+.sec{border-top:1px solid #efeff1;padding:14px 0}
+.sec-h{font-size:14px;color:#8e8e93;margin-bottom:8px}
+.rr{display:flex;gap:14px;align-items:flex-start;padding:6px 0;position:relative;font-size:17px}
+.rr:not(:last-child)::after{content:"";position:absolute;left:8px;top:28px;bottom:-8px;border-left:2px dotted #1DB954}
+.rdot{width:18px;height:18px;flex:none;margin-top:2px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;background:#8e8e93}
+.rr.from .rdot{background:radial-gradient(circle,#1DB954 0 3px,#fff 3.6px 5.4px,#1DB954 6px)}
+.rr.to .rdot{background:radial-gradient(circle,#1d1d1f 0 3px,#fff 3.6px 5.4px,#1d1d1f 6px)}
 .rt{min-width:0;overflow-wrap:anywhere}
-.trip2{margin-top:8px;font-weight:700;font-size:16px}
+.trip2{margin-top:8px;font-weight:600;font-size:16px}
 .prow{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.prow .pricefield{width:150px;height:56px}
-.cancel{width:100%;height:58px;border-radius:16px;background:#F0F0F0;color:#e5383b;font-weight:700;font-size:18px}
+.prow .pricefield{width:150px;height:52px}
+#rideSheet .sfoot{padding:12px 20px calc(12px + env(safe-area-inset-bottom))}
+.cancel{width:100%;height:56px;border-radius:16px;background:#F4F4F5;color:#e5383b;font-weight:600;font-size:18px}
 
 /* пин «Откуда» */
-.pin2{position:relative;width:56px;height:84px}
-.pin2 .h{position:absolute;left:0;top:0;width:56px;height:56px;border-radius:50%;background:#FFE033;box-shadow:0 3px 8px rgba(0,0,0,.22);display:grid;place-items:center}
-.pin2 .h i{width:9px;height:9px;border-radius:50%;background:#333}
-.pin2 .l{position:absolute;left:26.5px;top:54px;width:3px;height:30px;background:#FFD400;border-radius:2px}
+.pin1{position:relative;width:46px;height:70px}
+.pin1 .h{position:absolute;left:0;top:0;width:46px;height:46px;border-radius:50%;background:#1DB954;box-shadow:0 3px 8px rgba(0,0,0,.25);display:grid;place-items:center}
+.pin1 .h i{width:16px;height:16px;border-radius:50%;background:#fff}
+.pin1 .l{position:absolute;left:21.5px;top:44px;width:3px;height:26px;background:#1DB954;border-radius:2px}
+
+/* v2: детали как в реальном приложении */
+body{--to-bg:#fff;--to-fg:#1d1d1f;--stop-bg:#fff}
+.mk-num{color:#1d1d1f;border:4px solid #1d1d1f;width:26px;height:26px;font-size:12px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.mk-num.to{font-size:0}
+.base-tiles.vector{filter:saturate(.8) brightness(1.02)}
+.mapbtn.fit{width:62px;height:62px;border-radius:50%;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.18);display:grid;place-items:center;bottom:calc(var(--sheet,280px) + 90px)}
+.dbub{transform:translate(-50%,-150%);background:#fff;border-radius:10px;padding:6px 10px;font-size:14px;font-weight:600;color:#1d1d1f;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.dbub small{font-weight:400;color:#8e8e93;font-size:14px}
+.ebub{transform:translate(-50%,-112px);background:#1d1d1f;color:#fff;border-radius:10px;padding:5px 10px;font-size:14px;font-weight:700}
+.eta-t .js-countdown{display:inline-block;margin-left:6px;background:#EAF8EF;color:#13813b;border-radius:8px;padding:2px 8px;font-size:17px;font-variant-numeric:tabular-nums;vertical-align:2px}
+.ava{position:relative}
+.ava .rb{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.2);font-size:11px;font-weight:700;color:#1d1d1f;padding:1px 5px;white-space:nowrap}
+.fsub{display:block}
+.frow.stop .fsub span,.frow.to .fsub span{color:#8e8e93}
+
 </style>
 </head>
 <body>
 <div id="map"></div>
 
-<button class="menu js-menu" aria-label="Меню"><svg width="30" height="22" viewBox="0 0 30 22"><path d="M2 2h26M2 11h26M2 20h26" stroke="#333" stroke-width="2.6" stroke-linecap="round"/></svg></button>
-<div class="bonus">680<svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#FFD43A"/><circle cx="17" cy="17" r="11" fill="#FFB800"/><path d="M13 12.5c2-1.4 6-1 6.6 1.6.5 2.3-3.5 3-3.5 5.6" fill="none" stroke="#FFE680" stroke-width="2.4" stroke-linecap="round"/></svg></div>
-<button class="locate js-locate" aria-label="Моё местоположение"><svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="#333" stroke-width="2.4"><circle cx="17" cy="17" r="9"/><circle cx="17" cy="17" r="3.6" fill="#333"/><path d="M17 2v6M17 26v6M2 17h6M26 17h6" stroke-linecap="round"/></svg></button>
+<button class="menu js-menu" aria-label="Меню"><svg width="30" height="22" viewBox="0 0 30 22"><path d="M2 2h26M2 11h26M2 20h18" stroke="#1d1d1f" stroke-width="2.6" stroke-linecap="round"/></svg></button>
+<div class="bonus"><svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="13" fill="#F5B800"/><circle cx="14" cy="14" r="10" fill="#FFCE2E"/><path d="M14 7.5l1.9 4.1 4.4.4-3.3 2.9 1 4.4L14 17l-4 2.3 1-4.4-3.3-2.9 4.4-.4z" fill="#fff"/></svg>64</div>
+<button class="locate mapbtn js-locate" aria-label="Моё местоположение"><svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="#1d1d1f" stroke-width="2.4"><circle cx="17" cy="17" r="9"/><circle cx="17" cy="17" r="3.6" fill="#1d1d1f"/><path d="M17 2v6M17 26v6M2 17h6M26 17h6" stroke-linecap="round"/></svg></button>
+<button class="mapbtn fit js-fit" aria-label="Показать весь маршрут"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#1d1d1f" stroke-width="2.2" stroke-linecap="round"><circle cx="6" cy="20" r="3"/><circle cx="20" cy="6" r="3"/><path d="M8.5 18 17.5 8"/></svg></button>
 <div id="searching"><span class="spin"></span>Ищем машину…</div>
 <div id="toast" role="status"></div>
 
@@ -168,38 +212,29 @@ body{--accent:#FFD900;--accent2:#222;--to-bg:#222;--to-fg:#FFE033;--stop-bg:#555
 <section class="sheet" id="formSheet">
   <div class="grab"><div class="handle"></div></div>
   <div class="sbody">
-    <div class="card">
-      <div id="fields"></div>
-      <button class="addstop js-add-stop"><i>+</i>Добавить остановку</button>
-      <div class="recent">
-        <button class="rc" data-addr="Соляниковский переулок, 11, Харьков"><svg width="20" height="26" viewBox="0 0 20 26"><path d="M10 1a8.5 8.5 0 0 0-8.5 8.5C1.5 16 10 25 10 25s8.5-9 8.5-15.5A8.5 8.5 0 0 0 10 1z" fill="#555"/><circle cx="10" cy="9.5" r="3.2" fill="#fff"/></svg>Соляниковский переулок, 11</button>
-        <button class="rc" data-addr="Академика Павлова улица, 120, Харьков"><svg width="20" height="26" viewBox="0 0 20 26"><path d="M10 1a8.5 8.5 0 0 0-8.5 8.5C1.5 16 10 25 10 25s8.5-9 8.5-15.5A8.5 8.5 0 0 0 10 1z" fill="#555"/><circle cx="10" cy="9.5" r="3.2" fill="#fff"/></svg>Академика Павлова улица, 120</button>
-        <button class="rc" data-addr="Сумская улица, 25, Харьков"><svg width="20" height="26" viewBox="0 0 20 26"><path d="M10 1a8.5 8.5 0 0 0-8.5 8.5C1.5 16 10 25 10 25s8.5-9 8.5-15.5A8.5 8.5 0 0 0 10 1z" fill="#555"/><circle cx="10" cy="9.5" r="3.2" fill="#fff"/></svg>Сумская улица, 25</button>
-      </div>
-      <div class="trip js-trip hidden"></div>
-    </div>
-    <div class="card" id="classes">
+    <div id="fields"></div>
+    <button class="addstop js-add-stop"><i>+</i>Добавить остановку</button>
+    <div><div class="trip js-trip hidden"></div></div>
+    <div class="block">
       <div class="lbl">Стоимость, ₴</div>
       <label class="pricefield"><input class="js-price" type="text" inputmode="decimal" placeholder="Введите сумму" autocomplete="off"><span>₴</span></label>
-      <div class="clsrow">
-        <button class="cls js-cls" data-c="economy"><b>Эконом</b><small>1-4 пассажира</small></button>
-        <button class="cls js-cls" data-c="standard"><b>Стандарт</b><small>1-4 пассажира</small></button>
-        <button class="cls js-cls" data-c="comfort"><b>Комфорт</b><small>1-4 пассажира</small></button>
-      </div>
     </div>
-    <div class="card">
-      <div class="tiles">
-        <button class="tile js-deco">Доставка<span class="em">📦</span></button>
-        <button class="tile js-deco">Путешествия<br><span class="beta">BETA</span><span class="em">🚌</span></button>
-        <button class="tile js-deco">Автопомощь<span class="em">🛠️</span></button>
-        <button class="tile js-deco">Перегон авто<span class="em">🚗</span></button>
-        <button class="tile js-deco">Межгород<span class="em">🛣️</span></button>
-        <button class="tile js-deco">Донат<span class="em">💛</span></button>
+    <div class="block" id="classes">
+      <div class="lbl">Класс авто</div>
+      <div class="clsrow">
+        <button class="cls js-cls" data-c="economy"><span class="cpic"><svg width="20" height="36" viewBox="0 0 24 44"><use href="#carY"/></svg></span><b>Эконом</b><small>1-4 пассажира</small></button>
+        <button class="cls js-cls" data-c="standard"><span class="cpic"><svg width="20" height="36" viewBox="0 0 24 44"><use href="#carY"/></svg></span><b>Стандарт</b><small>1-4 пассажира</small></button>
+        <button class="cls js-cls" data-c="comfort"><span class="cpic"><svg width="20" height="36" viewBox="0 0 24 44"><use href="#carK"/></svg></span><b>Комфорт</b><small>1-4 пассажира</small></button>
       </div>
     </div>
   </div>
   <div class="sfoot">
-    <button class="gobig js-find">Найти машину <span class="js-price-show hidden"></span></button>
+    <button class="clsbtn js-cls-open">
+      <svg class="cv" width="24" height="44" viewBox="0 0 24 44"><use href="#carY"/></svg>
+      <span class="ct"><b><span class="js-cls-name">Стандарт</span><svg width="14" height="9" viewBox="0 0 14 9"><path d="M1.5 1.5 7 7l5.5-5.5" fill="none" stroke="#1d1d1f" stroke-width="2.2" stroke-linecap="round"/></svg></b><small>1-4 пассажира</small></span>
+    </button>
+    <label class="fprice"><input class="js-price" type="text" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Стоимость, ₴">₴</label>
+    <button class="go js-find" aria-label="Найти машину" title="Найти машину"><svg width="30" height="26" viewBox="0 0 30 26"><path d="M2 13h24M15 2l11 11-11 11" fill="none" stroke="#1d1d1f" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
 </section>
 
@@ -208,47 +243,54 @@ body{--accent:#FFD900;--accent2:#222;--to-bg:#222;--to-fg:#FFE033;--stop-bg:#555
   <div class="grab">
     <div class="handle"></div>
     <div class="eta">
-      <div><div class="eta-t">Машина будет через<b id="rcEta"></b></div><div class="eta-s"><span id="rcDist"></span> до вас · подача в <span class="js-eta-clock"></span></div></div>
-      <div class="eta-badge"><span><span class="js-cls-name" style="font-size:13px;font-weight:700"></span></span></div>
+      <div class="eta-t"><span class="js-arrive-title" data-t="Машина будет через" style="color:inherit">Машина будет через</span> <span id="rcEta"></span><span class="js-countdown">00:00</span></div>
+      <div class="eta-s"><span id="rcDist"></span> до вас · подача в <span class="js-eta-clock"></span></div>
     </div>
   </div>
   <div class="sbody">
-    <div class="card" style="padding-top:14px">
-      <div class="carrow">
-        <div><div class="plate" id="rcPlate"></div><div class="car-n" id="rcModel"></div><div class="car-c" id="rcColor"></div></div>
-        <div class="car-pic" id="rcCarPic"></div>
-      </div>
-      <div class="drv"><div class="ava" id="rcAva"></div><div><b id="rcDriver"></b><span class="rate">★ <span id="rcRating"></span> · водитель</span></div></div>
-      <div class="acts">
-        <button class="act js-call"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M6.6 10.8a15.2 15.2 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z" fill="#333"/></svg>Позвонить</button>
-        <button class="act js-msg"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 3h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 1-2z" fill="#333"/></svg>Сообщение</button>
-      </div>
+    <div class="carrow">
+      <div><div class="plate" id="rcPlate"></div><div class="car-n" id="rcModel"></div><div class="car-c"><span id="rcColor"></span> · <span class="js-cls-name"></span></div></div>
+      <div class="car-pic" id="rcCarPic"></div>
     </div>
-    <div class="card"><div class="sec-h">Маршрут поездки</div><div id="rcRoute"></div><div class="trip2" id="rcTrip"></div></div>
-    <div class="card prow"><div><div class="sec-h" style="margin:0">Стоимость</div><small style="color:#777">можно изменить</small></div><label class="pricefield"><input class="js-price" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span>₴</span></label></div>
+    <div class="drv"><div class="ava"><span id="rcAva"></span><span class="rb">★ <span id="rcRating"></span></span></div><div><b id="rcDriver"></b><span class="rate"><span class="js-trips"></span></span></div></div>
+    <div class="acts">
+      <button class="act js-call"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M6.6 10.8a15.2 15.2 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z" fill="#1DB954"/></svg>Позвонить</button>
+      <button class="act js-msg"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 3h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 1-2z" fill="#1DB954"/></svg>Сообщение</button>
+    </div>
+    <div class="sec"><div class="sec-h">Маршрут поездки</div><div id="rcRoute"></div><div class="trip2" id="rcTrip"></div></div>
+    <div class="sec prow"><div><div class="sec-h" style="margin:0">Стоимость</div><small style="color:#8e8e93">можно изменить</small></div><label class="pricefield"><input class="js-price" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span>₴</span></label></div>
   </div>
   <div class="sfoot"><button class="cancel js-cancel">Отменить</button></div>
 </section>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="carY"><rect x="1.5" y="1.5" width="21" height="41" rx="7" fill="#FFC928" stroke="#c99500"/><path d="M4.3 13.6Q12 9.6 19.7 13.6L18.6 18.4H5.4Z" fill="#26313d"/><path d="M5.4 33H18.6L19.2 37.3Q12 39.8 4.8 37.3Z" fill="#26313d"/><rect x="5.6" y="19.2" width="12.8" height="12.8" rx="2.5" fill="#FFD84F"/></g>
+    <g id="carK"><rect x="1.5" y="1.5" width="21" height="41" rx="7" fill="#2b2d33" stroke="#000"/><path d="M4.3 13.6Q12 9.6 19.7 13.6L18.6 18.4H5.4Z" fill="#9fb3c8"/><path d="M5.4 33H18.6L19.2 37.3Q12 39.8 4.8 37.3Z" fill="#9fb3c8"/><rect x="5.6" y="19.2" width="12.8" height="12.8" rx="2.5" fill="#3a3d45"/></g>
+  </defs>
+</svg>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
 <script>
 window.APP = {
-  name: 'Сонях',
+  vectorStyle: 'https://tiles.openfreemap.org/styles/liberty',
+  taxiColor: '#FFC928',
+  destBubble: (km, min) => `<div class="bubble"><div class="dbub">${km} <small>• ${min} мин</small></div></div>`,
+  etaBubble: min => `<div class="bubble"><div class="ebub">${min} мин</div></div>`,
+  name: 'Рух',
   tiles: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
   fallbackTiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
   attr: '© OpenStreetMap',
-  ph: { from: 'Откуда', to: 'Куда едем?', stop: 'Остановка' },
-  showSub: false,
-  dot: {
-    from: '<svg width="22" height="28" viewBox="0 0 22 28"><path d="M11 2a8.5 8.5 0 0 0-8.5 8.5C2.5 17 11 26 11 26s8.5-9 8.5-15.5A8.5 8.5 0 0 0 11 2z" fill="none" stroke="#333" stroke-width="2.2"/><circle cx="11" cy="10.5" r="2.6" fill="#333"/></svg>',
-    to: '<svg width="24" height="20" viewBox="0 0 24 20"><path d="M2 10h19M13 2l8 8-8 8" fill="none" stroke="#333" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-  },
-  toExtra: '<div class="hw"><button class="js-deco" aria-label="Дом"><svg width="30" height="28" viewBox="0 0 30 28" fill="none" stroke="#444" stroke-width="2"><path d="M3 13 14 4l11 9M6 11v13h16V11"/><path d="M24 2v7M20.5 5.5h7" stroke-linecap="round"/></svg></button><span></span><button class="js-deco" aria-label="Работа"><svg width="30" height="28" viewBox="0 0 30 28" fill="none" stroke="#444" stroke-width="2"><rect x="3" y="9" width="20" height="15" rx="2"/><path d="M9 9V6h8v3M3 15h20"/><path d="M25 2v7M21.5 5.5h7" stroke-linecap="round"/></svg></button></div>',
-  pin: { html: '<div class="pin2"><div class="h"><i></i></div><div class="l"></div></div>', size: [56, 84], anchor: [28, 84] },
-  route: { color: '#222222', casing: '#FFE033' },
-  carRoute: '#2f6fe0',
-  formSnaps: (H, top) => { const lo = Math.min(290, H * 0.45); return [lo, Math.max(lo + 80, H * 0.6), H - top - 64]; },
-  rideSnaps: (H, top) => { const lo = Math.min(210, H * 0.32); return [lo, Math.max(lo + 80, H * 0.58), H - top - 64]; }
+  ph: { from: 'Откуда', to: 'Куда...', stop: 'Остановка' },
+  showSub: true,
+  toExtra: '<button class="star js-deco" aria-label="Избранное"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17l-5.7 3.1 1.2-6.3L2.9 9.4l6.3-.8z" fill="none" stroke="#1d1d1f" stroke-width="1.8" stroke-linejoin="round"/></svg></button>',
+  pin: { html: '<div class="pin1"><div class="h"><i></i></div><div class="l"></div></div>', size: [46, 70], anchor: [23, 70] },
+  route: { color: '#1DB954', casing: '#ffffff' },
+  carRoute: '#1d1d1f',
+  formSnaps: (H, top) => { const lo = Math.min(300, H * 0.45); return [lo, Math.max(lo + 80, H * 0.58), H - top - 64]; },
+  rideSnaps: (H, top) => { const lo = Math.min(200, H * 0.3); return [lo, Math.max(lo + 80, H * 0.56), H - top - 64]; }
 };
 (() => {
 'use strict';
@@ -311,16 +353,31 @@ function toast(msg, ms = 3400) {
 
 /* ---------------- карта ---------------- */
 const map = L.map('map', { zoomControl: false, attributionControl: false, zoomSnap: 0.25 }).setView(KH, 15);
-const tileOpts = { maxZoom: 19, subdomains: 'abcd', attribution: C.attr, className: 'base-tiles' };
-let tiles = L.tileLayer(C.tiles, tileOpts).addTo(map);
-if (C.fallbackTiles) {                       // если OSM отказал (бывает при открытии с file://) — запасные тайлы
-  let errs = 0;
-  tiles.on('tileerror', () => {
-    if (++errs !== 4) return;
-    map.removeLayer(tiles);
-    tiles = L.tileLayer(C.fallbackTiles, { ...tileOpts, attribution: '© OpenStreetMap, © CARTO' }).addTo(map);
-  });
+const hasWebGL = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (_) { return false; } })();
+function rasterBase() {
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap', className: 'base-tiles raster' }).addTo(map);
 }
+if (C.vectorStyle && window.L.maplibreGL && hasWebGL) {
+  // векторная карта (OpenFreeMap, без ключа): чистая, как в приложениях такси
+  try {
+    const gl = L.maplibreGL({
+      style: C.vectorStyle, className: 'base-tiles vector',
+      attribution: '© <a href="https://openfreemap.org">OpenFreeMap</a> © OpenStreetMap'
+    }).addTo(map);
+    const glMap = gl.getMaplibreMap();
+    glMap.once('load', () => {
+      try {                                    // подписи только на местном языке, без латиницы
+        for (const ly of glMap.getStyle().layers) {
+          if (ly.type === 'symbol' && ly.layout && /name/.test(JSON.stringify(ly.layout['text-field'] || ''))) {
+            glMap.setLayoutProperty(ly.id, 'text-field', ['coalesce', ['get', 'name:uk'], ['get', 'name']]);
+          }
+        }
+        C.mapTweak?.(glMap);
+      } catch (_) {}
+    });
+    glMap.on('error', e => console.warn('map', e?.error?.message));
+  } catch (e) { console.warn(e); rasterBase(); }
+} else rasterBase();
 L.control.attribution({ position: 'topright', prefix: false }).addTo(map);
 const layers = {
   me: L.layerGroup().addTo(map), route: L.layerGroup().addTo(map),
@@ -387,11 +444,16 @@ async function geocode(q) {
 
 /* ---------------- поля адресов ---------------- */
 const fieldsBox = $('#fields');
+const SUBL = { from: 'Откуда', stop: 'Через', to: 'Куда' };
+function subHTML(p) {
+  if (p.k !== 'from' && !p.ll) return '';
+  return `<span>${SUBL[p.k]}</span>${p.city ? ' • ' + esc(p.city) : ''}`;
+}
 function rowHTML(p, i, n) {
   const stop = p.k === 'stop';
   const ph = stop ? `${C.ph.stop} ${i}` : C.ph[p.k];
   const dot = stop ? i : (C.dot?.[p.k] || '');
-  const sub = C.showSub && p.k === 'from' ? `<div class="fsub"><span>Откуда</span>${p.city ? ' • ' + esc(p.city) : ''}</div>` : '';
+  const sub = C.showSub ? `<div class="fsub">${subHTML(p)}</div>` : '';
   const ctl = stop ? `<div class="sctl"><button class="sb" data-a="up" ${i <= 1 ? 'disabled' : ''} aria-label="Выше">↑</button><button class="sb" data-a="down" ${i >= n - 2 ? 'disabled' : ''} aria-label="Ниже">↓</button><button class="sb del" data-a="del" aria-label="Удалить остановку">×</button></div>` : '';
   const extra = p.k === 'to' && C.toExtra ? C.toExtra : '';
   return `<div class="frow ${p.k}" data-i="${i}"><span class="fdot">${dot}</span><div class="fbox"><input class="finput" data-i="${i}" type="text" placeholder="${esc(ph)}" value="${esc(p.text)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">${sub}</div>${ctl}${extra}<div class="sugg" data-i="${i}"></div></div>`;
@@ -407,7 +469,7 @@ function syncField(i) {
   const p = S.pts[i];
   $('.finput', row).value = p.text;
   const sub = $('.fsub', row);
-  if (sub) sub.innerHTML = `<span>Откуда</span>${p.city ? ' • ' + esc(p.city) : ''}`;
+  if (sub) sub.innerHTML = subHTML(p);
 }
 function showSugg(i, list, msg) {
   S.sug = list; S.sugI = i;
@@ -536,6 +598,7 @@ async function updateRoute(fit) {
   if (seq !== rseq) return;
   S.trip = r;
   drawLine(layers.route, r.coords, C.route.color, r.ok, C.route.casing);
+  if (C.destBubble) L.marker(to.ll, { icon: icon(C.destBubble(fmtKm(r.dist), Math.max(1, Math.round(r.dur / 60))), [0, 0], [0, 0]), interactive: false, zIndexOffset: 350 }).addTo(layers.route);
   showTripInfo();
   if (!r.ok) toast('Сервис маршрутов не ответил — показана прямая линия');
   if (fit) fitTo(r.coords);
@@ -665,7 +728,7 @@ async function makeCar(p) {
     eta: Math.max(2, Math.round(r.dur / 60)),
     model: pick(MODELS[S.cls]), color: pick(COLORS),
     plate: `${pick(['AX', 'KX'])} ${d()}${d()}${d()}${d()} ${pick(PLATE_L)}${pick(PLATE_L)}`,
-    driver: pick(NAMES), rating: rnd(4.7, 5.0).toFixed(1)
+    driver: pick(NAMES), rating: rnd(4.7, 5.0).toFixed(1), trips: Math.round(rnd(150, 3200))
   };
 }
 function fillRide(car) {
@@ -676,6 +739,7 @@ function fillRide(car) {
   $('#rcPlate').innerHTML = `<span class="ua">UA</span><span class="pn">${esc(car.plate)}</span>`;
   $('#rcDriver').textContent = car.driver;
   $('#rcRating').textContent = car.rating;
+  $$('.js-trips').forEach(el => { el.textContent = car.trips + ' поездок'; });
   $('#rcAva').textContent = car.driver[0];
   $('#rcCarPic').innerHTML = `<div style="transform:rotate(90deg)">${carSvg(car.color.hex, 30)}</div>`;
   const t = new Date(Date.now() + car.eta * 60000);
@@ -706,11 +770,13 @@ async function findCar() {
   document.body.classList.remove('searching');
   $$('.js-find').forEach(b => { b.disabled = false; });
   S.busy = false; S.car = car;
+  if (C.etaBubble) L.marker(from.ll, { icon: icon(C.etaBubble(car.eta), [0, 0], [0, 0]), interactive: false, zIndexOffset: 600 }).addTo(layers.car);
+  startCountdown(car.eta * 60);
 
   drawLine(layers.car, car.route.coords, C.carRoute, true);
   layers.car.eachLayer(l => l.setStyle && l.setStyle({ dashArray: '1 11', weight: 6, lineCap: 'round' }));
   L.marker(car.pos, {
-    icon: icon(`<div class="car-ic" style="transform:rotate(${car.head.toFixed(0)}deg)">${carSvg(car.color.hex)}</div>`, [24, 44], [12, 22]),
+    icon: icon(`<div class="car-ic" style="transform:rotate(${car.head.toFixed(0)}deg)">${carSvg(C.taxiColor || '#FFC928')}</div>`, [24, 44], [12, 22]),
     interactive: false, zIndexOffset: 500
   }).addTo(layers.car);
   if (!car.route.ok) toast('Маршрут машины построен примерно — сервис маршрутов не ответил');
@@ -719,8 +785,31 @@ async function findCar() {
   formSheet.hide(); rideSheet.show(1);
   fitTo([...car.route.coords, ...(S.trip ? S.trip.coords : S.pts.filter(p => p.ll).map(p => p.ll))]);
 }
+let cdT;
+function startCountdown(sec) {
+  clearInterval(cdT);
+  const end = Date.now() + sec * 1000;
+  $$('.js-arrive-title').forEach(el => { if (el.dataset.t) el.textContent = el.dataset.t; });
+  const tick = () => {
+    const left = Math.max(0, Math.round((end - Date.now()) / 1000));
+    const txt = String(Math.floor(left / 60)).padStart(2, '0') + ':' + String(left % 60).padStart(2, '0');
+    $$('.js-countdown').forEach(el => { el.textContent = txt; });
+    if (left === 0) {
+      clearInterval(cdT);
+      $$('.js-arrive-title').forEach(el => { el.textContent = 'Водитель на месте'; });
+      toast('Водитель ожидает вас');
+    }
+  };
+  tick(); cdT = setInterval(tick, 1000);
+}
+function fitAll() {
+  const lls = [];
+  if (S.trip) lls.push(...S.trip.coords); else S.pts.forEach(p => p.ll && lls.push(p.ll));
+  if (S.car) lls.push(...S.car.route.coords);
+  if (lls.length) fitTo(lls); else if (S.me) centerOn(S.me, 16);
+}
 function cancelRide() {
-  layers.car.clearLayers(); S.car = null;
+  layers.car.clearLayers(); S.car = null; clearInterval(cdT);
   rideSheet.hide(); formSheet.show(1);
   fitTo(S.trip ? S.trip.coords : S.pts.filter(p => p.ll).map(p => p.ll));
 }
@@ -771,6 +860,8 @@ document.addEventListener('click', e => {
   else if (t.matches('.js-locate')) { if (S.me) centerOn(S.me, 16); else geolocate(false); }
   else if (t.matches('.js-call')) toast(`Звонок водителю (${S.car?.driver || ''}) — недоступен в демо`);
   else if (t.matches('.js-msg')) toast('Сообщения недоступны в демо');
+  else if (t.matches('.js-fit')) fitAll();
+  else if (t.matches('.js-hint-close')) { $('#installHint')?.classList.add('hidden'); localStorage.setItem('taxi.hint', '1'); }
   else if (t.matches('.js-menu')) toast(`${C.name} — демо-эмулятор заказа такси`);
   else if (t.dataset.addr) {
     const i = S.pts.length - 1, p = S.pts[i];
@@ -779,6 +870,25 @@ document.addEventListener('click', e => {
   else if (t.matches('.js-deco')) toast('Раздел недоступен в демо');
 });
 map.on('click', () => { if (document.activeElement?.matches('input')) document.activeElement.blur(); });
+
+/* ---------------- как приложение (PWA) ---------------- */
+const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+document.documentElement.classList.toggle('standalone', standalone);
+document.addEventListener('gesturestart', e => e.preventDefault());   // интерфейс не масштабируется щипком, карта — да
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+if (!standalone && isIOS && !localStorage.getItem('taxi.hint')) {
+  setTimeout(() => {
+    const d = document.createElement('div');
+    d.id = 'installHint';
+    d.innerHTML = location.protocol === 'file:'
+      ? '<b>Откройте по ссылке в Safari</b>Из «Файлов» приложение не установить. Откройте сайт в Safari и добавьте его на экран «Домой».<button class="js-hint-close" aria-label="Закрыть">×</button>'
+      : '<b>Установите как приложение</b>Нажмите <span class="shr"></span> «Поделиться» → «На экран „Домой“». Запускайте с иконки — без панелей браузера.<button class="js-hint-close" aria-label="Закрыть">×</button>';
+    document.body.appendChild(d);
+  }, 1200);
+}
 
 /* ---------------- старт ---------------- */
 renderFields();
