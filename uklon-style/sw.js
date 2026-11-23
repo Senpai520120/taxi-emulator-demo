@@ -1,6 +1,6 @@
 // Service worker: приложение открывается мгновенно с иконки, оболочка берётся из кэша.
 // Карта, адреса и маршруты всегда идут из сети.
-const CACHE = 'uklon-style-v6';
+const CACHE = 'uklon-style-v7';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',

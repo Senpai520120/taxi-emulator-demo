@@ -39,7 +39,7 @@ for tpl, out, name, bg, fg, theme in APPS:
     d = root / out
     d.mkdir(exist_ok=True)
     (d / 'index.html').write_text(html, encoding='utf-8', newline='\n')
-    (d / 'sw.js').write_text(sw.replace('__CACHE__', out + '-v6'), encoding='utf-8', newline='\n')
+    (d / 'sw.js').write_text(sw.replace('__CACHE__', out + '-v7'), encoding='utf-8', newline='\n')
     for px in (180, 192, 512):
         make_icon(px, bg, fg).save(d / f'icon-{px}.png')
     manifest = {

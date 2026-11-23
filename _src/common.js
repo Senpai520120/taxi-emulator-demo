@@ -92,6 +92,26 @@ function carSide(body, { w = 120, glass = '#2b3036', dark = false } = {}) {
 <circle cx="92" cy="40" r="8.6" fill="#1b1d20"/><circle cx="92" cy="40" r="4.6" fill="#c9ccd1"/><circle cx="92" cy="40" r="1.6" fill="#6b7077"/>
 </svg>`;
 }
+function carAngle(body, { w = 100, glass = '#2b3036', dark = false } = {}) {
+  const h = Math.round(w * 52 / 100);
+  const face = dark ? '#15171a' : 'rgba(0,0,0,.16)';
+  return `<svg viewBox="0 0 100 52" width="${w}" height="${h}" aria-hidden="true">
+<ellipse cx="52" cy="47" rx="46" ry="3.4" fill="rgba(0,0,0,.16)"/>
+<path d="M5 33Q4.5 27.5 10 26L27 22.2Q35 13 46 12H63Q71 12.6 78.5 20.5L89 22.4Q96.5 24 97 30.5V38.5Q97 42 93.5 42H8.5Q5 42 5 38.5Z" fill="${body}" stroke="rgba(0,0,0,.22)" stroke-width=".6"/>
+<path d="M78.5 20.5 89 22.4Q96.5 24 97 30.5V34H79Z" fill="${face}"/>
+<path d="M30.5 22.2Q37.5 15 46.5 14.4H55V22.2Z" fill="${glass}"/>
+<path d="M57.5 14.4H63Q69.6 15 75.5 21.6L57.5 22.2Z" fill="${glass}"/>
+<path d="M75.5 21.6 78 21 86 22.6 77.5 23.4Z" fill="${glass}" opacity=".85"/>
+<path d="M81.5 25.6 94.5 27.4 94 29.8 81.6 28.6Z" fill="${dark ? '#dfe8ff' : '#fff8d6'}"/>
+<rect x="83" y="31.5" width="11" height="3.2" rx="1.2" fill="rgba(0,0,0,.35)"/>
+<path d="M7 31H78" stroke="rgba(0,0,0,.12)"/><path d="M56.3 14.4V40" stroke="rgba(0,0,0,.15)" stroke-width=".7"/>
+<rect x="5.2" y="27.6" width="3.6" height="3.2" rx=".8" fill="#d8392f"/>
+<ellipse cx="24" cy="41.5" rx="6.8" ry="7.6" fill="#1b1d20"/><ellipse cx="24" cy="41.5" rx="3.4" ry="4" fill="#c9ccd1"/>
+<ellipse cx="73" cy="41.5" rx="6.4" ry="7.6" fill="#1b1d20"/><ellipse cx="73" cy="41.5" rx="3.2" ry="4" fill="#c9ccd1"/>
+<ellipse cx="90.5" cy="40" rx="2.6" ry="5.6" fill="#1b1d20"/>
+</svg>`;
+}
+window.carAngle = carAngle;
 const avatarSvg = `<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" fill="#d9dde2"/><circle cx="32" cy="25" r="11" fill="#9aa3ad"/><path d="M11 60Q13 41 32 41Q51 41 53 60Z" fill="#9aa3ad"/></svg>`;
 window.carTop = carTop; window.carSide = carSide;
 $$('[data-car-side]').forEach(el => { el.innerHTML = carSide(el.dataset.carSide, { w: +el.dataset.w || 120 }); });
@@ -178,7 +198,8 @@ function applyTheme(glMap, T) {
         lay(id, 'text-anchor', 'left');
         lay(id, 'text-offset', metro ? [1, 0] : [0.9, -1.1]);
         lay(id, 'text-justify', 'left');
-        lay(id, 'text-size', 13);
+        lay(id, 'text-size', C.poiTextSize || 13);
+        lay(id, 'text-font', ['Noto Sans Regular']);
         lay(id, 'text-max-width', 9);
         set(id, 'text-color', T.poiText === 'cat'
           ? ['match', POI_CAT, 'shop', T.poiLabel.shop, 'food', T.poiLabel.food, 'drink', T.poiLabel.food, 'health', T.poiLabel.health, 'park', T.poiLabel.park, T.poiLabel.other]
@@ -258,7 +279,7 @@ if (!CLASS_IDS.includes(S.cls)) S.cls = CLASS_IDS.includes('standard') ? 'standa
 function fmtAddr(r) {
   const a = r.address || {};
   const road = a.road || a.pedestrian || a.footway || a.square || a.neighbourhood || a.quarter || a.suburb || '';
-  const house = a.house_number || '';
+  const house = (a.house_number || '').replace(/(\d)-(?=\D)/, '$1');
   const city = a.city || a.town || a.village || a.municipality || a.state || '';
   const rd = C.roadFirst ? road.replace(/^(проспект|вулиця|провулок|площа|бульвар|узвіз|набережна|шосе|проїзд|майдан|улица|переулок|площадь)\s+(.+)$/i, '$2 $1') : road;
   const street = [rd, house].filter(Boolean).join(', ');
@@ -301,6 +322,7 @@ function renderFields() {
   fieldsBox.innerHTML = S.pts.map((p, i) => rowHTML(p, i, n)).join('');
   S.sug = []; S.sugI = -1;
   $$('.js-add-stop').forEach(b => b.classList.toggle('hidden', n - 2 >= MAX_STOPS));
+  if (C.fitForm) requestAnimationFrame(() => { try { refit(); } catch (_) {} });
 }
 function syncField(i) {
   const row = $(`#fields .frow[data-i="${i}"]`); if (!row) return;
@@ -311,6 +333,7 @@ function syncField(i) {
   if (ft) { ft.textContent = p.text || $('.finput', row).placeholder; ft.classList.toggle('ph', !p.text); }
   const sub = $('.fsub', row);
   if (sub) sub.innerHTML = subHTML(p);
+  if (C.fitForm) requestAnimationFrame(() => { try { refit(); } catch (_) {} });
 }
 function showSugg(i, list, msg) {
   S.sug = list; S.sugI = i;
@@ -475,7 +498,8 @@ const activeSheet = () => sheets[S.state] || formSheet;
 function fitTo(lls) {
   if (!lls.length) return;
   const sh = activeSheet();
-  const bottom = Math.min(sh.snaps[1], sh.vis || 0, innerHeight * 0.62) + (C.fitExtraBottom || 24);
+  const above = C.mapAboveRide && S.state === 'ride';   // карта в рамке над панелью — панель её не перекрывает
+  const bottom = above ? 30 : Math.min(sh.snaps[1], sh.vis || 0, innerHeight * 0.62) + (C.fitExtraBottom || 24);
   const px = (S.state === 'order' && C.fitXOrder) || 40;
   map.fitBounds(L.latLngBounds(lls), { paddingTopLeft: [px, safeTop + (S.state === 'order' && C.fitTopOrder || C.fitTop || 100)], paddingBottomRight: [px, bottom], maxZoom: 16.5 });
 }
@@ -485,21 +509,36 @@ function centerOn(ll, z) {
   map.setView(map.unproject(map.project(ll, z).add([0, off]), z), z);
 }
 
+/* ---------------- поправка iOS: «приложение» с прозрачным статус-баром ----------------
+   В режиме «На экран Домой» iOS считает нижний край для position:fixed выше реального
+   на высоту статус-бара — внизу появлялась серая полоса. Меряем разницу и сдвигаем. */
+const gapProbe = document.createElement('div');
+gapProbe.style.cssText = 'position:fixed;top:0;bottom:0;width:0;visibility:hidden;pointer-events:none';
+document.body.appendChild(gapProbe);
+let GAP = 0;
+function measureGap() {
+  const g = Math.round(innerHeight - gapProbe.offsetHeight);
+  GAP = g > 0 && g < 150 ? g : 0;
+  document.documentElement.style.setProperty('--gap', GAP + 'px');
+}
+measureGap();
+
 /* ---------------- подвижные панели ---------------- */
 function makeSheet(el, snapsFn) {
   const sh = { el, i: 1, vis: 0, snaps: [0, 0, 0], on: !el.classList.contains('off') };
-  sh.calc = () => { sh.snaps = snapsFn(innerHeight, safeTop).map(Math.round); };
+  sh.calc = () => { sh.snaps = snapsFn(innerHeight, safeTop, el).map(Math.round); };
   sh.set = (v, anim = true) => {
     sh.vis = v;
     el.style.transition = anim ? '' : 'none';
     el.style.height = v + 'px';
     if (sh.on) {
-      document.documentElement.style.setProperty('--sheet', v + 'px');
+      document.documentElement.style.setProperty('--sheet', (v - GAP) + 'px');
       document.body.classList.toggle('sheet-full', v > innerHeight * 0.72);
     }
   };
   sh.snap = (i, anim = true) => {
     sh.i = Math.max(0, Math.min(2, i)); sh.set(sh.snaps[sh.i], anim);
+    if (C.mapAboveRide && S.state === 'ride') setTimeout(() => map.invalidateSize({ pan: false }), 330);
     if (sh.i < 2 && el.contains(document.activeElement)) document.activeElement.blur();
   };
   sh.show = i => { sh.on = true; el.classList.remove('off'); sh.snap(i ?? sh.i); };
@@ -555,9 +594,14 @@ function go(name, snapIdx) {
   sheets[name].show(snapIdx);
   setTimeout(() => map.invalidateSize({ pan: false }), 360);
 }
-addEventListener('resize', () => {
-  Object.values(sheets).forEach(sh => { sh.calc(); if (sh.on) sh.set(sh.snaps[sh.i], false); });
-});
+function relayout(anim) {
+  measureGap();
+  Object.values(sheets).forEach(sh => { sh.calc(); if (sh.on) sh.set(sh.snaps[sh.i], anim); });
+}
+addEventListener('resize', () => relayout(false));
+addEventListener('load', () => setTimeout(() => relayout(false), 300));
+// панель по высоте содержимого (зелёный: адреса + низ, без пустоты)
+function refit() { if (typeof formSheet !== 'undefined' && formSheet.on) { const i = formSheet.i; formSheet.calc(); formSheet.set(formSheet.snaps[i]); } }
 
 /* ---------------- класс и цена ---------------- */
 function estimateStd() {                         // ориентировочная цена «Стандарта», если своя не введена
@@ -595,6 +639,10 @@ function setPrice(v, src) {
   $$('.js-price').forEach(x => { if (x !== src) x.value = shown; });
   $$('.js-price-show').forEach(x => { x.textContent = shown ? shown + ' ₴' : ''; x.classList.toggle('hidden', !shown); });
   renderClasses();
+  autoW();
+}
+function autoW() {
+  $$('.js-price.autow').forEach(x => { x.style.width = (Math.max(1, (x.value || x.placeholder || '').length) + 0.3) + 'ch'; });
 }
 document.addEventListener('input', e => {
   const t = e.target.closest('.js-price'); if (!t) return;
@@ -604,6 +652,7 @@ document.addEventListener('input', e => {
   v = v.slice(0, 9);
   if (t.value !== fmtP(v)) t.value = fmtP(v);
   setPrice(v, t);
+  autoW();
 });
 
 /* ---------------- такси рядом (декор на главной) ---------------- */
@@ -621,7 +670,8 @@ async function spawnNearby(center) {
       if (!cs || cs.length < 2 || seq !== nearSeq) return;
       let k = 1; while (k < cs.length - 1 && dist(cs[0], cs[k]) < 8) k++;
       const h = bearing(cs[0], cs[k]);
-      L.marker(cs[0], { icon: icon(`<div class="near-car" style="transform:rotate(${h.toFixed(0)}deg)">${carTop(C.taxiColor || '#FFC928', { w: 20 })}</div>`, [20, 40], [10, 20]), interactive: false }).addTo(layers.nearby);
+      const cw = C.carW || 20;
+      L.marker(cs[0], { icon: icon(`<div class="near-car" style="transform:rotate(${h.toFixed(0)}deg)">${carTop(C.taxiColor || '#FFC928', { w: cw })}</div>`, [cw, cw * 2], [cw / 2, cw]), interactive: false }).addTo(layers.nearby);
     } catch (_) {}
   });
   await Promise.all(jobs);
@@ -662,7 +712,7 @@ function fillRide(car) {
   setText('.js-car-full', `${car.color.n} ${car.model}`);
   setText('.js-car-model', car.model);
   setText('.js-car-color', car.color.n);
-  setHTML('.js-car-side', carSide(car.color.hex, { w: +($('.js-car-side')?.dataset.w || 120), dark: car.color.hex === '#26272b' }));
+  setHTML('.js-car-side', (C.carPic || carSide)(car.color.hex, { w: +($('.js-car-side')?.dataset.w || 120), dark: car.color.hex === '#26272b' }));
   setText('.js-driver', car.driver);
   setText('.js-rating', car.rating);
   setText('.js-trips-n', String(car.trips));
@@ -673,6 +723,15 @@ function fillRide(car) {
   setText('.js-eta-clock', t.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
   setHTML('.js-route-list', routeListHTML());
   setPrice(S.price);
+}
+// кнопки «-10 ₴ / +N ₴»: минус неактивен на исходной цене, плюс дотягивает до круглых десятков
+function stepBtns() {
+  const p = +(S.price || priceFor(S.cls));
+  const up = p % 10 ? 10 - (p % 10) : 10;
+  $$('.js-pstep').forEach(b => {
+    if (+b.dataset.d < 0) { b.disabled = p <= (S.basePrice || 0); }
+    else { b.dataset.d = up; b.textContent = `+${up} ₴`; }
+  });
 }
 let stageT = [];
 function setSteps(n, title) {
@@ -696,6 +755,8 @@ async function findCar() {
   layers.car.clearLayers(); layers.nearby.clearLayers();
   if (sheets.search) {
     $('#searchSheet').classList.remove('price-changed');
+    setHTML('.js-route-list', routeListHTML());
+    S.basePrice = +(S.price || priceFor(S.cls)); stepBtns();
     go('search', 1); runStages();
     if (C.searchCircle) searchLayers.push(L.circle(from.ll, { radius: 330, color: '#ffffff', weight: 1, opacity: .9, fillColor: '#ffffff', fillOpacity: .5, interactive: false }).addTo(layers.car));
   } else {
@@ -716,8 +777,9 @@ async function findCar() {
   drawLine(layers.car, car.route.coords, cs, true);
   if (C.etaBubble) L.marker(from.ll, { icon: icon(C.etaBubble(car.eta), [0, 0], [0, 0]), interactive: false, zIndexOffset: 600 }).addTo(layers.car);
   const real = C.mapCar === 'real';
-  const html = real ? carTop(car.color.hex === '#f2f3f5' ? '#e9ebee' : car.color.hex, { glass: '#15181b', roof: '#15181b' }) : carTop(C.taxiColor || '#FFC928');
-  L.marker(car.pos, { icon: icon(`<div class="car-ic" style="transform:rotate(${car.head.toFixed(0)}deg)">${html}</div>`, [24, 48], [12, 24]), interactive: false, zIndexOffset: 500 }).addTo(layers.car);
+  const cw = C.carW || 24;
+  const html = real ? carTop(car.color.hex === '#f2f3f5' ? '#e9ebee' : car.color.hex, { glass: '#15181b', roof: '#15181b', w: cw }) : carTop(C.taxiColor || '#FFC928', { w: cw });
+  L.marker(car.pos, { icon: icon(`<div class="car-ic" style="width:${cw}px;height:${cw * 2}px;transform:rotate(${car.head.toFixed(0)}deg)">${html}</div>`, [cw, cw * 2], [cw / 2, cw]), interactive: false, zIndexOffset: 500 }).addTo(layers.car);
   fillRide(car);
   if (C.rideHideTrip) map.removeLayer(layers.route);
   go('ride', 1);
@@ -819,8 +881,10 @@ document.addEventListener('click', e => {
   else if (t.matches('.js-pedit')) { const r = $('#priceEdit'); r?.classList.toggle('hidden'); if (r && !r.classList.contains('hidden')) $('input', r)?.focus(); }
   else if (t.matches('.js-pdone')) { $('#priceEdit')?.classList.add('hidden'); document.activeElement?.blur(); }
   else if (t.matches('.js-pstep')) {
+    if (t.disabled) return;
     const v = Math.max(10, Math.round((+S.price || priceFor(S.cls)) + +t.dataset.d));
-    setPrice(String(v)); $('#searchSheet')?.classList.add('price-changed');
+    setPrice(String(v)); stepBtns();
+    $('#searchSheet')?.classList.toggle('price-changed', v !== S.basePrice);
   }
   else if (t.matches('.js-search-at')) { $('#searchSheet')?.classList.remove('price-changed'); }
   else if (t.matches('.js-hint-close')) { $('#installHint')?.classList.add('hidden'); localStorage.setItem('taxi.hint', '1'); }

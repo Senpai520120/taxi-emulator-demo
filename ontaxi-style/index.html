@@ -13,6 +13,8 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <title>Рух — такси (демо)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.css">
 <style>
@@ -29,6 +31,8 @@ input::placeholder{color:#9a9a9f;opacity:1}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;flex-direction:column;height:280px;max-width:640px;margin:0 auto;overflow:hidden;
   transition:height .3s cubic-bezier(.2,.8,.2,1),transform .3s ease}
 .sheet.off{transform:translateY(115%);pointer-events:none}
+.sheet{bottom:calc(-1 * var(--gap, 0px))}
+#map{bottom:calc(-1 * var(--gap, 0px))}
 .grab{flex:none;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
 .handle{width:40px;height:5px;border-radius:3px;background:#d3d3d6;margin:9px auto 9px}
 .sbody{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
@@ -160,7 +164,7 @@ body.st-ride .fit{bottom:calc(var(--sheet,280px) + 18px)}
 .frow.to.has-ll .starbtn{display:none}
 .fprice .from{display:none;font-weight:600;margin-right:5px}
 .fprice input::placeholder{color:var(--ink);opacity:1}
-.fprice input:placeholder-shown{width:2.1em;text-align:left}
+.fprice input{text-align:right}
 #classes{margin-top:56px}
 .fprice:has(input:placeholder-shown) .from{display:inline}
 .bonus{border:1.5px solid #f0d27a}
@@ -245,7 +249,8 @@ body.arrived .rwait{display:block}
 .opt .ot small{display:block;color:var(--g2);font-size:14px}
 .opt.dim .ot{color:#8a979e}
 .chip{border:1px solid #dfe3e6;border-radius:8px;padding:6px 10px;font-size:14px}
-.opt .pricefield{width:110px;height:38px;background:transparent;padding:0}
+.opt .pricefield{width:auto;height:38px;background:transparent;padding:0;gap:2px}
+.opt .pricefield span{color:var(--ink)}
 .opt .pricefield input{text-align:right;font-weight:400;font-size:17px}
 .opt.cancel{color:#D32F2F}
 #rideHead{position:fixed;left:0;right:0;top:0;z-index:19;height:calc(env(safe-area-inset-top) + 64px);padding-top:env(safe-area-inset-top);background:#00A35A;color:#fff;display:none;align-items:center;justify-content:space-between;padding-left:12px;padding-right:12px}
@@ -253,17 +258,66 @@ body.arrived .rwait{display:block}
 #rideHead button{width:40px;height:40px;display:grid;place-items:center}
 body.st-ride.sheet-full #rideHead{display:flex}
 #searching{top:calc(env(safe-area-inset-top) + 104px)}
+
+/* ===== v7: точная подгонка по сверке со скринами (значения сняты в CSS px) ===== */
+body{--g:#00A460;--g2:#00A460;--mute:#6B7278;--accent:#00A460;--accent2:#00A460}
+.menu,.more{top:calc(env(safe-area-inset-top) + 3px)}
+.bonus{top:calc(env(safe-area-inset-top) + 8px);border:1px solid #DADDE0;height:31px;padding:0 10px 0 6px;gap:4px}
+.locate{bottom:calc(var(--sheet,280px) + 13px)}
+.fit{bottom:calc(var(--sheet,280px) + 69px)}
+.taxi-btn{bottom:calc(var(--sheet,280px) + 69px)}
+body.st-ride .fit{bottom:calc(var(--sheet,280px) + 13px)}
+/* адреса */
+.frow{gap:0 18px;padding:9px 0 15px}
+.fdot{margin-left:2px}
+.frow:not(:last-child)::after{left:11px;top:42px;bottom:-6px;border:none;width:2px;background:repeating-linear-gradient(var(--g2) 0 3px,transparent 3px 6px)}
+.fsub,.elink,.opt .ot small{font-size:13px}
+.ftext.ph,.finput::placeholder{color:#8F959B}
+.sugg{flex-basis:calc(100% - 40px);margin-left:40px}
+/* низ */
+#formSheet .sfoot{gap:18px;padding:16px 0 calc(17px + env(safe-area-inset-bottom)) 16px}
+.clsbtn{gap:18px}
+body.has-route .fprice .from{display:none!important}
+/* пин «Откуда» */
+.pin1{width:30px;height:50px}
+.pin1 .h{width:30px;height:30px}
+.pin1 .h i{width:11px;height:11px}
+.pin1 .l{left:14px;top:30px;width:2px;height:20px}
+.pin1 .ring{left:-1px;bottom:-16px}
+.pin1 .ring::after{box-shadow:none}
+.mk-to{box-shadow:0 1px 3px rgba(0,0,0,.25)}
+/* подача авто */
+.rtitle,.chat,#rideHead b{font-family:Montserrat,system-ui,sans-serif}
+.rtitle{font-weight:700}
+.chat{font-weight:600}
+.carname{margin-top:5px}
+.drv{gap:8px}
+.dname i{margin-left:6px}
+.dname i b{margin-left:1px}
+.ava .on{bottom:0;font-size:9px;padding:0 4px;line-height:14px}
+.chatrow{padding-bottom:24px}
+.chat{border-color:#E2EAF0}
+.band{background:#F0F4F8}
+#rideHead{background:#00A460}
+.js-route-list{padding-top:18px}
+.rl{gap:18px;padding:8px 0 17px}
+.rl .rd{margin-left:2px}
+.rl:not(:last-child)::after{left:11px;border:none;width:2px;background:repeating-linear-gradient(var(--g2) 0 3px,transparent 3px 6px);top:30px;bottom:-4px}
+.rl span{font-size:18px}
+.opt{padding:0;min-height:56px}
+.opt .pricefield{height:auto}
+.opt.dim .pricefield span,.opt.dim .pricefield input{color:var(--ink)}
 </style>
 </head>
 <body>
 <div id="map"></div>
 
-<button class="mbtn menu js-menu" aria-label="Меню"><svg width="20" height="14" viewBox="0 0 20 14"><path d="M1 1h18M1 7h18M1 13h12" stroke="#1f2a30" stroke-width="2" stroke-linecap="round"/></svg></button>
+<button class="mbtn menu js-menu" aria-label="Меню"><svg width="18" height="12" viewBox="0 0 18 12"><path d="M1 1h16M1 6h12M1 11h16" stroke="#1f2a30" stroke-width="1.8" stroke-linecap="round"/></svg></button>
 <button class="mbtn more js-deco" aria-label="Ещё"><svg width="18" height="4" viewBox="0 0 18 4"><circle cx="2" cy="2" r="2" fill="#1f2a30"/><circle cx="9" cy="2" r="2" fill="#1f2a30"/><circle cx="16" cy="2" r="2" fill="#1f2a30"/></svg></button>
-<div class="bonus"><svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="10.5" fill="#F5A800"/><circle cx="11" cy="11" r="8" fill="#FFC41F"/><path d="M11 5.6l1.5 3.3 3.6.4-2.7 2.4.8 3.6L11 13.4l-3.2 1.9.8-3.6-2.7-2.4 3.6-.4z" fill="#fff"/></svg>64</div>
+<div class="bonus"><svg width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="8.5" fill="#F5A300"/><circle cx="9" cy="9" r="6.6" fill="#FFC21A"/><path d="M9 4.6 10 8 13.4 9 10 10 9 13.4 8 10 4.6 9 8 8z" fill="#fff"/></svg>64</div>
 <button class="mapbtn taxi-btn js-fit" aria-label="Машина"><svg width="22" height="20" viewBox="0 0 22 20" fill="#1f2a30"><path d="M8 1h6l.6 2.4H7.4z"/><path d="M4.6 5h12.8l2.2 5.4c.9.4 1.4 1.2 1.4 2.2V17a1 1 0 0 1-1 1h-1.6a1 1 0 0 1-1-1v-1H4.6v1a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-4.4c0-1 .5-1.8 1.4-2.2zm1.2 1.8-1.4 3.6h13.2l-1.4-3.6zM4.6 12.2a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6zm12.8 0a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6z"/></svg></button>
 <button class="mapbtn fit js-fit" aria-label="Весь маршрут"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#1f2a30" stroke-width="2"><circle cx="5" cy="5" r="3"/><circle cx="17" cy="17" r="3"/><path d="M7.2 7.2l7.6 7.6" stroke-linecap="round"/></svg></button>
-<button class="mapbtn locate js-locate" aria-label="Моё местоположение"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#1f2a30" stroke-width="2"><circle cx="11" cy="11" r="6"/><circle cx="11" cy="11" r="2.4" fill="#1f2a30"/><path d="M11 1v3.5M11 17.5V21M1 11h3.5M17.5 11H21" stroke-linecap="round"/></svg></button>
+<button class="mapbtn locate js-locate" aria-label="Моё местоположение"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#1f2a30" stroke-width="1.8"><circle cx="11" cy="11" r="7.5"/><circle cx="11" cy="11" r="3.6" fill="#1f2a30" stroke="none"/><path d="M11 1v2.5M11 18.5V21M1 11h2.5M18.5 11H21" stroke-linecap="round"/></svg></button>
 <div id="toast" role="status"></div>
 <div id="rideHead"><button class="js-collapse" aria-label="Свернуть"><svg width="18" height="11" viewBox="0 0 18 11"><path d="M1.5 1.5 9 9l7.5-7.5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button><b>Ваша поездка</b><button class="js-deco" aria-label="Ещё"><svg width="18" height="4" viewBox="0 0 18 4"><circle cx="2" cy="2" r="2" fill="#fff"/><circle cx="9" cy="2" r="2" fill="#fff"/><circle cx="16" cy="2" r="2" fill="#fff"/></svg></button></div>
 
@@ -282,7 +336,7 @@ body.st-ride.sheet-full #rideHead{display:flex}
       <span data-car-top="#FFC928" data-w="22"></span>
       <span><b><span class="js-cls-name">Стандарт</span><svg width="13" height="8" viewBox="0 0 13 8"><path d="M1.2 1.2 6.5 6.5l5.3-5.3" fill="none" stroke="#1f2a30" stroke-width="1.8" stroke-linecap="round"/></svg></b><small>1-4 пассажира</small></span>
     </button>
-    <label class="fprice"><span class="from">от</span><input class="js-price" type="text" inputmode="decimal" autocomplete="off" aria-label="Стоимость, ₴">₴</label>
+    <label class="fprice"><span class="from">от</span><input class="js-price autow" type="text" inputmode="decimal" autocomplete="off" aria-label="Стоимость, ₴">₴</label>
     <button class="go js-find" aria-label="Найти машину"><svg width="20" height="18" viewBox="0 0 20 18"><path d="M1.5 9h16M10.5 2l7 7-7 7" fill="none" stroke="#1f2a30" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
 </section>
@@ -301,7 +355,7 @@ body.st-ride.sheet-full #rideHead{display:flex}
     <div class="drv">
       <div class="ava"><span class="js-ava"></span><span class="on">Онлайн</span></div>
       <div>
-        <div class="dname"><span class="js-driver"></span><i>★ <b class="js-rating"></b></i></div>
+        <div class="dname"><span class="js-driver"></span><i>★<b class="js-rating"></b></i></div>
         <div class="dstat">Поездок: <b class="js-trips-n"></b></div>
         <div class="dstat">В сервисе: <b class="js-years"></b></div>
       </div>
@@ -313,12 +367,12 @@ body.st-ride.sheet-full #rideHead{display:flex}
     <div class="band">ПАРАМЕТРЫ ЗАКАЗА</div>
     <div class="js-route-list"></div>
     <div class="opts">
-      <div class="opt"><span class="oi"><svg width="22" height="20" viewBox="0 0 22 20" fill="none" stroke="#9aa6ad" stroke-width="1.8"><path d="M2 2h18v12H8l-6 4z" stroke-linejoin="round"/><circle cx="7" cy="8" r=".6" fill="#9aa6ad"/><circle cx="11" cy="8" r=".6" fill="#9aa6ad"/><circle cx="15" cy="8" r=".6" fill="#9aa6ad"/></svg></span><span class="ot">Комментарий<small>Изменить</small></span><button class="chip js-deco">Подъезд</button></div>
-      <div class="opt"><span class="oi"><svg width="20" height="18" viewBox="0 0 20 18" stroke="#9aa6ad" stroke-width="1.8" stroke-linecap="round"><path d="M1 3h18M1 9h18M1 15h18"/><path d="M6 1v4M14 7v4M8 13v4"/></svg></span><span class="ot">Дополнительные опции<small>Изменить</small></span></div>
-      <div class="opt dim"><span class="oi"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#9aa6ad" stroke-width="1.8"><circle cx="11" cy="11" r="9.5"/><path d="M11 5v6l4 2.5" stroke-linecap="round"/></svg></span><span class="ot">На ближайшее время</span></div>
-      <div class="opt dim"><span class="oi"><svg width="22" height="18" viewBox="0 0 22 18" fill="#9aa6ad"><path d="M4.6 2h12.8l2.2 5.4c.9.4 1.4 1.2 1.4 2.2V15a1 1 0 0 1-1 1h-1.6a1 1 0 0 1-1-1v-1H4.6v1a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V9.6c0-1 .5-1.8 1.4-2.2zm1.2 1.8L4.4 7.4h13.2l-1.4-3.6z"/></svg></span><span class="ot js-cls-name">Стандарт</span></div>
-      <div class="opt"><span class="oi"><svg width="24" height="18" viewBox="0 0 24 18"><rect x="1" y="1" width="22" height="16" rx="1.5" fill="#1A9A50"/><rect x="3.5" y="3.5" width="17" height="11" fill="none" stroke="#c8f0d6" stroke-width="1"/><text x="12" y="12.2" text-anchor="middle" font-size="6.5" font-weight="700" fill="#fff" font-family="system-ui,sans-serif">100</text></svg></span><span class="ot">Наличные</span><label class="pricefield"><input class="js-price" type="text" inputmode="decimal" autocomplete="off"><span>₴</span></label></div>
-      <button class="opt js-share"><span class="oi"><svg width="20" height="22" viewBox="0 0 20 22" fill="none" stroke="#9aa6ad" stroke-width="1.8"><circle cx="16" cy="4" r="3"/><circle cx="4" cy="11" r="3"/><circle cx="16" cy="18" r="3"/><path d="m6.6 9.6 6.8-4.2M6.6 12.4l6.8 4.2"/></svg></span><span class="ot">Поделиться заказом</span></button>
+      <div class="opt"><span class="oi"><svg width="22" height="20" viewBox="0 0 22 20" fill="none" stroke="#C5CDD1" stroke-width="1.8"><path d="M2 2h18v12H8l-6 4z" stroke-linejoin="round"/><circle cx="7" cy="8" r=".6" fill="#C5CDD1"/><circle cx="11" cy="8" r=".6" fill="#C5CDD1"/><circle cx="15" cy="8" r=".6" fill="#C5CDD1"/></svg></span><span class="ot">Комментарий<small>Изменить</small></span><button class="chip js-deco">Подъезд</button></div>
+      <div class="opt"><span class="oi"><svg width="20" height="18" viewBox="0 0 20 18" stroke="#C5CDD1" stroke-width="1.8" stroke-linecap="round"><path d="M1 3h18M1 9h18M1 15h18"/><path d="M6 1v4M14 7v4M8 13v4"/></svg></span><span class="ot">Дополнительные опции<small>Изменить</small></span></div>
+      <div class="opt dim"><span class="oi"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#C5CDD1" stroke-width="1.8"><circle cx="11" cy="11" r="9.5"/><path d="M11 5v6l4 2.5" stroke-linecap="round"/></svg></span><span class="ot">На ближайшее время</span></div>
+      <div class="opt dim"><span class="oi"><svg width="22" height="18" viewBox="0 0 22 18" fill="#C5CDD1"><path d="M4.6 2h12.8l2.2 5.4c.9.4 1.4 1.2 1.4 2.2V15a1 1 0 0 1-1 1h-1.6a1 1 0 0 1-1-1v-1H4.6v1a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V9.6c0-1 .5-1.8 1.4-2.2zm1.2 1.8L4.4 7.4h13.2l-1.4-3.6z"/></svg></span><span class="ot js-cls-name">Стандарт</span></div>
+      <div class="opt dim"><span class="oi"><svg width="24" height="18" viewBox="0 0 24 18"><rect x="1" y="1" width="22" height="16" rx="1.5" fill="#1A9A50"/><rect x="3.5" y="3.5" width="17" height="11" fill="none" stroke="#c8f0d6" stroke-width="1"/><text x="12" y="12.2" text-anchor="middle" font-size="6.5" font-weight="700" fill="#fff" font-family="system-ui,sans-serif">100</text></svg></span><span class="ot">Наличные</span><label class="pricefield"><input class="js-price autow" type="text" inputmode="decimal" autocomplete="off"><span>₴</span></label></div>
+      <button class="opt js-share"><span class="oi"><svg width="20" height="22" viewBox="0 0 20 22" fill="none" stroke="#C5CDD1" stroke-width="1.8"><circle cx="16" cy="4" r="3"/><circle cx="4" cy="11" r="3"/><circle cx="16" cy="18" r="3"/><path d="m6.6 9.6 6.8-4.2M6.6 12.4l6.8 4.2"/></svg></span><span class="ot">Поделиться заказом</span></button>
       <button class="opt cancel js-cancel"><span class="oi"><svg width="18" height="18" viewBox="0 0 18 18" stroke="#D32F2F" stroke-width="2.4" stroke-linecap="round"><path d="M2 2l14 14M16 2 2 16"/></svg></span><span class="ot">Отменить заказ</span></button>
     </div>
   </div>
@@ -333,7 +387,7 @@ window.APP = {
   vectorStyle: 'https://tiles.openfreemap.org/styles/liberty',
   // палитра карты — как стандартная Google Maps на скринах
   mapTheme: {
-    bg: '#ECEEF1', area: '#E6E8EB', park: '#A8DAB0', water: '#A6D3F2', waterLabel: '#4A84B5',
+    bg: '#E2E6EA', area: '#DDE1E5', park: '#A8DAB0', water: '#A6D3F2', waterLabel: '#4A84B5',
     road: '#FFFFFF', roadMajor: '#FFFFFF', casing: '#DADDE1', rail: '#C9CDD2',
     building: '#DCDEE2', buildingLine: '#C9CCD1', extrude: false,
     label: '#3C4043', roadLabel: '#6B7176', halo: '#FFFFFF',
@@ -349,13 +403,19 @@ window.APP = {
   wrapFields: true,
   editLink: true,
   toExtra: '<button class="starbtn js-deco" aria-label="Избранное"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17l-5.7 3.1 1.2-6.3L2.9 9.4l6.3-.8z" fill="none" stroke="#1f2a30" stroke-width="2" stroke-linejoin="round"/></svg></button><button class="plusbtn js-add-stop" aria-label="Добавить остановку"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#1f2a30" stroke-width="1.8" stroke-linecap="round"/></svg></button>',
-  pin: { html: '<div class="pin1"><div class="h"><i></i></div><div class="l"></div><div class="ring"></div></div>', size: [40, 62], anchor: [20, 62] },
-  route: { color: '#12924A', weight: 5 },
+  pin: { html: '<div class="pin1"><div class="h"><i></i></div><div class="l"></div><div class="ring"></div></div>', size: [30, 50], anchor: [15, 50] },
+  route: { color: '#00A460', weight: 4 },
+  carW: 16, poiTextSize: 14,
   carRoute: { color: '#1f2a30', weight: 5, dash: '1 9' },
   mapCar: 'taxi', taxiColor: '#FFC928',
   nearby: 5,
-  formSnaps: (H) => [Math.min(190, H * 0.24), Math.max(270, H * 0.33), H - 90],
-  rideSnaps: (H, top) => [Math.min(150, H * 0.2), Math.max(330, H * 0.41), H - top - 64]
+  fitForm: true,
+  formSnaps: (H, top, el) => {
+    const m = el ? el.querySelector('.grab').offsetHeight + el.querySelector('#fields').offsetHeight + el.querySelector('.sfoot').offsetHeight + 6 : 0;
+    const mid = m > 120 ? m : Math.max(270, H * 0.33);
+    return [Math.max(140, mid - 64), mid, H - 90];
+  },
+  rideSnaps: (H, top) => [Math.min(150, H * 0.2), 352, H - top - 64]
 };
 (() => {
 'use strict';
@@ -451,6 +511,26 @@ function carSide(body, { w = 120, glass = '#2b3036', dark = false } = {}) {
 <circle cx="92" cy="40" r="8.6" fill="#1b1d20"/><circle cx="92" cy="40" r="4.6" fill="#c9ccd1"/><circle cx="92" cy="40" r="1.6" fill="#6b7077"/>
 </svg>`;
 }
+function carAngle(body, { w = 100, glass = '#2b3036', dark = false } = {}) {
+  const h = Math.round(w * 52 / 100);
+  const face = dark ? '#15171a' : 'rgba(0,0,0,.16)';
+  return `<svg viewBox="0 0 100 52" width="${w}" height="${h}" aria-hidden="true">
+<ellipse cx="52" cy="47" rx="46" ry="3.4" fill="rgba(0,0,0,.16)"/>
+<path d="M5 33Q4.5 27.5 10 26L27 22.2Q35 13 46 12H63Q71 12.6 78.5 20.5L89 22.4Q96.5 24 97 30.5V38.5Q97 42 93.5 42H8.5Q5 42 5 38.5Z" fill="${body}" stroke="rgba(0,0,0,.22)" stroke-width=".6"/>
+<path d="M78.5 20.5 89 22.4Q96.5 24 97 30.5V34H79Z" fill="${face}"/>
+<path d="M30.5 22.2Q37.5 15 46.5 14.4H55V22.2Z" fill="${glass}"/>
+<path d="M57.5 14.4H63Q69.6 15 75.5 21.6L57.5 22.2Z" fill="${glass}"/>
+<path d="M75.5 21.6 78 21 86 22.6 77.5 23.4Z" fill="${glass}" opacity=".85"/>
+<path d="M81.5 25.6 94.5 27.4 94 29.8 81.6 28.6Z" fill="${dark ? '#dfe8ff' : '#fff8d6'}"/>
+<rect x="83" y="31.5" width="11" height="3.2" rx="1.2" fill="rgba(0,0,0,.35)"/>
+<path d="M7 31H78" stroke="rgba(0,0,0,.12)"/><path d="M56.3 14.4V40" stroke="rgba(0,0,0,.15)" stroke-width=".7"/>
+<rect x="5.2" y="27.6" width="3.6" height="3.2" rx=".8" fill="#d8392f"/>
+<ellipse cx="24" cy="41.5" rx="6.8" ry="7.6" fill="#1b1d20"/><ellipse cx="24" cy="41.5" rx="3.4" ry="4" fill="#c9ccd1"/>
+<ellipse cx="73" cy="41.5" rx="6.4" ry="7.6" fill="#1b1d20"/><ellipse cx="73" cy="41.5" rx="3.2" ry="4" fill="#c9ccd1"/>
+<ellipse cx="90.5" cy="40" rx="2.6" ry="5.6" fill="#1b1d20"/>
+</svg>`;
+}
+window.carAngle = carAngle;
 const avatarSvg = `<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" fill="#d9dde2"/><circle cx="32" cy="25" r="11" fill="#9aa3ad"/><path d="M11 60Q13 41 32 41Q51 41 53 60Z" fill="#9aa3ad"/></svg>`;
 window.carTop = carTop; window.carSide = carSide;
 $$('[data-car-side]').forEach(el => { el.innerHTML = carSide(el.dataset.carSide, { w: +el.dataset.w || 120 }); });
@@ -537,7 +617,8 @@ function applyTheme(glMap, T) {
         lay(id, 'text-anchor', 'left');
         lay(id, 'text-offset', metro ? [1, 0] : [0.9, -1.1]);
         lay(id, 'text-justify', 'left');
-        lay(id, 'text-size', 13);
+        lay(id, 'text-size', C.poiTextSize || 13);
+        lay(id, 'text-font', ['Noto Sans Regular']);
         lay(id, 'text-max-width', 9);
         set(id, 'text-color', T.poiText === 'cat'
           ? ['match', POI_CAT, 'shop', T.poiLabel.shop, 'food', T.poiLabel.food, 'drink', T.poiLabel.food, 'health', T.poiLabel.health, 'park', T.poiLabel.park, T.poiLabel.other]
@@ -617,7 +698,7 @@ if (!CLASS_IDS.includes(S.cls)) S.cls = CLASS_IDS.includes('standard') ? 'standa
 function fmtAddr(r) {
   const a = r.address || {};
   const road = a.road || a.pedestrian || a.footway || a.square || a.neighbourhood || a.quarter || a.suburb || '';
-  const house = a.house_number || '';
+  const house = (a.house_number || '').replace(/(\d)-(?=\D)/, '$1');
   const city = a.city || a.town || a.village || a.municipality || a.state || '';
   const rd = C.roadFirst ? road.replace(/^(проспект|вулиця|провулок|площа|бульвар|узвіз|набережна|шосе|проїзд|майдан|улица|переулок|площадь)\s+(.+)$/i, '$2 $1') : road;
   const street = [rd, house].filter(Boolean).join(', ');
@@ -660,6 +741,7 @@ function renderFields() {
   fieldsBox.innerHTML = S.pts.map((p, i) => rowHTML(p, i, n)).join('');
   S.sug = []; S.sugI = -1;
   $$('.js-add-stop').forEach(b => b.classList.toggle('hidden', n - 2 >= MAX_STOPS));
+  if (C.fitForm) requestAnimationFrame(() => { try { refit(); } catch (_) {} });
 }
 function syncField(i) {
   const row = $(`#fields .frow[data-i="${i}"]`); if (!row) return;
@@ -670,6 +752,7 @@ function syncField(i) {
   if (ft) { ft.textContent = p.text || $('.finput', row).placeholder; ft.classList.toggle('ph', !p.text); }
   const sub = $('.fsub', row);
   if (sub) sub.innerHTML = subHTML(p);
+  if (C.fitForm) requestAnimationFrame(() => { try { refit(); } catch (_) {} });
 }
 function showSugg(i, list, msg) {
   S.sug = list; S.sugI = i;
@@ -834,7 +917,8 @@ const activeSheet = () => sheets[S.state] || formSheet;
 function fitTo(lls) {
   if (!lls.length) return;
   const sh = activeSheet();
-  const bottom = Math.min(sh.snaps[1], sh.vis || 0, innerHeight * 0.62) + (C.fitExtraBottom || 24);
+  const above = C.mapAboveRide && S.state === 'ride';   // карта в рамке над панелью — панель её не перекрывает
+  const bottom = above ? 30 : Math.min(sh.snaps[1], sh.vis || 0, innerHeight * 0.62) + (C.fitExtraBottom || 24);
   const px = (S.state === 'order' && C.fitXOrder) || 40;
   map.fitBounds(L.latLngBounds(lls), { paddingTopLeft: [px, safeTop + (S.state === 'order' && C.fitTopOrder || C.fitTop || 100)], paddingBottomRight: [px, bottom], maxZoom: 16.5 });
 }
@@ -844,21 +928,36 @@ function centerOn(ll, z) {
   map.setView(map.unproject(map.project(ll, z).add([0, off]), z), z);
 }
 
+/* ---------------- поправка iOS: «приложение» с прозрачным статус-баром ----------------
+   В режиме «На экран Домой» iOS считает нижний край для position:fixed выше реального
+   на высоту статус-бара — внизу появлялась серая полоса. Меряем разницу и сдвигаем. */
+const gapProbe = document.createElement('div');
+gapProbe.style.cssText = 'position:fixed;top:0;bottom:0;width:0;visibility:hidden;pointer-events:none';
+document.body.appendChild(gapProbe);
+let GAP = 0;
+function measureGap() {
+  const g = Math.round(innerHeight - gapProbe.offsetHeight);
+  GAP = g > 0 && g < 150 ? g : 0;
+  document.documentElement.style.setProperty('--gap', GAP + 'px');
+}
+measureGap();
+
 /* ---------------- подвижные панели ---------------- */
 function makeSheet(el, snapsFn) {
   const sh = { el, i: 1, vis: 0, snaps: [0, 0, 0], on: !el.classList.contains('off') };
-  sh.calc = () => { sh.snaps = snapsFn(innerHeight, safeTop).map(Math.round); };
+  sh.calc = () => { sh.snaps = snapsFn(innerHeight, safeTop, el).map(Math.round); };
   sh.set = (v, anim = true) => {
     sh.vis = v;
     el.style.transition = anim ? '' : 'none';
     el.style.height = v + 'px';
     if (sh.on) {
-      document.documentElement.style.setProperty('--sheet', v + 'px');
+      document.documentElement.style.setProperty('--sheet', (v - GAP) + 'px');
       document.body.classList.toggle('sheet-full', v > innerHeight * 0.72);
     }
   };
   sh.snap = (i, anim = true) => {
     sh.i = Math.max(0, Math.min(2, i)); sh.set(sh.snaps[sh.i], anim);
+    if (C.mapAboveRide && S.state === 'ride') setTimeout(() => map.invalidateSize({ pan: false }), 330);
     if (sh.i < 2 && el.contains(document.activeElement)) document.activeElement.blur();
   };
   sh.show = i => { sh.on = true; el.classList.remove('off'); sh.snap(i ?? sh.i); };
@@ -914,9 +1013,14 @@ function go(name, snapIdx) {
   sheets[name].show(snapIdx);
   setTimeout(() => map.invalidateSize({ pan: false }), 360);
 }
-addEventListener('resize', () => {
-  Object.values(sheets).forEach(sh => { sh.calc(); if (sh.on) sh.set(sh.snaps[sh.i], false); });
-});
+function relayout(anim) {
+  measureGap();
+  Object.values(sheets).forEach(sh => { sh.calc(); if (sh.on) sh.set(sh.snaps[sh.i], anim); });
+}
+addEventListener('resize', () => relayout(false));
+addEventListener('load', () => setTimeout(() => relayout(false), 300));
+// панель по высоте содержимого (зелёный: адреса + низ, без пустоты)
+function refit() { if (typeof formSheet !== 'undefined' && formSheet.on) { const i = formSheet.i; formSheet.calc(); formSheet.set(formSheet.snaps[i]); } }
 
 /* ---------------- класс и цена ---------------- */
 function estimateStd() {                         // ориентировочная цена «Стандарта», если своя не введена
@@ -954,6 +1058,10 @@ function setPrice(v, src) {
   $$('.js-price').forEach(x => { if (x !== src) x.value = shown; });
   $$('.js-price-show').forEach(x => { x.textContent = shown ? shown + ' ₴' : ''; x.classList.toggle('hidden', !shown); });
   renderClasses();
+  autoW();
+}
+function autoW() {
+  $$('.js-price.autow').forEach(x => { x.style.width = (Math.max(1, (x.value || x.placeholder || '').length) + 0.3) + 'ch'; });
 }
 document.addEventListener('input', e => {
   const t = e.target.closest('.js-price'); if (!t) return;
@@ -963,6 +1071,7 @@ document.addEventListener('input', e => {
   v = v.slice(0, 9);
   if (t.value !== fmtP(v)) t.value = fmtP(v);
   setPrice(v, t);
+  autoW();
 });
 
 /* ---------------- такси рядом (декор на главной) ---------------- */
@@ -980,7 +1089,8 @@ async function spawnNearby(center) {
       if (!cs || cs.length < 2 || seq !== nearSeq) return;
       let k = 1; while (k < cs.length - 1 && dist(cs[0], cs[k]) < 8) k++;
       const h = bearing(cs[0], cs[k]);
-      L.marker(cs[0], { icon: icon(`<div class="near-car" style="transform:rotate(${h.toFixed(0)}deg)">${carTop(C.taxiColor || '#FFC928', { w: 20 })}</div>`, [20, 40], [10, 20]), interactive: false }).addTo(layers.nearby);
+      const cw = C.carW || 20;
+      L.marker(cs[0], { icon: icon(`<div class="near-car" style="transform:rotate(${h.toFixed(0)}deg)">${carTop(C.taxiColor || '#FFC928', { w: cw })}</div>`, [cw, cw * 2], [cw / 2, cw]), interactive: false }).addTo(layers.nearby);
     } catch (_) {}
   });
   await Promise.all(jobs);
@@ -1021,7 +1131,7 @@ function fillRide(car) {
   setText('.js-car-full', `${car.color.n} ${car.model}`);
   setText('.js-car-model', car.model);
   setText('.js-car-color', car.color.n);
-  setHTML('.js-car-side', carSide(car.color.hex, { w: +($('.js-car-side')?.dataset.w || 120), dark: car.color.hex === '#26272b' }));
+  setHTML('.js-car-side', (C.carPic || carSide)(car.color.hex, { w: +($('.js-car-side')?.dataset.w || 120), dark: car.color.hex === '#26272b' }));
   setText('.js-driver', car.driver);
   setText('.js-rating', car.rating);
   setText('.js-trips-n', String(car.trips));
@@ -1032,6 +1142,15 @@ function fillRide(car) {
   setText('.js-eta-clock', t.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
   setHTML('.js-route-list', routeListHTML());
   setPrice(S.price);
+}
+// кнопки «-10 ₴ / +N ₴»: минус неактивен на исходной цене, плюс дотягивает до круглых десятков
+function stepBtns() {
+  const p = +(S.price || priceFor(S.cls));
+  const up = p % 10 ? 10 - (p % 10) : 10;
+  $$('.js-pstep').forEach(b => {
+    if (+b.dataset.d < 0) { b.disabled = p <= (S.basePrice || 0); }
+    else { b.dataset.d = up; b.textContent = `+${up} ₴`; }
+  });
 }
 let stageT = [];
 function setSteps(n, title) {
@@ -1055,6 +1174,8 @@ async function findCar() {
   layers.car.clearLayers(); layers.nearby.clearLayers();
   if (sheets.search) {
     $('#searchSheet').classList.remove('price-changed');
+    setHTML('.js-route-list', routeListHTML());
+    S.basePrice = +(S.price || priceFor(S.cls)); stepBtns();
     go('search', 1); runStages();
     if (C.searchCircle) searchLayers.push(L.circle(from.ll, { radius: 330, color: '#ffffff', weight: 1, opacity: .9, fillColor: '#ffffff', fillOpacity: .5, interactive: false }).addTo(layers.car));
   } else {
@@ -1075,8 +1196,9 @@ async function findCar() {
   drawLine(layers.car, car.route.coords, cs, true);
   if (C.etaBubble) L.marker(from.ll, { icon: icon(C.etaBubble(car.eta), [0, 0], [0, 0]), interactive: false, zIndexOffset: 600 }).addTo(layers.car);
   const real = C.mapCar === 'real';
-  const html = real ? carTop(car.color.hex === '#f2f3f5' ? '#e9ebee' : car.color.hex, { glass: '#15181b', roof: '#15181b' }) : carTop(C.taxiColor || '#FFC928');
-  L.marker(car.pos, { icon: icon(`<div class="car-ic" style="transform:rotate(${car.head.toFixed(0)}deg)">${html}</div>`, [24, 48], [12, 24]), interactive: false, zIndexOffset: 500 }).addTo(layers.car);
+  const cw = C.carW || 24;
+  const html = real ? carTop(car.color.hex === '#f2f3f5' ? '#e9ebee' : car.color.hex, { glass: '#15181b', roof: '#15181b', w: cw }) : carTop(C.taxiColor || '#FFC928', { w: cw });
+  L.marker(car.pos, { icon: icon(`<div class="car-ic" style="width:${cw}px;height:${cw * 2}px;transform:rotate(${car.head.toFixed(0)}deg)">${html}</div>`, [cw, cw * 2], [cw / 2, cw]), interactive: false, zIndexOffset: 500 }).addTo(layers.car);
   fillRide(car);
   if (C.rideHideTrip) map.removeLayer(layers.route);
   go('ride', 1);
@@ -1178,8 +1300,10 @@ document.addEventListener('click', e => {
   else if (t.matches('.js-pedit')) { const r = $('#priceEdit'); r?.classList.toggle('hidden'); if (r && !r.classList.contains('hidden')) $('input', r)?.focus(); }
   else if (t.matches('.js-pdone')) { $('#priceEdit')?.classList.add('hidden'); document.activeElement?.blur(); }
   else if (t.matches('.js-pstep')) {
+    if (t.disabled) return;
     const v = Math.max(10, Math.round((+S.price || priceFor(S.cls)) + +t.dataset.d));
-    setPrice(String(v)); $('#searchSheet')?.classList.add('price-changed');
+    setPrice(String(v)); stepBtns();
+    $('#searchSheet')?.classList.toggle('price-changed', v !== S.basePrice);
   }
   else if (t.matches('.js-search-at')) { $('#searchSheet')?.classList.remove('price-changed'); }
   else if (t.matches('.js-hint-close')) { $('#installHint')?.classList.add('hidden'); localStorage.setItem('taxi.hint', '1'); }

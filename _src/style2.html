@@ -49,7 +49,7 @@ body.st-ride .task{display:block}
 .leaflet-top.leaflet-right{top:calc(env(safe-area-inset-top) + 50px)}
 body.st-ride .leaflet-top.leaflet-right{top:calc(env(safe-area-inset-top) + 64px)}
 /* карта в рамке на экране поездки */
-body.st-ride #map{top:calc(env(safe-area-inset-top) + 2px);left:8px;right:8px;border-radius:16px;border:1px solid #dcdcdc;overflow:hidden}
+body.st-ride #map{top:calc(env(safe-area-inset-top) + 2px);left:8px;right:8px;bottom:calc(-1 * var(--gap, 0px));border-radius:16px;border:1px solid #dcdcdc;overflow:hidden}
 body.st-ride .down{left:16px;top:calc(env(safe-area-inset-top) + 10px)}
 body.st-ride .shield{right:16px}
 
@@ -207,22 +207,111 @@ body.st-ride.sheet-full #miniBar{display:flex}
 .track .tcar svg{display:block}
 .track .tend{position:absolute;right:0;top:5px;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle,#222 0 3px,var(--y) 3.6px)}
 body.arrived .etapill{background:#E5F7EF}
+
+/* ===== v7: точная подгонка по сверке со скринами ===== */
+.sq,.mapbtn{width:44px;height:44px}
+.menu::after{display:none}
+.bonus{height:34px;min-width:60px;border-radius:10px;padding:0 8px 0 12px;background:linear-gradient(45deg,#FBD24A,#EE6235);gap:5px}
+.handle{width:40px;height:4px;background:#D7D7D7}
+#searchSheet .handle,#rideSheet .handle{width:48px}
+/* главная */
+.card{padding:2px 16px 12px}
+.frow{margin-bottom:8px}
+.fbox{height:52px;padding-left:57px;border-radius:10px}
+.fdot{left:17px;top:15px}
+.finput{font-size:16px}
+.finput::placeholder{color:#555}
+.hw{height:52px;width:117px;justify-content:space-around;border-radius:10px}
+.hw button{width:58px;height:52px}
+.recent{padding:20px 0 20px;margin:0 -16px}
+.rc{gap:20px;padding:0 16px;border-right:0;position:relative}
+.rc svg{width:17px;height:22px}
+.rc svg path{fill:#71747B}
+.rc+.rc::before{content:"";position:absolute;left:0;top:50%;height:16px;margin-top:-8px;width:1px;background:#6E6E6E}
+.tile{font-size:15px;padding:8px 10px}
+.pstrip{font-size:13px;font-weight:600;background:linear-gradient(90deg,#1CB2CD,#33CAA1)}
+/* пин «Откуда» */
+.pin2{width:40px;height:66px}
+.pin2 .h{width:40px;height:40px;box-shadow:none}
+.pin2 .h i{width:8px;height:8px;margin:0;background:#3A3D4F}
+.pin2 .l{left:18px;top:38px;width:4px;height:25px;background:#D9BD1E}
+.pin2 .b{left:7px;bottom:-5px;width:26px;height:10px;border-radius:50%;background:rgba(0,0,0,.12)}
+.pin2 .b::after{display:none}
+.pin2 .d{left:10px;bottom:-10px;box-shadow:none}
+body.st-search .pin2 .h{width:34px;height:34px;left:3px;top:4px}
+body.st-search .pin2 .b{left:10px;bottom:-10px;width:20px;height:20px;background:rgba(255,221,45,.45);display:grid;place-items:center}
+body.st-search .pin2 .b::after{display:block;content:"";width:6px;height:6px;border-radius:50%;background:#8a8a8a}
+.mk-to{width:21px;height:21px;background:radial-gradient(circle,#fff 0 3.2px,#1d1d1f 3.8px);box-shadow:none}
+body.st-ride .mk-to{display:none}
+.apill span{font-size:13px;height:30px;line-height:30px;padding:0 10px;border-radius:8px}
+.apill.from{transform:translate(-50%,16px)}
+.chips button{padding:0 18px}
+body.st-search .down,body.st-ride .down{left:16px}
+body.st-search .shield,body.st-ride .shield{right:14px}
+.ebub{background:rgba(255,221,45,.5);transform:translate(-50%,calc(-100% - 20px))}
+/* выбор класса */
+#orderSheet .sbody{padding:0 8px;position:relative}
+.clsr{padding-left:16px;position:relative}
+.clsr b,.clsr .cp{font-weight:500}
+.clsr small{color:#555}
+.clsr small svg{stroke:#555}
+.clsr:not(.on)+.clsr:not(.on)::before{content:"";position:absolute;left:16px;right:8px;top:-2px;height:1px;background:#E9E9E9}
+.promo{position:sticky;bottom:0;margin:0 0 0;font-size:14px;font-weight:500;overflow:hidden;min-height:44px}
+.promo .bigcoin{position:absolute;right:14px;top:-4px;width:60px;height:60px}
+#orderSheet .sfoot{border-top:0}
+.cash,.gbtn{font-weight:500}
+.gbtn{height:40px;font-size:14px;padding:0 20px}
+.order{height:56px}
+/* поиск */
+#searchSheet{left:8px;right:8px;background:transparent;box-shadow:none}
+#searchSheet .sbody{padding-left:0!important;padding-right:0!important}
+body.st-search.sheet-full #searchSheet{background:#F2F2F4}
+#dim{background:#32353C}
+#dim button{font-size:15px;width:131px;height:40px;padding:0}
+.sbody .wcard{margin-bottom:4px}
+.scard .handle{margin-top:8px}
+.scard .js-steps{margin:27px 0 26px;gap:8px}
+.js-steps b{height:4px;background:#F2F2F2}
+.stage{font-size:20px}
+.stsub{font-size:16px;margin:4px 0 26px}
+.prow{padding:16px 32px 0}
+.pbtn{font-size:14px}
+.pbtn:disabled{background:#fff;border:1px solid #D7D7D7;color:#999;opacity:1}
+.hint{padding:30px 16px 38px;color:#3C3C3C;font-size:14px}
+.searchat{font-size:14px;height:44px;margin-top:18px}
+.redbtn,.sharebtn{height:64px;font-size:16px;font-weight:500}
+.routecard,.paycard,.taskcard{margin-left:16px!important;margin-right:16px!important}
+.h2{font-weight:500}
+.rx span{font-size:16px}
+/* поездка */
+body.st-ride #map{bottom:calc(var(--sheet,300px) + 10px)}
+.etapill{padding:4px 16px}
+.carcard{padding-top:28px}
+.carcard .drv{margin-top:26px}
+.carpic{width:100px;height:56px;margin-right:-14px}
+.drv .ava{margin-left:6px}
+.dn{padding-left:12px}
+.ava .rb{font-size:14px;height:21px;line-height:19px;min-width:56px;text-align:center;border-radius:8px;bottom:-12px}
+#miniBar{background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#miniBar .sqb{width:44px;height:44px}
+.track .tcar{width:21px;height:42px;transform:translate(10px,-50%) rotate(90deg)}
+.track .tend{width:23px;height:23px;top:4px}
 </style>
 </head>
 <body>
 <div id="map"></div>
 
-<button class="sq menu js-menu" aria-label="Меню"><svg width="20" height="14" viewBox="0 0 20 14"><path d="M1 1h18M1 7h18M1 13h18" stroke="#333" stroke-width="2" stroke-linecap="round"/></svg></button>
+<button class="sq menu js-menu" aria-label="Меню"><svg width="22" height="16" viewBox="0 0 22 16"><path d="M2 2h10M2 8h17M2 14h17" stroke="#333" stroke-width="2" stroke-linecap="round"/><circle cx="16.5" cy="2.4" r="3.7" fill="#E5212B"/></svg></button>
 <button class="sq back js-back" aria-label="Назад"><svg width="20" height="16" viewBox="0 0 20 16"><path d="M19 8H2M8 1 1 8l7 7" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 <button class="sq down js-collapse" aria-label="Свернуть"><svg width="16" height="10" viewBox="0 0 16 10"><path d="M1.5 1.5 8 8l6.5-6.5" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-<div class="bonus">680<svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="10" fill="#FFD43A"/><circle cx="11" cy="11" r="7.4" fill="#FFB800"/><path d="M8.3 8.2c1.4-1 4.1-.7 4.5 1.1.3 1.6-2.4 2-2.4 3.8" fill="none" stroke="#FFE680" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+<div class="bonus">680<svg width="21" height="21" viewBox="0 0 22 22"><circle cx="11" cy="11" r="10" fill="#FFD43A"/><circle cx="11" cy="11" r="7.4" fill="#FFB800"/><path d="M8.3 8.2c1.4-1 4.1-.7 4.5 1.1.3 1.6-2.4 2-2.4 3.8" fill="none" stroke="#FFE680" stroke-width="1.7" stroke-linecap="round"/></svg></div>
 <div class="task">+40 <svg width="16" height="16" viewBox="0 0 16 16" style="vertical-align:-1px"><circle cx="8" cy="8" r="7.5" fill="#FFC41F"/><circle cx="8" cy="8" r="5" fill="#FFD84F"/></svg><i></i></div>
 <button class="mapbtn fit js-fit" aria-label="Весь маршрут"><svg width="20" height="20" viewBox="0 0 22 22" fill="none" stroke="#333" stroke-width="2"><circle cx="5" cy="5" r="3"/><circle cx="17" cy="17" r="3"/><path d="M7.2 7.2l7.6 7.6" stroke-linecap="round"/></svg></button>
 <button class="mapbtn locate js-locate" aria-label="Моё местоположение"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#333" stroke-width="2"><circle cx="11" cy="11" r="6"/><circle cx="11" cy="11" r="2.4" fill="#333"/><path d="M11 1v3.5M11 17.5V21M1 11h3.5M17.5 11H21" stroke-linecap="round"/></svg></button>
-<button class="mapbtn shield js-fit" aria-label="Безопасность"><svg width="14" height="20" viewBox="0 0 14 20" fill="none" stroke="#333" stroke-width="1.6"><path d="M7 1 13 3.5V9c0 4.6-2.6 8.3-6 10C3.6 17.3 1 13.6 1 9V3.5Z"/><path d="M7 1v18" /></svg></button>
+<button class="mapbtn shield js-fit" aria-label="Безопасность"><svg width="10" height="22" viewBox="0 0 10 22" fill="none" stroke="#333" stroke-width="1.5"><path d="M5 1 9 3.5V10c0 5-1.8 8.8-4 11C2.8 18.8 1 15 1 10V3.5Z"/><path d="M5 1v20"/></svg></button>
 <div class="chips"><button class="js-deco">Комментарий</button><button class="js-deco">Еду я</button><button class="js-deco">Дополнительные услуги</button></div>
 <div id="dim"><button class="js-collapse">Скрыть детали</button></div>
-<div id="miniBar"><button class="sqb js-expand" aria-label="Развернуть карту"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#222" stroke-width="1.8" stroke-linecap="round"><path d="M10.5 1.5h6v6M16.5 1.5l-6 6M7.5 16.5h-6v-6M1.5 16.5l6-6"/></svg></button><div class="track"><span class="done"></span><span class="tcar" data-car-top="#FFD21F" data-w="14" data-glass="#222"></span><span class="tend"></span></div></div>
+<div id="miniBar"><button class="sqb js-expand" aria-label="Развернуть карту"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#222" stroke-width="1.8" stroke-linecap="round"><path d="M10.5 1.5h6v6M16.5 1.5l-6 6M7.5 16.5h-6v-6M1.5 16.5l6-6"/></svg></button><div class="track"><span class="done"></span><span class="tcar" data-car-top="#FFD21F" data-w="21" data-glass="#222"></span><span class="tend"></span></div></div>
 <div id="toast" role="status"></div>
 
 <!-- Главная: адреса -->
@@ -254,7 +343,7 @@ body.arrived .etapill{background:#E5F7EF}
   <div class="grab"><div class="handle"></div></div>
   <div class="sbody">
     <div id="clsList"></div>
-    <div class="promo">Еще 2 поездки и +40 <svg width="18" height="18" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.5" fill="#FFC41F"/><circle cx="8" cy="8" r="5" fill="#FFD84F"/></svg></div>
+    <div class="promo">Еще 2 поездки и +40 <svg width="18" height="18" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.5" fill="#FFC41F"/><circle cx="8" cy="8" r="5" fill="#FFD84F"/></svg><svg class="bigcoin" viewBox="0 0 60 60"><circle cx="30" cy="30" r="29" fill="#F5B400"/><circle cx="30" cy="30" r="23" fill="#FFCF2E" stroke="#E9A800" stroke-width="2"/><path d="M22 22c5-4 15-3 16 3 1 5-7 6-7 12" fill="none" stroke="#B98600" stroke-width="4" stroke-linecap="round"/></svg></div>
   </div>
   <div class="sfoot">
     <div id="priceEdit" class="hidden"><label class="pricefield"><input class="js-price" type="text" inputmode="decimal" autocomplete="off" aria-label="Своя цена"><span>₴</span></label></div>
@@ -300,7 +389,7 @@ body.arrived .etapill{background:#E5F7EF}
     <div class="wcard carcard">
       <div class="carrow">
         <div><div class="bigplate js-plate"></div><div class="carsub"><span class="js-car-full"></span> • <span class="js-cls-name"></span></div></div>
-        <div class="carpic js-car-side" data-w="100"></div>
+        <div class="carpic js-car-side" data-w="110"></div>
       </div>
       <div class="drv">
         <div class="ava"><span class="js-ava"></span><span class="rb"><span class="js-rating"></span> ⭐</span></div>
@@ -313,7 +402,7 @@ body.arrived .etapill{background:#E5F7EF}
     <div class="h2">Маршрут</div>
     <div class="wcard routecard js-route-list"></div>
     <div class="h2">Метод оплаты</div>
-    <div class="wcard paycard"><svg width="26" height="24" viewBox="0 0 26 24"><rect x="2" y="5" width="15" height="17" rx="2" transform="rotate(-14 9 13)" fill="#e7f6ef" stroke="#1d7a55" stroke-width="1.4"/><rect x="8" y="3" width="15" height="17" rx="2" transform="rotate(10 15 11)" fill="#e7f6ef" stroke="#1d7a55" stroke-width="1.4"/><circle cx="15.5" cy="11.5" r="2.6" fill="#2fb894"/></svg><div class="pv"><label><input class="js-price" type="text" inputmode="decimal" autocomplete="off" aria-label="Стоимость"> ₴</label><small>Наличные</small></div></div>
+    <div class="wcard paycard"><svg width="26" height="24" viewBox="0 0 26 24"><rect x="2" y="5" width="15" height="17" rx="2" transform="rotate(-14 9 13)" fill="#e7f6ef" stroke="#1d7a55" stroke-width="1.4"/><rect x="8" y="3" width="15" height="17" rx="2" transform="rotate(10 15 11)" fill="#e7f6ef" stroke="#1d7a55" stroke-width="1.4"/><circle cx="15.5" cy="11.5" r="2.6" fill="#2fb894"/></svg><div class="pv"><label><input class="js-price autow" type="text" inputmode="decimal" autocomplete="off" aria-label="Стоимость"> ₴</label><small>Наличные</small></div></div>
     <div class="h2">Текущее задание</div>
     <div class="wcard taskcard"><div class="tt"><svg width="22" height="22" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.5" fill="#FFC41F"/><circle cx="8" cy="8" r="5" fill="#FFD84F"/></svg><div><b>+40 медиаторов</b><small>После выполнения этой и ещё 1 поездки</small></div></div><div class="bar"></div></div>
   </div>
@@ -339,8 +428,8 @@ window.APP = {
   classes: ['fast', 'standard', 'comfort', 'business'],
   seats: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#7c7f85" stroke-width="1.4"><circle cx="7" cy="4.5" r="3"/><path d="M1.5 13c.5-3 2.6-4.6 5.5-4.6s5 1.6 5.5 4.6z"/></svg> 4',
   clsImg: id => id === 'fast'
-    ? `<span style="position:absolute;left:-2px;top:2px">${carSide('#FFD21F', { w: 40 })}</span><span style="position:absolute;left:18px;top:0">${carSide('#2b2d31', { w: 42, dark: true })}</span>`
-    : carSide(id === 'business' ? '#2b2d31' : '#FFD21F', { w: 56, dark: id === 'business' }),
+    ? `<span style="position:absolute;left:-4px;top:4px">${carAngle('#FFD21F', { w: 40 })}</span><span style="position:absolute;left:16px;top:1px">${carAngle('#2b2d31', { w: 44, dark: true })}</span>`
+    : carAngle(id === 'business' ? '#2b2d31' : '#FFD21F', { w: 54, dark: id === 'business' }),
   ph: { from: 'Откуда', to: 'Куда едем?' },
   roadFirst: true, cityInAddr: true,
   showSub: false,
@@ -356,7 +445,9 @@ window.APP = {
   addrPills: true,
   searchCircle: true,
   searchMs: 4200,
-  stages: [[0, 1, 'Приняли заказ...'], [1400, 2, 'Ожидание ответа...'], [2800, 3, 'Большой спрос, но ищем...']],
+  stages: [[0, 1, 'Приняли заказ...'], [1400, 3, 'Ожидание ответа...'], [2800, 3, 'Большой спрос, но ищем...']],
+  carPic: (c, o) => carAngle(c, o),
+  mapAboveRide: true,
   plateJoin: '',
   rideHideTrip: true,
   fitExtraBottom: 64,
@@ -365,7 +456,7 @@ window.APP = {
   formSnaps: (H, top) => [Math.round(H * 0.3), Math.round(H * 0.45), H - top - 60],
   orderSnaps: (H, top) => [Math.round(H * 0.32), Math.max(430, Math.round(H * 0.52)), H - top - 60],
   searchSnaps: (H, top) => [Math.round(H * 0.26), Math.max(370, Math.round(H * 0.45)), H - top - 72],
-  rideSnaps: (H, top) => [96, Math.max(330, Math.round(H * 0.42)), H - top - 72]
+  rideSnaps: (H, top) => [96, Math.round(H * 0.49), H - top - 72]
 };
 /*__JS__*/
 </script>

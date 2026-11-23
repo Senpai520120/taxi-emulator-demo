@@ -11,6 +11,8 @@ input::placeholder{color:#9a9a9f;opacity:1}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;flex-direction:column;height:280px;max-width:640px;margin:0 auto;overflow:hidden;
   transition:height .3s cubic-bezier(.2,.8,.2,1),transform .3s ease}
 .sheet.off{transform:translateY(115%);pointer-events:none}
+.sheet{bottom:calc(-1 * var(--gap, 0px))}
+#map{bottom:calc(-1 * var(--gap, 0px))}
 .grab{flex:none;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
 .handle{width:40px;height:5px;border-radius:3px;background:#d3d3d6;margin:9px auto 9px}
 .sbody{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
