@@ -19,7 +19,7 @@
 /*__CSS__*/
 /* ===== Зелёный стиль: по скринам пользователя (главная, подача авто, «Ваша поездка») ===== */
 body{--g:#12924A;--g2:#1A9A50;--ink:#1f2a30;--mute:#7d8a92;--line:#e7eaec;--accent:#12924A;--accent2:#12924A;color:var(--ink);font-size:17px}
-.base-tiles.vector{filter:saturate(.38) brightness(1.05)}
+.base-tiles.vector{filter:none}
 #formSheet .trip{display:none}
 .leaflet-container{background:#e9ebee}
 
@@ -54,6 +54,16 @@ body.st-ride .fit{bottom:calc(var(--sheet,280px) + 18px)}
 .finput{height:24px}
 .fsub{font-size:14px;color:var(--mute);margin-top:2px}
 .fsub span{color:var(--g2)}
+.starbtn{width:31px;height:31px;flex:none;border-radius:50%;border:1px solid #dde1e4;display:grid;place-items:center;align-self:center;margin-left:8px}
+.frow.to .plusbtn{display:none}
+.frow.to.has-ll .plusbtn{display:grid}
+.frow.to.has-ll .starbtn{display:none}
+.fprice .from{display:none;font-weight:600;margin-right:5px}
+.fprice input::placeholder{color:var(--ink);opacity:1}
+.fprice input:placeholder-shown{width:2.1em;text-align:left}
+#classes{margin-top:56px}
+.fprice:has(input:placeholder-shown) .from{display:inline}
+.bonus{border:1.5px solid #f0d27a}
 .plusbtn{width:31px;height:31px;flex:none;border-radius:50%;border:1px solid #dde1e4;display:grid;place-items:center;align-self:center;margin-left:8px}
 .sugg{flex:0 0 calc(100% - 32px);margin:6px 0 0 32px;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1);padding:0 10px}
 .trip{margin:4px 0 10px 32px;display:inline-block;background:#E4F5EA;color:#117a3f;border-radius:8px;padding:5px 10px;font-size:14px;font-weight:600}
@@ -176,7 +186,7 @@ body.st-ride.sheet-full #rideHead{display:flex}
       <span data-car-top="#FFC928" data-w="22"></span>
       <span><b><span class="js-cls-name">Стандарт</span><svg width="13" height="8" viewBox="0 0 13 8"><path d="M1.2 1.2 6.5 6.5l5.3-5.3" fill="none" stroke="#1f2a30" stroke-width="1.8" stroke-linecap="round"/></svg></b><small>1-4 пассажира</small></span>
     </button>
-    <label class="fprice"><input class="js-price" type="text" inputmode="decimal" autocomplete="off" aria-label="Стоимость, ₴">₴</label>
+    <label class="fprice"><span class="from">от</span><input class="js-price" type="text" inputmode="decimal" autocomplete="off" aria-label="Стоимость, ₴">₴</label>
     <button class="go js-find" aria-label="Найти машину"><svg width="20" height="18" viewBox="0 0 20 18"><path d="M1.5 9h16M10.5 2l7 7-7 7" fill="none" stroke="#1f2a30" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
 </section>
@@ -226,6 +236,15 @@ body.st-ride.sheet-full #rideHead{display:flex}
 window.APP = {
   name: 'Рух',
   vectorStyle: 'https://tiles.openfreemap.org/styles/liberty',
+  // палитра карты — как стандартная Google Maps на скринах
+  mapTheme: {
+    bg: '#ECEEF1', area: '#E6E8EB', park: '#A8DAB0', water: '#A6D3F2', waterLabel: '#4A84B5',
+    road: '#FFFFFF', roadMajor: '#FFFFFF', casing: '#DADDE1', rail: '#C9CDD2',
+    building: '#E3E5E8', buildingLine: '#D4D7DB', extrude: false,
+    label: '#3C4043', roadLabel: '#6B7176', halo: '#FFFFFF',
+    poi: { shop: '#4A8AF4', food: '#F29C38', health: '#EE675C', park: '#34A853', other: '#8A9097', metro: '#E53935' },
+    poiText: 'cat', poiLabel: { shop: '#1A6FDC', food: '#C5621B', health: '#D33B2F', park: '#2E8B47', other: '#5F6368' }
+  },
   classes: ['economy', 'standard', 'comfort', 'business'],
   seats: '1-4 пассажира',
   clsImg: id => carTop(id === 'business' ? '#2b2d31' : '#FFC928', { w: 16 }),
@@ -233,7 +252,7 @@ window.APP = {
   showSub: true,
   wrapFields: true,
   editLink: true,
-  toExtra: '<button class="plusbtn js-add-stop" aria-label="Добавить остановку"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#1f2a30" stroke-width="1.8" stroke-linecap="round"/></svg></button>',
+  toExtra: '<button class="starbtn js-deco" aria-label="Избранное"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17l-5.7 3.1 1.2-6.3L2.9 9.4l6.3-.8z" fill="none" stroke="#1f2a30" stroke-width="2" stroke-linejoin="round"/></svg></button><button class="plusbtn js-add-stop" aria-label="Добавить остановку"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#1f2a30" stroke-width="1.8" stroke-linecap="round"/></svg></button>',
   pin: { html: '<div class="pin1"><div class="h"><i></i></div><div class="l"></div><div class="ring"></div></div>', size: [40, 62], anchor: [20, 62] },
   route: { color: '#12924A', weight: 5 },
   carRoute: { color: '#1f2a30', weight: 5, dash: '1 9' },

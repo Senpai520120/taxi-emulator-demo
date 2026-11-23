@@ -19,7 +19,14 @@
 /*__CSS__*/
 /* ===== Жёлтый стиль: по скринам пользователя (главная, выбор класса, поиск, поездка) ===== */
 body{--y:#FFDD2D;--ink:#222326;--mute:#7c7f85;--bg:#F1F1F1;--line:#ececec;--red:#D0021B;--mint:#33D19B;--accent:#ffffff;--accent2:#222;--to-bg:#222326;color:var(--ink);font-size:17px;background:var(--bg)}
-.base-tiles.vector{filter:saturate(.4) brightness(1.05)}
+.base-tiles.vector{filter:none}
+body:not(.st-form) .near-car{display:none}
+.fit{display:none!important}
+.menu::after{content:"";position:absolute;right:7px;top:7px;width:8px;height:8px;border-radius:50%;background:#E5212B;border:1.5px solid #fff}
+.pstrip{height:30px;margin:0;background:linear-gradient(90deg,#26B4D7,#36CF8C);border-radius:14px 14px 0 0;text-align:center;font-size:14px;line-height:28px;color:#1d2a2a}
+.gwhite{background:#fff;border-radius:14px 14px 0 0;margin-top:-6px;padding-top:1px}
+#formSheet{background:var(--bg);border-radius:14px 14px 0 0}
+#formSheet .grab{background:transparent}
 .leaflet-container{background:#ededed}
 
 /* кнопки на карте */
@@ -221,7 +228,7 @@ body.arrived .etapill{background:#E5F7EF}
 
 <!-- Главная: адреса -->
 <section class="sheet" id="formSheet">
-  <div class="grab"><div class="handle"></div></div>
+  <div class="grab"><div class="pstrip">У тебя есть промокод 🙂</div><div class="gwhite"><div class="handle"></div></div></div>
   <div class="sbody">
     <div class="card">
       <div id="fields"></div>
@@ -321,6 +328,16 @@ body.arrived .etapill{background:#E5F7EF}
 window.APP = {
   name: 'Сонях',
   vectorStyle: 'https://tiles.openfreemap.org/styles/liberty',
+  // палитра карты — приглушённая серая, как на скринах
+  mapTheme: {
+    bg: '#EFEFEF', area: '#EAEAEA', park: '#B5D9CB', water: '#9CCFD6', waterLabel: '#6E9EA6',
+    road: '#D9D9D9', roadMajor: '#D2D2D2', casing: '#CDCDCD', rail: '#C6C6C6',
+    building: '#F8F8F8', buildingLine: '#D0D0D0', extrude: true,
+    label: '#8E8E8E', roadLabel: '#8A8A8A', halo: '#F4F4F4',
+    poi: { shop: '#4A9BE8', food: '#E5904A', health: '#E06A6A', park: '#5DB08E', other: '#9AA0A6', metro: '#E53935' },
+    poiText: '#9A9A9A'
+  },
+  nearby: 5, nearbyR: [60, 380],
   classes: ['fast', 'standard', 'comfort', 'business'],
   seats: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#7c7f85" stroke-width="1.4"><circle cx="7" cy="4.5" r="3"/><path d="M1.5 13c.5-3 2.6-4.6 5.5-4.6s5 1.6 5.5 4.6z"/></svg> 4',
   clsImg: id => id === 'fast'

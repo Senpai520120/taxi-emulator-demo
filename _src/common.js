@@ -97,6 +97,99 @@ window.carTop = carTop; window.carSide = carSide;
 $$('[data-car-side]').forEach(el => { el.innerHTML = carSide(el.dataset.carSide, { w: +el.dataset.w || 120 }); });
 $$('[data-car-top]').forEach(el => { el.innerHTML = carTop(el.dataset.carTop, { w: +el.dataset.w || 24, glass: el.dataset.glass || '#1f2429' }); });
 
+/* ---------------- стиль карты (перекраска слоёв OpenFreeMap) ---------------- */
+const POI_CAT = ['match', ['get', 'class'],
+  ['shop', 'grocery', 'clothing_store', 'hardware', 'furniture', 'gift', 'jewelry', 'mobile_phone', 'optician', 'shoe', 'books', 'stationery', 'pet', 'music', 'alcohol_shop', 'bakery', 'butcher', 'car', 'laundry', 'hairdresser', 'beauty', 'florist', 'convenience', 'supermarket', 'department_store', 'mall', 'electronics', 'cosmetics'], 'shop',
+  ['restaurant', 'fast_food', 'food_court', 'ice_cream'], 'food',
+  ['bar', 'beer', 'cafe', 'pub', 'nightclub'], 'drink',
+  ['hospital', 'pharmacy', 'doctors', 'dentist', 'clinic', 'veterinary'], 'health',
+  ['post'], 'post',
+  ['park', 'garden', 'playground', 'zoo'], 'park',
+  'other'];
+function poiImages(glMap, T) {
+  const mk = (name, color, draw, metro) => {
+    const S = 2, w = 22 * S, h = 26 * S, c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const x = c.getContext('2d');
+    x.fillStyle = color; x.strokeStyle = '#fff'; x.lineWidth = 1.6 * S;
+    if (metro) {
+      x.beginPath(); if (x.roundRect) x.roundRect(3 * S, 3 * S, 16 * S, 16 * S, 3 * S); else x.rect(3 * S, 3 * S, 16 * S, 16 * S); x.fill(); x.stroke();
+      x.fillStyle = '#fff'; x.font = `bold ${11 * S}px system-ui,sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle';
+      x.fillText('M', 11 * S, 11.6 * S);
+    } else {
+      x.beginPath();                                     // капля как в Google
+      x.arc(11 * S, 10 * S, 9 * S, Math.PI * 0.82, Math.PI * 2.18);
+      x.lineTo(11 * S, 24 * S); x.closePath();
+      x.shadowColor = 'rgba(0,0,0,.25)'; x.shadowBlur = 2 * S; x.shadowOffsetY = S * .6;
+      x.fill(); x.shadowColor = 'transparent'; x.stroke();
+      x.strokeStyle = '#fff'; x.fillStyle = '#fff'; x.lineWidth = 1.5 * S; x.lineCap = 'round';
+      draw(x, S);
+    }
+    glMap.addImage(name, x.getImageData(0, 0, w, h), { pixelRatio: S });
+  };
+  const P = T.poi;
+  mk('tp-shop', P.shop, (x, S) => { x.beginPath(); x.rect(7 * S, 8.5 * S, 8 * S, 6.5 * S); x.stroke(); x.beginPath(); x.arc(11 * S, 8.5 * S, 2.3 * S, Math.PI, 0); x.stroke(); });
+  mk('tp-food', P.food, (x, S) => { x.beginPath(); x.moveTo(8.5 * S, 5.5 * S); x.lineTo(8.5 * S, 14.5 * S); x.moveTo(7 * S, 5.5 * S); x.lineTo(7 * S, 9 * S); x.lineTo(10 * S, 9 * S); x.lineTo(10 * S, 5.5 * S); x.moveTo(13.5 * S, 14.5 * S); x.lineTo(13.5 * S, 5.5 * S); x.quadraticCurveTo(15.5 * S, 7 * S, 15 * S, 10 * S); x.lineTo(13.5 * S, 10 * S); x.stroke(); });
+  mk('tp-drink', P.food, (x, S) => { x.beginPath(); x.moveTo(6.5 * S, 6 * S); x.lineTo(15.5 * S, 6 * S); x.lineTo(11 * S, 11 * S); x.closePath(); x.fill(); x.beginPath(); x.moveTo(11 * S, 11 * S); x.lineTo(11 * S, 14.5 * S); x.moveTo(8.5 * S, 14.5 * S); x.lineTo(13.5 * S, 14.5 * S); x.stroke(); });
+  mk('tp-health', P.health, (x, S) => { x.font = `bold ${10 * S}px system-ui,sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('H', 11 * S, 10.5 * S); });
+  mk('tp-post', P.other, (x, S) => { x.beginPath(); x.rect(6.5 * S, 7 * S, 9 * S, 6.5 * S); x.moveTo(6.5 * S, 7 * S); x.lineTo(11 * S, 10.5 * S); x.lineTo(15.5 * S, 7 * S); x.stroke(); });
+  mk('tp-park', P.park, (x, S) => { x.beginPath(); x.arc(11 * S, 8.5 * S, 3.5 * S, 0, Math.PI * 2); x.fill(); x.fillRect(10.2 * S, 10 * S, 1.6 * S, 5 * S); });
+  mk('tp-other', P.other, (x, S) => { x.beginPath(); x.arc(11 * S, 10 * S, 3.4 * S, 0, Math.PI * 2); x.fill(); x.fillStyle = P.other; x.beginPath(); x.arc(11 * S, 10 * S, 1.5 * S, 0, Math.PI * 2); x.fill(); });
+  mk('tp-metro', P.metro, null, true);
+}
+function applyTheme(glMap, T) {
+  const set = (id, prop, v) => { try { glMap.setPaintProperty(id, prop, v); } catch (_) {} };
+  const lay = (id, prop, v) => { try { glMap.setLayoutProperty(id, prop, v); } catch (_) {} };
+  poiImages(glMap, T);
+  for (const ly of glMap.getStyle().layers) {
+    const id = ly.id;
+    if (ly.type === 'background') set(id, 'background-color', T.bg);
+    else if (id === 'natural_earth' || id === 'road_area_pattern' || /boundary/.test(id)) lay(id, 'visibility', 'none');
+    else if (/landcover_grass|landuse_pitch|landuse_track/.test(id)) { set(id, 'fill-color', T.area); set(id, 'fill-opacity', T.grass ?? 0); }
+    else if (/^park/.test(id) || /landcover_wood|landuse_cemetery/.test(id)) {
+      if (ly.type === 'fill') { set(id, 'fill-color', T.park); set(id, 'fill-opacity', 1); set(id, 'fill-outline-color', T.park); }
+      else set(id, 'line-color', T.park);
+    }
+    else if (/landuse_residential/.test(id)) set(id, 'fill-opacity', 0);
+    else if (/landuse_(hospital|school)|aeroway_fill|landcover_(ice|sand|wetland)/.test(id)) { set(id, 'fill-color', T.area); set(id, 'fill-opacity', 1); }
+    else if (/aeroway_(runway|taxiway)/.test(id)) set(id, 'line-color', T.road);
+    else if (/^water$/.test(id)) set(id, 'fill-color', T.water);
+    else if (/^waterway/.test(id) && ly.type === 'line') set(id, 'line-color', T.water);
+    else if (ly['source-layer'] === 'transportation' && ly.type === 'line') {
+      if (/rail/.test(id)) { set(id, 'line-color', T.rail); }
+      else if (/casing/.test(id)) set(id, 'line-color', T.casing);
+      else if (/motorway|trunk|primary|secondary|link/.test(id)) set(id, 'line-color', T.roadMajor);
+      else set(id, 'line-color', T.road);
+    }
+    else if (id === 'building') { set(id, 'fill-color', T.building); set(id, 'fill-outline-color', T.buildingLine); }
+    else if (id === 'building-3d') {
+      if (T.extrude) { set(id, 'fill-extrusion-color', T.building); set(id, 'fill-extrusion-opacity', .9); }
+      else lay(id, 'visibility', 'none');
+    }
+    else if (ly.type === 'symbol') {
+      if (/^poi/.test(id)) {
+        const metro = id === 'poi_transit';
+        lay(id, 'icon-image', metro ? ['match', ['get', 'subclass'], 'subway', 'tp-metro', 'tp-other'] : ['concat', 'tp-', POI_CAT]);
+        lay(id, 'icon-anchor', metro ? 'center' : 'bottom');
+        lay(id, 'icon-size', 1);
+        lay(id, 'text-anchor', 'left');
+        lay(id, 'text-offset', metro ? [1, 0] : [0.9, -1.1]);
+        lay(id, 'text-justify', 'left');
+        lay(id, 'text-size', 13);
+        lay(id, 'text-max-width', 9);
+        set(id, 'text-color', T.poiText === 'cat'
+          ? ['match', POI_CAT, 'shop', T.poiLabel.shop, 'food', T.poiLabel.food, 'drink', T.poiLabel.food, 'health', T.poiLabel.health, 'park', T.poiLabel.park, T.poiLabel.other]
+          : T.poiText);
+        set(id, 'text-halo-color', T.halo); set(id, 'text-halo-width', 1.4);
+      } else if (/highway-name|waterway_line|water_name/.test(id)) {
+        set(id, 'text-color', /water/.test(id) ? T.waterLabel : T.roadLabel); set(id, 'text-halo-color', T.halo);
+      } else if (/^label_|airport/.test(id)) {
+        set(id, 'text-color', T.label); set(id, 'text-halo-color', T.halo);
+      } else if (/shield|one_way/.test(id)) lay(id, 'visibility', 'none');
+    }
+  }
+}
+
 /* ---------------- карта ---------------- */
 const map = L.map('map', { zoomControl: false, attributionControl: false, zoomSnap: 0.25 }).setView(KH, 15);
 const hasWebGL = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (_) { return false; } })();
@@ -117,8 +210,9 @@ if (C.vectorStyle && window.L.maplibreGL && hasWebGL) {
             glMap.setLayoutProperty(ly.id, 'text-field', ['coalesce', ['get', 'name:uk'], ['get', 'name']]);
           }
         }
+        if (C.mapTheme) applyTheme(glMap, C.mapTheme);
         C.mapTweak?.(glMap);
-      } catch (_) {}
+      } catch (e) { console.warn('theme', e); }
     });
     glMap.on('error', e => console.warn('map', e?.error?.message));
   } catch (e) { console.warn(e); rasterBase(); }
@@ -197,7 +291,7 @@ function rowHTML(p, i, n) {
   const ctl = stop ? `<div class="sctl"><button class="sb" data-a="up" ${i <= 1 ? 'disabled' : ''} aria-label="Выше">↑</button><button class="sb" data-a="down" ${i >= n - 2 ? 'disabled' : ''} aria-label="Ниже">↓</button><button class="sb del" data-a="del" aria-label="Удалить остановку">×</button></div>` : '';
   const extra = p.k === 'to' && C.toExtra ? C.toExtra : '';
   const ftext = C.wrapFields ? `<div class="ftext${p.text ? '' : ' ph'}">${esc(p.text || ph)}</div>` : '';
-  return `<div class="frow ${p.k}" data-i="${i}"><span class="fdot">${dot}</span><div class="fbox">${ftext}<input class="finput" data-i="${i}" type="text" placeholder="${esc(ph)}" value="${esc(p.text)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">${sub}</div>${ctl}${extra}<div class="sugg" data-i="${i}"></div></div>`;
+  return `<div class="frow ${p.k}${p.ll ? ' has-ll' : ''}" data-i="${i}"><span class="fdot">${dot}</span><div class="fbox">${ftext}<input class="finput" data-i="${i}" type="text" placeholder="${esc(ph)}" value="${esc(p.text)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">${sub}</div>${ctl}${extra}<div class="sugg" data-i="${i}"></div></div>`;
 }
 function renderFields() {
   const n = S.pts.length;
@@ -208,6 +302,7 @@ function renderFields() {
 function syncField(i) {
   const row = $(`#fields .frow[data-i="${i}"]`); if (!row) return;
   const p = S.pts[i];
+  row.classList.toggle('has-ll', !!p.ll);
   $('.finput', row).value = p.text;
   const ft = $('.ftext', row);
   if (ft) { ft.textContent = p.text || $('.finput', row).placeholder; ft.classList.toggle('ph', !p.text); }
@@ -513,7 +608,7 @@ async function spawnNearby(center) {
   const seq = ++nearSeq;
   layers.nearby.clearLayers();
   const jobs = Array.from({ length: C.nearby }, async () => {
-    const a = destPoint(center, rnd(250, 1100), rnd(0, 360));
+    const a = destPoint(center, rnd(...(C.nearbyR || [250, 1100])), rnd(0, 360));
     const b = destPoint(a, 250, rnd(0, 360));
     try {
       const j = await getJSON(`${OSRM}/route/v1/driving/${a[1].toFixed(6)},${a[0].toFixed(6)};${b[1].toFixed(6)},${b[0].toFixed(6)}?overview=full&geometries=geojson`, 8000);
