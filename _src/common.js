@@ -654,9 +654,20 @@ function setPrice(v, src) {
   renderClasses();
   autoW();
 }
+// ширина поля цены = реальная ширина текста в том же шрифте (на iPhone цифры шире, чем «ch»)
+const priceMeter = document.createElement('span');
+priceMeter.style.cssText = 'position:absolute;left:-9999px;top:0;white-space:pre;visibility:hidden';
+document.body.appendChild(priceMeter);
 function autoW() {
-  $$('.js-price.autow').forEach(x => { x.style.width = (Math.max(1, (x.value || x.placeholder || '').length) + 1) + 'ch'; });
+  $$('.js-price.autow').forEach(x => {
+    const cs = getComputedStyle(x);
+    priceMeter.style.font = cs.font;
+    priceMeter.style.letterSpacing = cs.letterSpacing;
+    priceMeter.textContent = x.value || x.placeholder || '0';
+    x.style.width = Math.ceil(priceMeter.getBoundingClientRect().width + 6) + 'px';
+  });
 }
+document.fonts?.ready?.then(() => autoW());
 document.addEventListener('input', e => {
   const t = e.target.closest('.js-price'); if (!t) return;
   let v = t.value.replace(/,/g, '.').replace(/[^\d.]/g, '');

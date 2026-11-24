@@ -1,4 +1,6 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* поле цены: без системных отступов iOS, ширину задаёт autoW() */
+.js-price.autow{padding:0!important;margin:0;min-width:0;max-width:140px;box-sizing:content-box;-webkit-appearance:none;appearance:none;border-radius:0;text-indent:0}
 html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#1d1d1f;background:#e5e5e5;-webkit-font-smoothing:antialiased}
 #map{position:fixed;inset:0;z-index:0;background:#eceae6}
