@@ -1283,7 +1283,7 @@ async function makeCar(p) {
     model: pick(CLASS_DEF[S.cls].models), color: pick(COLORS),
     plate: [pick(['AX', 'KX']), `${d()}${d()}${d()}${d()}`, pick(PLATE_L) + pick(PLATE_L)],
     driver: pick(NAMES), rating: rnd(4.85, 5.0).toFixed(2),
-    trips: Math.round(rnd(1200, 12000)), years: Math.round(rnd(2, 9))
+    trips: Math.round(rnd(150, 3200)), years: Math.round(rnd(2, 9))
   };
 }
 function routeListHTML() {
