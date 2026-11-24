@@ -122,6 +122,7 @@ body.sheet-full .mapbtn{opacity:0;pointer-events:none}
 .js-steps b.done{background:#2aa883}
 
 /* ===== Зелёный стиль: по скринам пользователя (главная, подача авто, «Ваша поездка») ===== */
+html,body{background:#fff}
 body{--g:#12924A;--g2:#1A9A50;--ink:#1f2a30;--mute:#7d8a92;--line:#e7eaec;--accent:#12924A;--accent2:#12924A;color:var(--ink);font-size:17px}
 .base-tiles.vector{filter:none}
 #formSheet .trip{display:none}
@@ -908,51 +909,60 @@ async function updateRoute(fit, fromPick) {
 }
 
 /* ---------------- подгонка карты ---------------- */
-const safeTop = (() => {
-  const d = document.createElement('div');
-  d.style.cssText = 'position:fixed;top:0;height:env(safe-area-inset-top);visibility:hidden';
-  document.body.appendChild(d); const h = d.offsetHeight; d.remove(); return h;
-})();
+/* ---------------- размеры экрана (с поправкой на iOS-«приложение») ----------------
+   На iPhone в режиме «На экран Домой» innerHeight и нижний край для position:fixed
+   бывают меньше реального экрана на высоту статус-бара, а safe-area приходит не сразу.
+   Поэтому: высоту берём у экрана, нижний край меряем пробной точкой, всё перемеряем. */
+const IS_STANDALONE = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const safeProbe = document.createElement('div');
+safeProbe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top);visibility:hidden;pointer-events:none';
+const bottomProbe = document.createElement('div');
+bottomProbe.style.cssText = 'position:fixed;bottom:0;left:0;width:0;height:0;visibility:hidden;pointer-events:none';
+document.body.append(safeProbe, bottomProbe);
+let safeTop = 0, VH = innerHeight, GAP = 0;
+function measureView() {
+  safeTop = safeProbe.offsetHeight;
+  const portrait = innerHeight >= innerWidth;
+  const scr = portrait ? Math.max(screen.height, screen.width) : Math.min(screen.height, screen.width);
+  VH = (IS_STANDALONE && IS_IOS && scr > innerHeight && scr - innerHeight < 150) ? scr : innerHeight;
+  const fixedBottom = bottomProbe.getBoundingClientRect().top;     // где iOS считает низ для fixed
+  const g = Math.round(VH - fixedBottom);
+  GAP = g > 0 && g < 150 ? g : 0;
+  document.documentElement.style.setProperty('--gap', GAP + 'px');
+  document.documentElement.style.setProperty('--vh', VH + 'px');
+}
+measureView();
+// скрытая диагностика: зажать кнопку меню на 1,5 с
+let diagT;
+document.addEventListener('pointerdown', e => { if (e.target.closest('.js-menu')) diagT = setTimeout(() => toast(`экран ${screen.width}×${screen.height} · окно ${innerWidth}×${innerHeight} · низ fixed ${Math.round(bottomProbe.getBoundingClientRect().top)} · VH ${VH} · GAP ${GAP} · safe ${safeTop} · app ${IS_STANDALONE ? 'да' : 'нет'}`, 9000), 1500); });
+['pointerup', 'pointercancel'].forEach(ev => document.addEventListener(ev, () => clearTimeout(diagT)));
 const activeSheet = () => sheets[S.state] || formSheet;
 function fitTo(lls) {
   if (!lls.length) return;
   const sh = activeSheet();
   const above = C.mapAboveRide && S.state === 'ride';   // карта в рамке над панелью — панель её не перекрывает
-  const bottom = above ? 30 : Math.min(sh.snaps[1], sh.vis || 0, innerHeight * 0.62) + (C.fitExtraBottom || 24);
+  const bottom = above ? 30 : Math.min(sh.snaps[1], sh.vis || 0, VH * 0.62) + (C.fitExtraBottom || 24);
   const px = (S.state === 'order' && C.fitXOrder) || 40;
   map.fitBounds(L.latLngBounds(lls), { paddingTopLeft: [px, safeTop + (S.state === 'order' && C.fitTopOrder || C.fitTop || 100)], paddingBottomRight: [px, bottom], maxZoom: 16.5 });
 }
 function centerOn(ll, z) {
   const sh = activeSheet();
-  const off = Math.min(sh.vis || 0, innerHeight * 0.62) / 2;
+  const off = Math.min(sh.vis || 0, VH * 0.62) / 2;
   map.setView(map.unproject(map.project(ll, z).add([0, off]), z), z);
 }
-
-/* ---------------- поправка iOS: «приложение» с прозрачным статус-баром ----------------
-   В режиме «На экран Домой» iOS считает нижний край для position:fixed выше реального
-   на высоту статус-бара — внизу появлялась серая полоса. Меряем разницу и сдвигаем. */
-const gapProbe = document.createElement('div');
-gapProbe.style.cssText = 'position:fixed;top:0;bottom:0;width:0;visibility:hidden;pointer-events:none';
-document.body.appendChild(gapProbe);
-let GAP = 0;
-function measureGap() {
-  const g = Math.round(innerHeight - gapProbe.offsetHeight);
-  GAP = g > 0 && g < 150 ? g : 0;
-  document.documentElement.style.setProperty('--gap', GAP + 'px');
-}
-measureGap();
 
 /* ---------------- подвижные панели ---------------- */
 function makeSheet(el, snapsFn) {
   const sh = { el, i: 1, vis: 0, snaps: [0, 0, 0], on: !el.classList.contains('off') };
-  sh.calc = () => { sh.snaps = snapsFn(innerHeight, safeTop, el).map(Math.round); };
+  sh.calc = () => { sh.snaps = snapsFn(VH, safeTop, el).map(Math.round); };
   sh.set = (v, anim = true) => {
     sh.vis = v;
     el.style.transition = anim ? '' : 'none';
     el.style.height = v + 'px';
     if (sh.on) {
       document.documentElement.style.setProperty('--sheet', (v - GAP) + 'px');
-      document.body.classList.toggle('sheet-full', v > innerHeight * 0.72);
+      document.body.classList.toggle('sheet-full', v > VH * 0.72);
     }
   };
   sh.snap = (i, anim = true) => {
@@ -1014,11 +1024,15 @@ function go(name, snapIdx) {
   setTimeout(() => map.invalidateSize({ pan: false }), 360);
 }
 function relayout(anim) {
-  measureGap();
+  measureView();
   Object.values(sheets).forEach(sh => { sh.calc(); if (sh.on) sh.set(sh.snaps[sh.i], anim); });
 }
 addEventListener('resize', () => relayout(false));
 addEventListener('load', () => setTimeout(() => relayout(false), 300));
+[700, 1500, 3000].forEach(ms => setTimeout(() => relayout(false), ms));   // iOS доводит размеры не сразу
+window.visualViewport?.addEventListener('resize', () => relayout(false));
+addEventListener('orientationchange', () => setTimeout(() => relayout(false), 400));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => relayout(false), 200); });
 // панель по высоте содержимого (зелёный: адреса + низ, без пустоты)
 function refit() { if (typeof formSheet !== 'undefined' && formSheet.on) { const i = formSheet.i; formSheet.calc(); formSheet.set(formSheet.snaps[i]); } }
 
@@ -1061,7 +1075,7 @@ function setPrice(v, src) {
   autoW();
 }
 function autoW() {
-  $$('.js-price.autow').forEach(x => { x.style.width = (Math.max(1, (x.value || x.placeholder || '').length) + 0.3) + 'ch'; });
+  $$('.js-price.autow').forEach(x => { x.style.width = (Math.max(1, (x.value || x.placeholder || '').length) + 1) + 'ch'; });
 }
 document.addEventListener('input', e => {
   const t = e.target.closest('.js-price'); if (!t) return;
@@ -1315,13 +1329,13 @@ document.addEventListener('click', e => {
 map.on('click', () => { if (document.activeElement?.matches('input')) document.activeElement.blur(); });
 
 /* ---------------- как приложение (PWA) ---------------- */
-const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+const standalone = IS_STANDALONE;
 document.documentElement.classList.toggle('standalone', standalone);
 document.addEventListener('gesturestart', e => e.preventDefault());
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
-const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isIOS = IS_IOS;
 if (!standalone && isIOS && !localStorage.getItem('taxi.hint')) {
   setTimeout(() => {
     const d = document.createElement('div');
